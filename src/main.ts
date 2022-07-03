@@ -1,4 +1,4 @@
-import { Keycodes, listenKeyboard } from './controls.js';
+import { Keycodes, listenKeyboard } from './controls';
 
 const canvas = document.querySelector('canvas');
 const context = canvas.getContext('2d');
@@ -40,7 +40,7 @@ const images = {
 };
 
 async function main() {
-  images.road2 = await loadImage('data/road2.png');
+  images.road2 = await loadImage('data/graphics/road2.png');
 
   road();
 }
