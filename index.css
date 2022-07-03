@@ -1,0 +1,8 @@
+html {
+  display: flex;
+  height: 100%;
+}
+
+canvas {
+  width: 800px;
+}
