@@ -96,8 +96,8 @@ async function draw() {
   context.fillRect(0, 0, IMAGE_WIDTH, horizonY);
 
   // Ground
-  context.fillStyle = '#aa8';
-  context.fillRect(0, horizonY, IMAGE_WIDTH, IMAGE_HEIGHT - horizonY);
+  // context.fillStyle = '#aa8';
+  // context.fillRect(0, horizonY, IMAGE_WIDTH, IMAGE_HEIGHT - horizonY);
 
   drawRoad();
 
@@ -119,6 +119,8 @@ function drawRoad() {
     throw new Error(`Could not find height entry for y=${y}`);
   };
 
+  const groundColors = ['#aa8', '#aa8'];
+
   const textureSources = [
     { y: 0, height: 1 },
     { y: 33, height: 1 },
@@ -139,6 +141,9 @@ function drawRoad() {
 
     const destY = IMAGE_HEIGHT - y;
     const destH = 1;
+
+    context.fillStyle = groundColors[textureIndex];
+    context.fillRect(0, IMAGE_HEIGHT - y, IMAGE_WIDTH, 1);
 
     context.drawImage(
       images.road2,
