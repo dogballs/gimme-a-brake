@@ -1,4 +1,5 @@
 import { Keycodes, listenKeyboard } from './controls';
+import { createRangeValue } from './debug';
 
 const canvas = document.querySelector('canvas');
 const context = canvas.getContext('2d');
@@ -6,16 +7,52 @@ const context = canvas.getContext('2d');
 const IMAGE_WIDTH = 320;
 const IMAGE_HEIGHT = 240;
 
-const HORIZON_Y = IMAGE_HEIGHT / 2;
-
 const NEAR_TEX_HEIGHT = 32;
 
 const ROAD_IMAGE_WIDTH = 192;
 
-const ROAD_HEIGHT = IMAGE_HEIGHT - HORIZON_Y;
-
 canvas.width = IMAGE_WIDTH;
 canvas.height = IMAGE_HEIGHT;
+
+const curveTopStartValue = createRangeValue({
+  title: 'curveTopStart',
+  initialValue: 40,
+  min: 0,
+  max: IMAGE_HEIGHT,
+});
+const curveTopOffsetMultValue = createRangeValue({
+  title: 'cureveTopOffsetMult',
+  initialValue: 0.05,
+  min: 0,
+  max: 1,
+  step: 0.01,
+});
+// const curveBottomStartValue = createRangeValue({
+//   title: 'curveBottomStart',
+//   initialValue: 0,
+//   min: 0,
+//   max: IMAGE_HEIGHT,
+// });
+// const curveBottomOffsetMultValue = createRangeValue({
+//   title: 'cureveBottomOffsetMult',
+//   initialValue: 0.05,
+//   min: 0,
+//   max: 3,
+//   step: 0.01,
+// });
+const widthPerLineReduceValue = createRangeValue({
+  title: 'widthPerLineReduce',
+  initialValue: 1.6,
+  min: 0,
+  max: 3,
+  step: 0.05,
+});
+const horizonYValue = createRangeValue({
+  title: 'horizonY',
+  initialValue: IMAGE_HEIGHT / 2,
+  min: 0,
+  max: IMAGE_HEIGHT,
+});
 
 async function loadImage(imagePath: string) {
   return new Promise<HTMLImageElement>((resolve) => {
@@ -52,21 +89,24 @@ async function draw() {
     state.moveOffset -= speed;
   }
 
+  const horizonY = horizonYValue.get();
+
   // Sky
   context.fillStyle = '#88a';
-  context.fillRect(0, 0, IMAGE_WIDTH, HORIZON_Y);
+  context.fillRect(0, 0, IMAGE_WIDTH, horizonY);
 
   // Ground
   context.fillStyle = '#aa8';
-  context.fillRect(0, HORIZON_Y, IMAGE_WIDTH, IMAGE_HEIGHT - HORIZON_Y);
+  context.fillRect(0, horizonY, IMAGE_WIDTH, IMAGE_HEIGHT - horizonY);
 
-  drawStraightRoad();
+  drawRoad();
 
   requestAnimationFrame(draw);
 }
 
-function drawStraightRoad() {
-  const widthList = getWidthList();
+function drawRoad() {
+  // const widthList = getStraightWidthList();
+  const widthList = getCurvedWidthList();
   const heightList = getSegmentHeightList();
 
   const getTextureIndexForY = (y) => {
@@ -84,7 +124,9 @@ function drawStraightRoad() {
     { y: 33, height: 1 },
   ];
 
-  for (let y = 0; y <= ROAD_HEIGHT; y++) {
+  const roadHeight = IMAGE_HEIGHT - horizonYValue.get();
+
+  for (let y = 0; y <= roadHeight; y++) {
     const sourceX = 0;
     const sourceW = ROAD_IMAGE_WIDTH;
 
@@ -112,14 +154,16 @@ function drawStraightRoad() {
   }
 }
 
-function getWidthList() {
+function getStraightWidthList() {
   let dx = 0;
   const dxx = 1.6;
   const NEAR_WIDTH = 400;
 
+  const roadHeight = IMAGE_HEIGHT - horizonYValue.get();
+
   const widthList = [];
 
-  for (let i = 0; i <= ROAD_HEIGHT; i++) {
+  for (let i = 0; i <= roadHeight; i++) {
     const x = IMAGE_WIDTH / 2 - NEAR_WIDTH / 2 + dx;
     const width = NEAR_WIDTH - dx * 2;
 
@@ -134,7 +178,60 @@ function getWidthList() {
   return widthList;
 }
 
+function getCurvedWidthList() {
+  const roadHeight = IMAGE_HEIGHT - horizonYValue.get();
+
+  const curveTopStart = roadHeight - curveTopStartValue.get();
+  // const curveBottomStart = curveBottomStartValue.get();
+  const curveTopOffsetMult = curveTopOffsetMultValue.get();
+
+  const NEAR_WIDTH = 400;
+
+  const perIterationReduce = widthPerLineReduceValue.get();
+
+  let topOffset = 0;
+  let perIterationTopOffset = 0;
+
+  let bottomOffset = 0;
+  let perIterationBottomOffset = 0;
+
+  const widthList = [];
+
+  for (let i = 0; i <= roadHeight; i++) {
+    const widthReduce = i * perIterationReduce;
+    const straightX = IMAGE_WIDTH / 2 - NEAR_WIDTH / 2 + widthReduce;
+    const width = NEAR_WIDTH - widthReduce * 2;
+
+    const topCurveX = straightX - topOffset;
+    const bottomCurveX = straightX - bottomOffset;
+
+    // if (i <= curveBottomStart) {
+    //   widthList.push({
+    //     x: straightX,
+    //     width,
+    //   });
+    // } else
+    if (i >= curveTopStart) {
+      widthList.push({
+        x: topCurveX,
+        width,
+      });
+      topOffset += perIterationTopOffset;
+      perIterationTopOffset += curveTopOffsetMult;
+    } else {
+      widthList.push({
+        x: straightX,
+        width,
+      });
+    }
+  }
+
+  return widthList;
+}
+
 function getSegmentHeightList() {
+  const roadHeight = IMAGE_HEIGHT - horizonYValue.get();
+
   const heightList = [];
 
   const { moveOffset } = state;
@@ -169,7 +266,7 @@ function getSegmentHeightList() {
   }
 
   let currentY = 0;
-  let roadLeftToParse = ROAD_HEIGHT;
+  let roadLeftToParse = roadHeight;
 
   while (roadLeftToParse >= 0) {
     const downscaleMultiplier = 1.3 / downscaleIndex;
