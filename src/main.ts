@@ -1,5 +1,6 @@
 import { Keycodes, listenKeyboard } from './controls';
-import { createRangeValue } from './debug';
+// import { createButton, createRangeValue } from './debug';
+import { createDebugPanel, createDebugBox } from './core/debug';
 
 const canvas = document.querySelector('canvas');
 const context = canvas.getContext('2d');
@@ -14,45 +15,10 @@ const ROAD_IMAGE_WIDTH = 192;
 canvas.width = IMAGE_WIDTH;
 canvas.height = IMAGE_HEIGHT;
 
-const curveTopStartValue = createRangeValue({
-  title: 'curveTopStart',
-  initialValue: 40,
-  min: 0,
-  max: IMAGE_HEIGHT,
-});
-const curveTopOffsetMultValue = createRangeValue({
-  title: 'cureveTopOffsetMult',
-  initialValue: 0.05,
-  min: 0,
-  max: 1,
-  step: 0.01,
-});
-// const curveBottomStartValue = createRangeValue({
-//   title: 'curveBottomStart',
-//   initialValue: 0,
-//   min: 0,
-//   max: IMAGE_HEIGHT,
-// });
-// const curveBottomOffsetMultValue = createRangeValue({
-//   title: 'cureveBottomOffsetMult',
-//   initialValue: 0.05,
-//   min: 0,
-//   max: 3,
-//   step: 0.01,
-// });
-const widthPerLineReduceValue = createRangeValue({
-  title: 'widthPerLineReduce',
-  initialValue: 1.6,
-  min: 0,
-  max: 3,
-  step: 0.05,
-});
-const horizonYValue = createRangeValue({
-  title: 'horizonY',
-  initialValue: IMAGE_HEIGHT / 2,
-  min: 0,
-  max: IMAGE_HEIGHT,
-});
+const horizonYBox = createDebugBox();
+const curveTopStartBox = createDebugBox();
+const curveTopOffsetMultBox = createDebugBox();
+const widthPerLineReduceBox = createDebugBox();
 
 async function loadImage(imagePath: string) {
   return new Promise<HTMLImageElement>((resolve) => {
@@ -89,15 +55,15 @@ async function draw() {
     state.moveOffset -= speed;
   }
 
-  const horizonY = horizonYValue.get();
+  const horizonY = horizonYBox.get();
 
   // Sky
   context.fillStyle = '#88a';
   context.fillRect(0, 0, IMAGE_WIDTH, horizonY);
 
   // Ground
-  // context.fillStyle = '#aa8';
-  // context.fillRect(0, horizonY, IMAGE_WIDTH, IMAGE_HEIGHT - horizonY);
+  context.fillStyle = '#aa8';
+  context.fillRect(0, horizonY, IMAGE_WIDTH, IMAGE_HEIGHT - horizonY);
 
   drawRoad();
 
@@ -126,7 +92,7 @@ function drawRoad() {
     { y: 33, height: 1 },
   ];
 
-  const roadHeight = IMAGE_HEIGHT - horizonYValue.get();
+  const roadHeight = IMAGE_HEIGHT - horizonYBox.get();
 
   for (let y = 0; y <= roadHeight; y++) {
     const sourceX = 0;
@@ -159,40 +125,40 @@ function drawRoad() {
   }
 }
 
-function getStraightWidthList() {
-  let dx = 0;
-  const dxx = 1.6;
-  const NEAR_WIDTH = 400;
+// function getStraightWidthList() {
+//   let dx = 0;
+//   const dxx = 1.6;
+//   const NEAR_WIDTH = 400;
 
-  const roadHeight = IMAGE_HEIGHT - horizonYValue.get();
+//   const roadHeight = IMAGE_HEIGHT - horizonYBox.get();
 
-  const widthList = [];
+//   const widthList = [];
 
-  for (let i = 0; i <= roadHeight; i++) {
-    const x = IMAGE_WIDTH / 2 - NEAR_WIDTH / 2 + dx;
-    const width = NEAR_WIDTH - dx * 2;
+//   for (let i = 0; i <= roadHeight; i++) {
+//     const x = IMAGE_WIDTH / 2 - NEAR_WIDTH / 2 + dx;
+//     const width = NEAR_WIDTH - dx * 2;
 
-    widthList.push({
-      x,
-      width,
-    });
+//     widthList.push({
+//       x,
+//       width,
+//     });
 
-    dx += dxx;
-  }
+//     dx += dxx;
+//   }
 
-  return widthList;
-}
+//   return widthList;
+// }
 
 function getCurvedWidthList() {
-  const roadHeight = IMAGE_HEIGHT - horizonYValue.get();
+  const roadHeight = IMAGE_HEIGHT - horizonYBox.get();
 
-  const curveTopStart = roadHeight - curveTopStartValue.get();
+  const curveTopStart = roadHeight - curveTopStartBox.get();
   // const curveBottomStart = curveBottomStartValue.get();
-  const curveTopOffsetMult = curveTopOffsetMultValue.get();
+  const curveTopOffsetMult = curveTopOffsetMultBox.get();
 
   const NEAR_WIDTH = 400;
 
-  const perIterationReduce = widthPerLineReduceValue.get();
+  const perIterationReduce = widthPerLineReduceBox.get();
 
   let topOffset = 0;
   let perIterationTopOffset = 0;
@@ -235,7 +201,7 @@ function getCurvedWidthList() {
 }
 
 function getSegmentHeightList() {
-  const roadHeight = IMAGE_HEIGHT - horizonYValue.get();
+  const roadHeight = IMAGE_HEIGHT - horizonYBox.get();
 
   const heightList = [];
 
@@ -311,10 +277,84 @@ function getSegmentHeightList() {
   return heightList;
 }
 
+function move(moveOffset) {
+  state.moveOffset += moveOffset;
+  draw();
+}
+
 main();
 
 // @ts-ignore
 window.move = (moveOffset) => {
-  state.moveOffset = moveOffset;
-  draw();
+  move(moveOffset);
 };
+
+createDebugPanel({
+  sections: [
+    {
+      title: 'Curve',
+      items: [
+        {
+          type: 'range',
+          title: 'horizonY',
+          box: horizonYBox,
+          initial: IMAGE_HEIGHT / 2,
+          min: 0,
+          max: IMAGE_HEIGHT,
+        },
+        {
+          type: 'range',
+          title: 'cureveTopOffsetMult',
+          box: curveTopOffsetMultBox,
+          initial: 0.05,
+          min: 0,
+          max: 1,
+          step: 0.01,
+        },
+        {
+          type: 'range',
+          title: 'curveTopStart',
+          box: curveTopStartBox,
+          initial: 40,
+          min: 0,
+          max: IMAGE_HEIGHT,
+        },
+        {
+          type: 'range',
+          title: 'widthPerLineReduce',
+          box: widthPerLineReduceBox,
+          initial: 1.6,
+          min: 0,
+          max: 3,
+          step: 0.05,
+        },
+      ],
+    },
+    {
+      title: 'Move',
+      items: [
+        {
+          type: 'button',
+          title: '+1',
+          onClick: () => {
+            move(1);
+          },
+        },
+      ],
+    },
+  ],
+});
+
+// const curveBottomStartValue = createRangeValue({
+//   title: 'curveBottomStart',
+//   initialValue: 0,
+//   min: 0,
+//   max: IMAGE_HEIGHT,
+// });
+// const curveBottomOffsetMultValue = createRangeValue({
+//   title: 'cureveBottomOffsetMult',
+//   initialValue: 0.05,
+//   min: 0,
+//   max: 3,
+//   step: 0.01,
+// });
