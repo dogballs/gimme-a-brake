@@ -1,141 +1,173 @@
-type DebugRangeItemConfig = {
-  type: 'range';
-  box: DebugBox;
-  title?: string;
-  initial?: number;
-  min?: number;
-  max?: number;
-  step?: number;
-};
+// type DebugRangeItemConfig = {
+//   type: 'range';
+//   box: DebugBox;
+//   title?: string;
+//   initial?: number;
+//   min?: number;
+//   max?: number;
+//   step?: number;
+// };
 
-type DebugButtonItemConfig = {
-  type: 'button';
-  title?: string;
-  onClick?: () => void;
-};
+// export function createPanel({
+//   sections = [],
+//   parent = document.body,
+// }: DebugConfig) {
+//   const $container = document.createElement('div');
 
-type DebugItemConfig = DebugRangeItemConfig | DebugButtonItemConfig;
+//   sections.forEach((sectionConfig) => {
+//     const $section = createSection(sectionConfig);
+//     $container.appendChild($section);
+//   });
 
-type DebugSectionConfig = {
-  title?: string;
-  items?: DebugItemConfig[];
-};
+//   parent.appendChild($container);
 
-type DebugConfig = {
-  sections?: DebugSectionConfig[];
-  parent?: HTMLElement;
-};
+//   const getValues = () => {};
 
-class DebugBox {
-  value: number;
-  $input: HTMLInputElement;
+//   return {
+//     getValues,
+//   };
+// }
 
-  constructor(initialValue = 0) {
-    this.value = initialValue;
-  }
-
-  attach($input, initial) {
-    this.$input = $input;
-    this.value = initial;
-    this.$input.value = this.value.toString();
-  }
-
-  set(value: number) {
-    this.value = value;
-    this.$input.value = value.toString();
-  }
-
-  get() {
-    if (!this.$input) {
-      return this.value;
-    }
-    return Number(this.$input.value);
-  }
-}
-
-export function createDebugBox(initial: number = 0) {
-  return new DebugBox(initial);
-}
-
-export function createDebugPanel({
-  sections = [],
-  parent = document.body,
-}: DebugConfig) {
-  const $container = document.createElement('div');
-
-  sections.forEach((sectionConfig) => {
-    const $section = createSection(sectionConfig);
-    $container.appendChild($section);
-  });
-
-  parent.appendChild($container);
-}
-
-function createSection({
-  items = [],
+export function createSection({
   title = '(section)',
-}: DebugSectionConfig) {
+}: {
+  title?: string;
+} = {}) {
   const $section = document.createElement('fieldset');
 
   const $title = document.createElement('legend');
   $title.textContent = title;
   $section.appendChild($title);
 
-  if (items.length > 0) {
-    items.forEach((itemConfig) => {
-      let $item;
-      switch (itemConfig.type) {
-        case 'range':
-          $item = createRangeItem(itemConfig);
-          break;
-        case 'button':
-          $item = createButtonItem(itemConfig);
-          break;
-        default:
-          throw new Error(`Not supported debug item type "${itemConfig}"`);
-      }
-      $section.appendChild($item);
-    });
-  }
+  const addElement = ($element) => {
+    $section.appendChild($element);
+  };
 
-  return $section;
+  return {
+    $element: $section,
+    addElement,
+  };
 }
 
-function createRangeItem({
-  title = '(range)',
-  box,
-  initial = 0,
-  min = 0,
-  max = 100,
-  step = 1,
-}: DebugRangeItemConfig) {
-  const $container = document.createElement('div');
+// function createRangeItem({
+//   title = '(range)',
+//   box,
+//   initial = 0,
+//   min = 0,
+//   max = 100,
+//   step = 1,
+// }: DebugRangeItemConfig) {
+//   const $container = document.createElement('div');
 
-  const $title = document.createElement('span');
-  $title.textContent = title;
-  $container.appendChild($title);
+//   const $title = document.createElement('span');
+//   $title.textContent = title;
+//   $container.appendChild($title);
 
-  const $input = document.createElement('input');
-  $input.type = 'range';
-  $input.min = min.toString();
-  $input.max = max.toString();
-  $input.step = step.toString();
+//   const $value = document.createElement('span');
 
-  $container.appendChild($input);
+//   const updateValueText = () => {
+//     $value.textContent = $input.value;
+//   };
 
-  box.attach($input, initial);
+//   const $input = document.createElement('input');
+//   $input.type = 'range';
+//   $input.min = min.toString();
+//   $input.max = max.toString();
+//   $input.step = step.toString();
+//   // $input.addEventListener('input', updateValueText);
 
-  return $container;
-}
+//   $container.appendChild($input);
+//   $container.appendChild($value);
 
-function createButtonItem({
+//   // box.attach($input, initial);
+//   // updateValueText();
+
+//   const getValue = () => {
+//     return $input.value;
+//   };
+
+//   return {
+//     $container,
+//     getValue,
+//   };
+// }
+
+export function createButton({
   title = '(button)',
   onClick = () => {},
-}: DebugButtonItemConfig) {
+}: {
+  title?: string;
+  onClick?: () => void;
+}) {
   const $button = document.createElement('button');
+  $button.style.marginRight = '5px';
   $button.textContent = title;
   $button.addEventListener('click', () => {
     onClick();
   });
-  return $button;
+
+  return {
+    $element: $button,
+  };
+}
+
+export function createNumberInput({
+  title = '(input)',
+  value = 0,
+  step = 1,
+}: {
+  title?: string;
+  value?: number;
+  step?: number;
+} = {}) {
+  const $container = document.createElement('span');
+  $container.style.marginRight = '10px';
+
+  const $title = document.createElement('span');
+  $title.textContent = title + ': ';
+  $container.appendChild($title);
+
+  const $input = document.createElement('input');
+  $input.type = 'number';
+  $input.value = value.toString();
+  $input.step = step.toString();
+  $input.size = 8;
+
+  $container.appendChild($title);
+  $container.appendChild($input);
+
+  const getValue = () => {
+    return Number($input.value);
+  };
+
+  const getNumber = () => {
+    return $input.value;
+  };
+
+  return {
+    $element: $container,
+    getValue,
+  };
+}
+
+export function createLabel({ title = '(text)' }: { title?: string } = {}) {
+  const $container = document.createElement('span');
+  $container.style.marginRight = '10px';
+
+  const $title = document.createElement('span');
+  $title.textContent = `${title}: `;
+  $container.appendChild($title);
+
+  const $text = document.createElement('span');
+  $text.textContent = '(no value)';
+  $container.appendChild($text);
+
+  const update = (text: string) => {
+    $text.textContent = text;
+  };
+
+  return {
+    $element: $container,
+    update,
+  };
 }
