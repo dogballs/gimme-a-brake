@@ -115,10 +115,12 @@ export function createNumberInput({
   title = '(input)',
   value = 0,
   step = 1,
+  onChange = () => {},
 }: {
   title?: string;
   value?: number;
   step?: number;
+  onChange?: (value: number) => void;
 } = {}) {
   const $container = document.createElement('span');
   $container.style.marginRight = '10px';
@@ -131,14 +133,18 @@ export function createNumberInput({
   $input.type = 'number';
   $input.value = value.toString();
   $input.step = step.toString();
-  $input.size = 8;
-
-  $container.appendChild($title);
-  $container.appendChild($input);
+  $input.style.width = '80px';
 
   const getValue = () => {
     return Number($input.value);
   };
+
+  $input.addEventListener('input', () => {
+    onChange(getValue());
+  });
+
+  $container.appendChild($title);
+  $container.appendChild($input);
 
   const getNumber = () => {
     return $input.value;

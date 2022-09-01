@@ -7,9 +7,11 @@ import {
 
 export function installDebug({
   onMove,
+  onSpeedChange,
   onAddTurn,
 }: {
   onMove: (offset: number) => void;
+  onSpeedChange: (speed: number) => void;
   onAddTurn: (args: { offset: number; size: number }) => void;
 }) {
   const moveSection = createSection({ title: 'Move' });
@@ -20,9 +22,15 @@ export function installDebug({
     },
   });
   const moveOffsetLabel = createLabel({ title: 'Offset' });
+  const speedInput = createNumberInput({
+    title: 'Speed',
+    value: 3,
+    onChange: onSpeedChange,
+  });
 
   moveSection.addElement(moveButton.$element);
   moveSection.addElement(moveOffsetLabel.$element);
+  moveSection.addElement(speedInput.$element);
 
   document.body.appendChild(moveSection.$element);
 

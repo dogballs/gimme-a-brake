@@ -17,9 +17,8 @@ canvas.height = IMAGE_HEIGHT;
 
 const { getKeys } = listenKeyboard();
 
-const speed = 3;
-
 const state = {
+  speed: 3,
   moveOffset: 0,
   nextTurn: undefined,
 };
@@ -31,6 +30,9 @@ const images = {
 const { updateMoveOffsetLabel } = installDebug({
   onMove: move,
   onAddTurn: addTurn,
+  onSpeedChange: (speed: number) => {
+    state.speed = speed;
+  },
 });
 
 async function loadImage(imagePath: string) {
@@ -54,9 +56,9 @@ const turnEnd = 1100;
 
 function loop() {
   if (getKeys().includes(Keycodes.Up)) {
-    state.moveOffset += speed;
+    state.moveOffset += state.speed;
   } else if (getKeys().includes(Keycodes.Down)) {
-    state.moveOffset -= speed;
+    state.moveOffset -= state.speed;
   }
 
   updateMoveOffsetLabel(state.moveOffset.toString());
