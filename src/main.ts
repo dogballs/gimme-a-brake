@@ -20,12 +20,12 @@ canvas.addEventListener('click', (ev) => {
 
 const { getKeys } = listenKeyboard();
 
-const MAX_STEER = 300;
+const MAX_STEER = Infinity;
 
 const state = {
   moveSpeed: 3,
   moveOffset: 0,
-  steerSpeed: 15,
+  steerSpeed: 5,
   steerOffset: 0,
 };
 
@@ -33,11 +33,14 @@ const images = {
   car: undefined,
 };
 
+type CoordDescriptor = [number, number];
 type LineDescriptor = [number, number, number, number];
 
 type PathDescriptor = {
   left: LineDescriptor;
   right: LineDescriptor;
+  bottomLeft?: CoordDescriptor;
+  bottomRight?: CoordDescriptor;
 };
 
 type Fragment = PathDescriptor & { end: number };
@@ -248,8 +251,12 @@ function createDownhill({
       end: size - 200,
     },
     {
-      left: [HW - 70, HH + 25, HW - 10, y],
-      right: [HW + 70, HH + 25, HW + 10, y],
+      left: [HW - 30, HH + 25, HW - 10, y],
+      right: [HW + 30, HH + 25, HW + 10, y],
+      end: size - 100,
+    },
+    {
+      ...straightFragment,
       end: size,
     },
   ];
@@ -270,20 +277,30 @@ function createUphill({
   const y = HH + yOffset;
   const maxY = HH + steepness;
 
+  const xCorrection = state.steerOffset * 0.15;
+  const bottomLeftCorrection = state.steerOffset * 0.1;
+  const cxCorrection = state.steerOffset * 0.2;
+
   return [
     {
-      left: [HW - 100, y, HW - 50, y],
-      right: [HW + 100, y, HW + 50, y],
+      left: [HW - 70, y - 5, HW - 60 + xCorrection, y],
+      right: [HW + 70, y - 5, HW + 60 + xCorrection, y],
+      bottomLeft: [-180 - bottomLeftCorrection, 0],
+      bottomRight: [560 - bottomLeftCorrection, 0],
       end: 200,
     },
     {
-      left: [HW - 150, HH + 30, HW - 90, maxY],
-      right: [HW + 150, HH + 30, HW + 90, maxY],
+      left: [HW - 120 + cxCorrection, HH + 30, HW - 90 + xCorrection, maxY],
+      right: [HW + 120 + cxCorrection, HH + 30, HW + 90 + xCorrection, maxY],
+      bottomLeft: [-180 - bottomLeftCorrection, 0],
+      bottomRight: [560 - bottomLeftCorrection, 0],
       end: 300,
     },
     {
-      left: [HW - 150, HH + 30, HW - 90, maxY],
-      right: [HW + 150, HH + 30, HW + 90, maxY],
+      left: [HW - 120 + cxCorrection, HH + 30, HW - 90 + xCorrection, maxY],
+      right: [HW + 120 + cxCorrection, HH + 30, HW + 90 + xCorrection, maxY],
+      bottomLeft: [-180 - bottomLeftCorrection, 0],
+      bottomRight: [560 - bottomLeftCorrection, 0],
       end: size - 200,
     },
     {
@@ -302,29 +319,29 @@ function createTurn({
 }): Fragment[] {
   console.assert(size >= 600, 'turn too quick: %d', size);
   const fragments: Fragment[] = [
+    // {
+    //   left: [HW - 10, HH - 5, HW - 10, HH],
+    //   right: [HW + 190, HH + 50, HW + 10, HH],
+    //   end: 100,
+    // },
     {
-      left: [HW - 10, HH - 5, HW - 10, HH],
-      right: [HW + 190, HH + 50, HW + 10, HH],
+      left: [HW - 20, HH - 5, HW + 20, HH],
+      right: [HW + 10, HH, HW + 20, HH],
       end: 100,
     },
     {
-      left: [HW - 10, HH - 5, HW + 20, HH],
-      right: [HW + 10, HH, HW + 20, HH],
+      left: [HW - 50, HH - 5, HW + 115, HH],
+      right: [HW - 15, HH, HW + 115, HH],
       end: 200,
     },
     {
-      left: [HW - 30, HH - 5, HW + 115, HH],
-      right: [HW - 5, HH, HW + 115, HH],
-      end: 300,
-    },
-    {
-      left: [HW - 10, HH - 5, HW + 80, HH],
-      right: [HW - 30, HH + 5, HW + 115, HH],
+      left: [HW - 30, HH - 5, HW + 80, HH],
+      right: [HW - 15, HH + 5, HW + 115, HH],
       end: size - 200,
     },
     {
-      left: [HW + 10, HH - 5, HW + 60, HH],
-      right: [HW + 60, HH + 25, HW + 100, HH],
+      left: [HW - 30, HH - 5, HW + 60, HH],
+      right: [HW + 0, HH + 20, HW + 80, HH],
       end: size - 100,
     },
     {
@@ -447,7 +464,7 @@ function lineLength(
 }
 
 function drawPath(
-  { left, right }: PathDescriptor,
+  { left, right, bottomLeft, bottomRight }: PathDescriptor,
   { color = 'red' }: { color?: string } = {},
 ) {
   ctx.strokeStyle = color;
@@ -460,8 +477,13 @@ function drawPath(
   // x = (2700 - 18y) / 5
   // x = (2700 - 18 * 200) / 5
 
+  const steerOffset = state.steerOffset * 1;
+
+  const bottomLeftX = bottomLeft?.[0] ?? -180;
+  const bottomRightX = bottomRight?.[0] ?? 560;
+
   ctx.beginPath();
-  ctx.moveTo(-180 + state.steerOffset, 200);
+  ctx.moveTo(bottomLeftX + steerOffset, 200);
   ctx.quadraticCurveTo(...left);
   ctx.stroke();
 
@@ -472,7 +494,7 @@ function drawPath(
   // x = (18 * 200 - 800) / 5
 
   ctx.beginPath();
-  ctx.moveTo(380 + 180 + state.steerOffset, 200);
+  ctx.moveTo(bottomRightX + steerOffset, 200);
   ctx.quadraticCurveTo(...right);
   ctx.stroke();
 }
@@ -481,13 +503,13 @@ function drawCar() {
   const image = images.car;
   const scale = 0.6;
 
-  ctx.drawImage(
-    images.car,
-    (IW - image.width * scale) / 2,
-    130,
-    image.width * scale,
-    image.height * scale,
-  );
+  const centerX = (IW - image.width * scale) / 2;
+  const steerOffset = -1 * state.steerOffset * 0.02;
+
+  const x = centerX + steerOffset;
+  const y = 130;
+
+  ctx.drawImage(images.car, x, y, image.width * scale, image.height * scale);
 }
 
 async function loadImage(imagePath: string) {
