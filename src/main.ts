@@ -3,8 +3,11 @@ import { Keycodes, listenKeyboard } from './controls';
 const canvas = document.querySelector('canvas');
 const ctx = canvas.getContext('2d');
 
-const IW = 380;
-const IH = 200;
+const BW = 380;
+const BH = 200;
+
+const IW = BW;
+const IH = BH;
 const HW = IW / 2; // half = 190
 const HH = IH / 2; // half = 100
 
@@ -17,9 +20,17 @@ canvas.addEventListener('click', (ev) => {
 
 const { getKeys } = listenKeyboard();
 
+const MAX_STEER = 300;
+
 const state = {
-  speed: 3,
+  moveSpeed: 3,
   moveOffset: 0,
+  steerSpeed: 15,
+  steerOffset: 0,
+};
+
+const images = {
+  car: undefined,
 };
 
 type LineDescriptor = [number, number, number, number];
@@ -32,8 +43,8 @@ type PathDescriptor = {
 type Fragment = PathDescriptor & { end: number };
 
 const straightFragment: Fragment = {
-  left: [0, 150, 180, 100],
-  right: [380, 150, 200, 100],
+  left: [HW - 10, HH, HW - 10, HH],
+  right: [HW + 10, HH, HW + 10, HH],
   end: 0,
 };
 
@@ -84,28 +95,6 @@ function draw() {
 
   grid();
 
-  // drawPath({ ...straightFragment, color: 'yellow' });
-  // drawPath({ ...turn1Fragments[3], color: 'blue' });
-
-  // drawPath(turn1Fragments[4]);
-  // return;
-
-  // const path = transitionFragments(f1, f2, f1.end + state.moveOffset);
-
-  // const fragments = createUphill({
-  //   size: 500,
-  //   inOffset: state.moveOffset,
-  //   steepness: 30,
-  // });
-
-  // const fr = fragments[0];
-
-  // drawPath(fr);
-
-  // drawHorizon({ yOverride: fr.left[3] });
-  // drawInfo();
-  // return;
-
   let activeSection: Section = config.sections.find((s) => {
     return state.moveOffset >= s.start && state.moveOffset <= s.start + s.size;
   });
@@ -120,6 +109,7 @@ function draw() {
   if (activeSection.kind === 'straight') {
     drawHorizon();
     drawPath(straightFragment);
+    drawCar();
     return;
   }
 
@@ -132,13 +122,16 @@ function draw() {
       direction: activeSection.kind === 'turn-right' ? 'right' : 'left',
     });
 
+    const strFragments = steerFragments(fragments, state.steerOffset);
+
     const path = lerpSectionFragments({
-      fragments,
+      fragments: strFragments,
       inSectionOffset,
     });
 
     drawHorizon();
     drawPath(path);
+    drawCar();
     return;
   }
 
@@ -148,14 +141,20 @@ function draw() {
       inOffset: inSectionOffset,
       steepness: activeSection.steepness,
     });
+    const steeredFragments = steerFragments(fragments, state.steerOffset);
 
-    const path = lerpSectionFragments({ fragments, inSectionOffset });
+    const path = lerpSectionFragments({
+      fragments: steeredFragments,
+      inSectionOffset,
+    });
 
     const yOverride = path.left[3];
 
     drawHorizon({ yOverride });
 
     drawPath(path);
+
+    drawCar();
 
     return;
   }
@@ -166,14 +165,20 @@ function draw() {
       inOffset: inSectionOffset,
       steepness: activeSection.steepness,
     });
+    const steeredFragments = steerFragments(fragments, state.steerOffset);
 
-    const path = lerpSectionFragments({ fragments, inSectionOffset });
+    const path = lerpSectionFragments({
+      fragments: steeredFragments,
+      inSectionOffset,
+    });
 
     const yOverride = path.left[3];
 
     drawHorizon({ yOverride });
 
     drawPath(path);
+
+    drawCar();
 
     return;
   }
@@ -228,23 +233,23 @@ function createDownhill({
 
   return [
     {
-      left: [180, 100, 180, y],
-      right: [200, 100, 200, y],
+      left: [HW, HH, HW - 10, y],
+      right: [HW, HH, HW + 10, y],
       end: 100,
     },
     {
-      left: [180, 110, 180, minY],
-      right: [200, 110, 200, minY],
+      left: [HW - 25, HH + 25, HW - 10, minY],
+      right: [HW + 25, HH + 25, HW + 10, minY],
       end: 200,
     },
     {
-      left: [180, 100, 180, minY],
-      right: [200, 100, 200, minY],
+      left: [HW - 25, HH + 15, HW - 10, minY],
+      right: [HW + 25, HH + 15, HW + 10, minY],
       end: size - 200,
     },
     {
-      left: [120, 120, 180, y],
-      right: [260, 120, 200, y],
+      left: [HW - 70, HH + 25, HW - 10, y],
+      right: [HW + 70, HH + 25, HW + 10, y],
       end: size,
     },
   ];
@@ -267,18 +272,18 @@ function createUphill({
 
   return [
     {
-      left: [120, y, 140, y],
-      right: [260, y, 240, y],
+      left: [HW - 100, y, HW - 50, y],
+      right: [HW + 100, y, HW + 50, y],
       end: 200,
     },
     {
-      left: [60, 130, 100, maxY],
-      right: [320, 130, 280, maxY],
+      left: [HW - 150, HH + 30, HW - 90, maxY],
+      right: [HW + 150, HH + 30, HW + 90, maxY],
       end: 300,
     },
     {
-      left: [60, 130, 100, maxY],
-      right: [320, 130, 280, maxY],
+      left: [HW - 150, HH + 30, HW - 90, maxY],
+      right: [HW + 150, HH + 30, HW + 90, maxY],
       end: size - 200,
     },
     {
@@ -298,28 +303,28 @@ function createTurn({
   console.assert(size >= 600, 'turn too quick: %d', size);
   const fragments: Fragment[] = [
     {
-      left: [180, 95, 180, 100],
-      right: [380, 150, 200, 100],
+      left: [HW - 10, HH - 5, HW - 10, HH],
+      right: [HW + 190, HH + 50, HW + 10, HH],
       end: 100,
     },
     {
-      left: [180, 95, 210, 100],
-      right: [170, 95, 220, 100],
+      left: [HW - 10, HH - 5, HW + 20, HH],
+      right: [HW + 10, HH, HW + 20, HH],
       end: 200,
     },
     {
-      left: [180, 95, 305, 100],
-      right: [220, 100, 305, 100],
+      left: [HW - 30, HH - 5, HW + 115, HH],
+      right: [HW - 5, HH, HW + 115, HH],
       end: 300,
     },
     {
-      left: [180, 100, 270, 100],
-      right: [200, 105, 305, 100],
+      left: [HW - 10, HH - 5, HW + 80, HH],
+      right: [HW - 30, HH + 5, HW + 115, HH],
       end: size - 200,
     },
     {
-      left: [200, 100, 250, 100],
-      right: [270, 120, 290, 100],
+      left: [HW + 10, HH - 5, HW + 60, HH],
+      right: [HW + 60, HH + 25, HW + 100, HH],
       end: size - 100,
     },
     {
@@ -347,20 +352,21 @@ function mirrorFragments(fragments: Fragment[]): Fragment[] {
   });
 }
 
-function transitionFragments(
-  f1: Fragment,
-  f2: Fragment,
-  inSectionOffset: number,
-): PathDescriptor {
-  const size = f2.end - f1.end;
-  const internalOffset = inSectionOffset - f1.end;
+function steerFragments(
+  fragments: Fragment[],
+  steerOffset: number,
+): Fragment[] {
+  const topOffset = steerOffset * 0.01;
 
-  let d = 0;
-  if (size !== 0) {
-    d = internalOffset / size;
-  }
-
-  return lerpPath(f1, f2, d);
+  return fragments.map((f) => {
+    const l = f.left;
+    const r = f.right;
+    return {
+      ...f,
+      left: [l[0] + topOffset, l[1], l[2] + topOffset, l[3]],
+      right: [r[0] + topOffset, r[1], r[2] + topOffset, r[3]],
+    };
+  });
 }
 
 function lerpPath(
@@ -413,41 +419,105 @@ function drawInfo({ section }: { section?: string } = {}) {
   ctx.font = '8px serif';
 
   ctx.strokeText(`move offset: ${state.moveOffset}`, 5, 10);
+  ctx.strokeText(`steer: ${state.steerOffset}`, 5, 30);
 
   if (section) {
     ctx.strokeText(`section kind: ${section}`, 5, 20);
   }
 }
 
-function drawPath({
-  left,
-  right,
-  color = 'red',
-}: PathDescriptor & { color?: string }) {
+function getScale() {
+  const pl1 = { x: 180, y: 100 };
+  const pl2 = { x: 0, y: 150 };
+  const pl3 = { x: -180, y: 200 };
+
+  const l1 = lineLength(pl1, pl2);
+  const l2 = lineLength(pl1, pl3);
+
+  const dx = (pl2.x - pl1.x) / (pl3.x - pl1.x);
+
+  console.log({ l1, l2, d: l1 / l2, dx });
+}
+
+function lineLength(
+  p1: { x: number; y: number },
+  p2: { x: number; y: number },
+) {
+  return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+}
+
+function drawPath(
+  { left, right }: PathDescriptor,
+  { color = 'red' }: { color?: string } = {},
+) {
   ctx.strokeStyle = color;
   ctx.setLineDash([10]);
   ctx.lineDashOffset = state.moveOffset;
 
+  // (0, 150) (180, 100)
+  // 5x + 18y = 2700
+  // 5x = 2700 - 18y
+  // x = (2700 - 18y) / 5
+  // x = (2700 - 18 * 200) / 5
+
   ctx.beginPath();
-  ctx.moveTo(0, 150);
+  ctx.moveTo(-180 + state.steerOffset, 200);
   ctx.quadraticCurveTo(...left);
   ctx.stroke();
 
+  // 18 y - 5 x = 800
+  // -5x = 800 - 18y
+  // 5x = 18y - 800
+  // x = (18y - 800) / 5
+  // x = (18 * 200 - 800) / 5
+
   ctx.beginPath();
-  ctx.moveTo(380, 150);
+  ctx.moveTo(380 + 180 + state.steerOffset, 200);
   ctx.quadraticCurveTo(...right);
   ctx.stroke();
 }
 
-function main() {
+function drawCar() {
+  const image = images.car;
+  const scale = 0.6;
+
+  ctx.drawImage(
+    images.car,
+    (IW - image.width * scale) / 2,
+    130,
+    image.width * scale,
+    image.height * scale,
+  );
+}
+
+async function loadImage(imagePath: string) {
+  return new Promise<HTMLImageElement>((resolve) => {
+    const image = new Image();
+    image.src = imagePath;
+    image.addEventListener('load', () => {
+      resolve(image);
+    });
+  });
+}
+
+async function main() {
+  images.car = await loadImage('data/graphics/car.png');
+
   loop();
 }
 
 function loop() {
   if (getKeys().includes(Keycodes.Up)) {
-    state.moveOffset += state.speed;
+    state.moveOffset += state.moveSpeed;
   } else if (getKeys().includes(Keycodes.Down)) {
-    state.moveOffset -= state.speed;
+    state.moveOffset -= state.moveSpeed;
+  }
+  if (getKeys().includes(Keycodes.Left)) {
+    const nextOffset = state.steerOffset + state.steerSpeed;
+    state.steerOffset = Math.min(MAX_STEER, nextOffset);
+  } else if (getKeys().includes(Keycodes.Right)) {
+    const nextOffset = state.steerOffset - state.steerSpeed;
+    state.steerOffset = Math.max(-MAX_STEER, nextOffset);
   }
 
   draw();
