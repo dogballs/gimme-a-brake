@@ -20,12 +20,16 @@ canvas.addEventListener('click', (ev) => {
 
 const { getKeys } = listenKeyboard();
 
-const MAX_STEER = Infinity;
+const STEER_LIMIT = Infinity;
+const STEER_TURN_COUNTER_FORCE = 3;
+
+const MOVE_SPEED = 3;
+const STEER_SPEED = 5;
 
 const state = {
-  moveSpeed: 3,
+  moveSpeed: 0,
   moveOffset: 0,
-  steerSpeed: 5,
+  steerSpeed: 0,
   steerOffset: 0,
 };
 
@@ -120,6 +124,14 @@ function draw() {
     activeSection.kind === 'turn-right' ||
     activeSection.kind === 'turn-left'
   ) {
+    if (state.moveSpeed > 0) {
+      if (activeSection.kind === 'turn-left') {
+        state.steerOffset -= STEER_TURN_COUNTER_FORCE;
+      } else if (activeSection.kind === 'turn-right') {
+        state.steerOffset += STEER_TURN_COUNTER_FORCE;
+      }
+    }
+
     const fragments = createTurn({
       size: activeSection.size,
       direction: activeSection.kind === 'turn-right' ? 'right' : 'left',
@@ -530,16 +542,25 @@ async function main() {
 
 function loop() {
   if (getKeys().includes(Keycodes.Up)) {
+    state.moveSpeed = MOVE_SPEED;
     state.moveOffset += state.moveSpeed;
   } else if (getKeys().includes(Keycodes.Down)) {
+    state.moveSpeed = MOVE_SPEED;
     state.moveOffset -= state.moveSpeed;
+  } else {
+    state.moveSpeed = 0;
   }
+
   if (getKeys().includes(Keycodes.Left)) {
+    state.steerSpeed = STEER_SPEED;
     const nextOffset = state.steerOffset + state.steerSpeed;
-    state.steerOffset = Math.min(MAX_STEER, nextOffset);
+    state.steerOffset = Math.min(STEER_LIMIT, nextOffset);
   } else if (getKeys().includes(Keycodes.Right)) {
+    state.steerSpeed = STEER_SPEED;
     const nextOffset = state.steerOffset - state.steerSpeed;
-    state.steerOffset = Math.max(-MAX_STEER, nextOffset);
+    state.steerOffset = Math.max(-STEER_LIMIT, nextOffset);
+  } else {
+    state.steerSpeed = 0;
   }
 
   draw();
