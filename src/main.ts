@@ -3,19 +3,24 @@ import { Keycodes, listenKeyboard } from './controls';
 const canvas = document.querySelector('canvas');
 const ctx = canvas.getContext('2d');
 
-const IMAGE_WIDTH = 380;
-const IMAGE_HEIGHT = 200;
-const WH = IMAGE_WIDTH / 2; // half = 190
-const HH = IMAGE_HEIGHT / 2; // half = 100
+const IW = 380;
+const IH = 200;
+const HW = IW / 2; // half = 190
+const HH = IH / 2; // half = 100
 
-canvas.width = IMAGE_WIDTH;
-canvas.height = IMAGE_HEIGHT;
+canvas.width = IW;
+canvas.height = IH;
 
 canvas.addEventListener('click', (ev) => {
   console.log(ev.clientX / 2, ev.clientY / 2);
 });
 
 const { getKeys } = listenKeyboard();
+
+const state = {
+  speed: 2,
+  moveOffset: 0,
+};
 
 type LineDescriptor = [number, number, number, number];
 
@@ -31,6 +36,193 @@ const straightFragment: Fragment = {
   right: [380, 150, 200, 100],
   end: 0,
 };
+
+type Section =
+  | {
+      kind: 'straight' | 'turn-right' | 'turn-left';
+      start: number;
+      size: number;
+    }
+  | {
+      kind: 'downhill';
+      start: number;
+      size: number;
+      steepness: number;
+    };
+
+const config: {
+  sections: Section[];
+} = {
+  sections: [
+    {
+      kind: 'downhill',
+      start: 100,
+      size: 700,
+      steepness: 70,
+    },
+    {
+      kind: 'turn-left',
+      start: 1000,
+      size: 600,
+    },
+    {
+      kind: 'turn-right',
+      start: 1500,
+      size: 1000,
+    },
+  ],
+};
+
+function draw() {
+  ctx.clearRect(0, 0, IW, IH);
+
+  grid();
+
+  // drawPath({ ...straightFragment, color: 'yellow' });
+  // drawPath({ ...turn1Fragments[3], color: 'blue' });
+
+  // drawPath(turn1Fragments[4]);
+  // return;
+
+  // const path = transitionFragments(f1, f2, f1.end + state.moveOffset);
+
+  // const fragments = createDownhill({
+  //   size: 500,
+  //   inOffset: state.moveOffset,
+  //   steepness: 50,
+  // });
+
+  // drawPath(fragments[1]);
+
+  // drawHorizon({ yOverride: fragments[1].left[3] });
+  // drawInfo();
+  // return;
+
+  let activeSection: Section = config.sections.find((s) => {
+    return state.moveOffset >= s.start && state.moveOffset <= s.start + s.size;
+  });
+  if (!activeSection || hasSectionEnded(activeSection)) {
+    activeSection = { start: state.moveOffset, kind: 'straight', size: 0 };
+  }
+
+  const inSectionOffset = state.moveOffset - activeSection.start;
+
+  drawInfo({ section: activeSection.kind });
+
+  if (activeSection.kind === 'straight') {
+    drawHorizon();
+    drawPath(straightFragment);
+    return;
+  }
+
+  if (
+    activeSection.kind === 'turn-right' ||
+    activeSection.kind === 'turn-left'
+  ) {
+    const fragments = createTurn({
+      size: activeSection.size,
+      direction: activeSection.kind === 'turn-right' ? 'right' : 'left',
+    });
+
+    const path = lerpSectionFragments({
+      fragments,
+      inSectionOffset,
+    });
+
+    drawHorizon();
+    drawPath(path);
+    return;
+  }
+
+  if (activeSection.kind === 'downhill') {
+    const fragments = createDownhill({
+      size: activeSection.size,
+      inOffset: inSectionOffset,
+      steepness: activeSection.steepness,
+    });
+
+    const path = lerpSectionFragments({ fragments, inSectionOffset });
+
+    const yOverride = path.left[3];
+
+    drawHorizon({ yOverride });
+
+    drawPath(path);
+
+    return;
+  }
+}
+
+function lerpSectionFragments({
+  fragments,
+  inSectionOffset,
+}: {
+  fragments: Fragment[];
+  inSectionOffset: number;
+}) {
+  const activeIndex = fragments.findIndex((fragment) => {
+    return inSectionOffset < fragment.end;
+  });
+  const prevIndex = activeIndex !== -1 ? activeIndex - 1 : -1;
+
+  const prevFragment = fragments[prevIndex] || straightFragment;
+  const activeFragment = fragments[activeIndex] || straightFragment;
+
+  let d = 0;
+
+  const fragmentSize = activeFragment.end - prevFragment.end;
+  const inFragmentOffset = inSectionOffset - prevFragment.end;
+  if (fragmentSize !== 0) {
+    d = inFragmentOffset / fragmentSize;
+  }
+
+  const path = lerpPath(prevFragment, activeFragment, d);
+
+  return path;
+}
+
+function hasSectionEnded(section: Section) {
+  return section.start + section.size < state.moveOffset;
+}
+
+function createDownhill({
+  size,
+  steepness,
+  inOffset,
+}: {
+  size: number;
+  steepness: number;
+  inOffset: number;
+}): Fragment[] {
+  const halfSize = size / 2;
+  const d = 1 - Math.abs((inOffset - halfSize) / halfSize);
+  const yOffset = -steepness * d;
+  const y = HH + yOffset;
+  const minY = HH - steepness;
+
+  return [
+    {
+      left: [180, 100, 180, y],
+      right: [200, 100, 200, y],
+      end: 100,
+    },
+    {
+      left: [180, 110, 180, minY],
+      right: [200, 110, 200, minY],
+      end: 200,
+    },
+    {
+      left: [180, 100, 180, minY],
+      right: [200, 100, 200, minY],
+      end: size - 200,
+    },
+    {
+      left: [120, 120, 180, y],
+      right: [260, 120, 200, y],
+      end: size,
+    },
+  ];
+}
 
 function createTurn({
   size,
@@ -79,115 +271,16 @@ function createTurn({
   return fragments;
 }
 
-const state = {
-  speed: 3,
-  moveOffset: 0,
-};
-
-type Section = {
-  kind: 'straight' | 'turn-right' | 'turn-left';
-  start: number;
-  size: number;
-};
-
-const config: {
-  sections: Section[];
-} = {
-  sections: [
-    {
-      kind: 'turn-left',
-      start: 100,
-      size: 600,
-    },
-    {
-      kind: 'turn-right',
-      start: 700,
-      size: 1000,
-    },
-  ],
-};
-
 function mirrorFragments(fragments: Fragment[]): Fragment[] {
   return fragments.map((f) => {
     const l = f.left;
     const r = f.right;
     return {
       ...f,
-      left: [WH + (WH - r[0]), r[1], WH + (WH - r[2]), r[3]],
-      right: [WH + (WH - l[0]), l[1], WH + (WH - l[2]), l[3]],
+      left: [HW + (HW - r[0]), r[1], HW + (HW - r[2]), r[3]],
+      right: [HW + (HW - l[0]), l[1], HW + (HW - l[2]), l[3]],
     };
   });
-}
-
-function hasSectionEnded(section: Section) {
-  return section.start + section.size < state.moveOffset;
-}
-
-function draw() {
-  ctx.clearRect(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
-
-  grid();
-  horizon();
-
-  // drawPath({ ...straightFragment, color: 'yellow' });
-  // drawPath({ ...turn1Fragments[3], color: 'blue' });
-
-  // drawPath(turn1Fragments[4]);
-  // return;
-
-  // const f1 = turn1Fragments[3];
-  // const f2 = turn1Fragments[4];
-
-  // const path = transitionFragments(f1, f2, f1.end + state.moveOffset);
-
-  // drawPath(path);
-  // return;
-
-  let activeSection: Section = config.sections.find((s) => {
-    return state.moveOffset >= s.start && state.moveOffset <= s.start + s.size;
-  });
-  if (!activeSection || hasSectionEnded(activeSection)) {
-    activeSection = { start: state.moveOffset, kind: 'straight', size: 0 };
-  }
-
-  info({ section: activeSection.kind });
-
-  if (activeSection.kind === 'straight') {
-    drawPath(straightFragment);
-    return;
-  }
-
-  if (
-    activeSection.kind === 'turn-right' ||
-    activeSection.kind === 'turn-left'
-  ) {
-    const inSectionOffset = state.moveOffset - activeSection.start;
-
-    const turnFragments = createTurn({
-      size: activeSection.size,
-      direction: activeSection.kind === 'turn-right' ? 'right' : 'left',
-    });
-
-    const activeIndex = turnFragments.findIndex((fragment) => {
-      return inSectionOffset < fragment.end;
-    });
-    const prevIndex = activeIndex !== -1 ? activeIndex - 1 : -1;
-
-    const prevFragment = turnFragments[prevIndex] || straightFragment;
-    const activeFragment = turnFragments[activeIndex] || straightFragment;
-
-    let d = 0;
-
-    const fragmentSize = activeFragment.end - prevFragment.end;
-    const inFragmentOffset = inSectionOffset - prevFragment.end;
-    if (fragmentSize !== 0) {
-      d = inFragmentOffset / fragmentSize;
-    }
-
-    const path = lerpPath(prevFragment, activeFragment, d);
-    drawPath(path);
-    return;
-  }
 }
 
 function transitionFragments(
@@ -232,13 +325,13 @@ function lerpLine(
   return [cpx, cpy, x, y];
 }
 
-function horizon() {
+function drawHorizon({ yOverride }: { yOverride?: number } = {}) {
   ctx.strokeStyle = 'green';
   ctx.setLineDash([]);
 
   ctx.beginPath();
-  ctx.moveTo(0, IMAGE_HEIGHT / 2);
-  ctx.lineTo(IMAGE_WIDTH, IMAGE_HEIGHT / 2);
+  ctx.moveTo(0, yOverride ?? HH);
+  ctx.lineTo(IW, yOverride ?? HH);
   ctx.stroke();
 }
 
@@ -246,17 +339,20 @@ function grid() {
   ctx.setLineDash([]);
   ctx.strokeStyle = '#cccccc77';
 
-  ctx.moveTo(IMAGE_WIDTH / 2, 0);
-  ctx.lineTo(IMAGE_WIDTH / 2, IMAGE_HEIGHT);
+  ctx.moveTo(HW, 0);
+  ctx.lineTo(HW, IH);
   ctx.stroke();
 }
 
-function info({ section }: { section: string }) {
+function drawInfo({ section }: { section?: string } = {}) {
   ctx.strokeStyle = '#000';
   ctx.font = '8px serif';
 
   ctx.strokeText(`move offset: ${state.moveOffset}`, 5, 10);
-  ctx.strokeText(`section kind: ${section}`, 5, 20);
+
+  if (section) {
+    ctx.strokeText(`section kind: ${section}`, 5, 20);
+  }
 }
 
 function drawPath({
