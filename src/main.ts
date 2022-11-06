@@ -18,7 +18,7 @@ canvas.addEventListener('click', (ev) => {
 const { getKeys } = listenKeyboard();
 
 const state = {
-  speed: 2,
+  speed: 3,
   moveOffset: 0,
 };
 
@@ -44,7 +44,7 @@ type Section =
       size: number;
     }
   | {
-      kind: 'downhill';
+      kind: 'downhill' | 'uphill';
       start: number;
       size: number;
       steepness: number;
@@ -55,10 +55,10 @@ const config: {
 } = {
   sections: [
     {
-      kind: 'downhill',
+      kind: 'uphill',
       start: 100,
       size: 700,
-      steepness: 70,
+      steepness: 30,
     },
     {
       kind: 'turn-left',
@@ -69,6 +69,12 @@ const config: {
       kind: 'turn-right',
       start: 1500,
       size: 1000,
+    },
+    {
+      kind: 'downhill',
+      start: 2600,
+      size: 700,
+      steepness: 50,
     },
   ],
 };
@@ -86,15 +92,17 @@ function draw() {
 
   // const path = transitionFragments(f1, f2, f1.end + state.moveOffset);
 
-  // const fragments = createDownhill({
+  // const fragments = createUphill({
   //   size: 500,
   //   inOffset: state.moveOffset,
-  //   steepness: 50,
+  //   steepness: 30,
   // });
 
-  // drawPath(fragments[1]);
+  // const fr = fragments[0];
 
-  // drawHorizon({ yOverride: fragments[1].left[3] });
+  // drawPath(fr);
+
+  // drawHorizon({ yOverride: fr.left[3] });
   // drawInfo();
   // return;
 
@@ -136,6 +144,24 @@ function draw() {
 
   if (activeSection.kind === 'downhill') {
     const fragments = createDownhill({
+      size: activeSection.size,
+      inOffset: inSectionOffset,
+      steepness: activeSection.steepness,
+    });
+
+    const path = lerpSectionFragments({ fragments, inSectionOffset });
+
+    const yOverride = path.left[3];
+
+    drawHorizon({ yOverride });
+
+    drawPath(path);
+
+    return;
+  }
+
+  if (activeSection.kind === 'uphill') {
+    const fragments = createUphill({
       size: activeSection.size,
       inOffset: inSectionOffset,
       steepness: activeSection.steepness,
@@ -219,6 +245,44 @@ function createDownhill({
     {
       left: [120, 120, 180, y],
       right: [260, 120, 200, y],
+      end: size,
+    },
+  ];
+}
+
+function createUphill({
+  size,
+  steepness,
+  inOffset,
+}: {
+  size: number;
+  steepness: number;
+  inOffset: number;
+}): Fragment[] {
+  const halfSize = size / 2;
+  const d = 1 - Math.abs((inOffset - halfSize) / halfSize);
+  const yOffset = steepness * d;
+  const y = HH + yOffset;
+  const maxY = HH + steepness;
+
+  return [
+    {
+      left: [120, y, 140, y],
+      right: [260, y, 240, y],
+      end: 200,
+    },
+    {
+      left: [60, 130, 100, maxY],
+      right: [320, 130, 280, maxY],
+      end: 300,
+    },
+    {
+      left: [60, 130, 100, maxY],
+      right: [320, 130, 280, maxY],
+      end: size - 200,
+    },
+    {
+      ...straightFragment,
       end: size,
     },
   ];
