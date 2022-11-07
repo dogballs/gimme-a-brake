@@ -1,8 +1,14 @@
 import { Section } from './types';
 
-export const map: {
+type Map = {
   sections: Section[];
-} = {
+};
+
+export const straightMap: Map = {
+  sections: [],
+};
+
+export const coolMap: Map = {
   sections: [
     {
       kind: 'uphill',

@@ -16,7 +16,8 @@ import {
   createDownhill,
   lerpFragments,
 } from './fragment';
-import { map } from './map';
+import { straightMap, coolMap } from './map';
+import { stripesHeightList } from './stripe';
 import {
   CoordDescriptor,
   LineDescriptor,
@@ -38,6 +39,7 @@ canvas.addEventListener('click', (ev) => {
 const { getKeys } = listenKeyboard();
 
 const state = {
+  map: coolMap,
   moveSpeed: 0,
   moveOffset: 0,
   steerSpeed: 0,
@@ -46,19 +48,14 @@ const state = {
 
 const images = {
   car: undefined,
+  road: undefined,
   pattern: undefined,
-};
-
-const patterns = {
-  left: undefined,
 };
 
 function draw() {
   ctx.clearRect(0, 0, IW, IH);
 
-  grid();
-
-  let activeSection: Section = map.sections.find((s) => {
+  let activeSection: Section = state.map.sections.find((s) => {
     return state.moveOffset >= s.start && state.moveOffset <= s.start + s.size;
   });
   if (!activeSection || hasSectionEnded(activeSection)) {
@@ -70,9 +67,7 @@ function draw() {
   drawInfo({ section: activeSection.kind });
 
   if (activeSection.kind === 'straight') {
-    drawHorizon();
-    drawPath(straightFragment);
-    drawCar();
+    drawObjects({ path: straightFragment });
     return;
   }
 
@@ -99,9 +94,7 @@ function draw() {
       inOffset: inSectionOffset,
     });
 
-    drawHorizon();
-    drawPath(path);
-    drawCar();
+    drawObjects({ path });
     return;
   }
 
@@ -120,12 +113,7 @@ function draw() {
 
     const yOverride = path.left[3];
 
-    drawHorizon({ yOverride });
-
-    drawPath(path);
-
-    drawCar();
-
+    drawObjects({ path, yOverride });
     return;
   }
 
@@ -144,18 +132,43 @@ function draw() {
 
     const yOverride = path.left[3];
 
-    drawHorizon({ yOverride });
-
-    drawPath(path);
-
-    drawCar();
-
+    drawObjects({ path, yOverride });
     return;
   }
 }
 
+function drawObjects({
+  path,
+  yOverride,
+}: {
+  path: PathDescriptor;
+  yOverride?: number;
+}) {
+  drawRoadStripes({ yOverride });
+  drawPath(path);
+  drawHorizon({ yOverride });
+  drawGrid();
+  drawCar();
+}
+
 function hasSectionEnded(section: Section) {
   return section.start + section.size < state.moveOffset;
+}
+
+function drawRoadStripes({ yOverride }: { yOverride?: number } = {}) {
+  const roadHeight = IH - (yOverride ?? HH);
+
+  const heightList = stripesHeightList({
+    roadHeight,
+    moveOffset: state.moveOffset,
+  });
+
+  const groundColors = ['#d4d79e', '#e5e9a3'];
+
+  for (const heightEntry of heightList) {
+    ctx.fillStyle = groundColors[heightEntry.textureIndex];
+    ctx.fillRect(0, IH - heightEntry.y2, IW, heightEntry.height);
+  }
 }
 
 function drawHorizon({ yOverride }: { yOverride?: number } = {}) {
@@ -169,7 +182,7 @@ function drawHorizon({ yOverride }: { yOverride?: number } = {}) {
   ctx.stroke();
 }
 
-function grid() {
+function drawGrid() {
   ctx.setLineDash([]);
   ctx.strokeStyle = '#cccccc77';
 
@@ -255,8 +268,10 @@ async function loadImage(imagePath: string) {
 async function main() {
   images.car = await loadImage('data/graphics/car.png');
   images.pattern = await loadImage('data/graphics/pattern.png');
+  images.road = await loadImage('data/graphics/road3.png');
 
-  patterns.left = ctx.createPattern(images.pattern, 'repeat');
+  // drawRoadStripes();
+  // drawHorizon();
 
   loop();
 }
