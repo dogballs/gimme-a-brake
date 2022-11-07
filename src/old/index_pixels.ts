@@ -1,4 +1,4 @@
-import { Keycodes, listenKeyboard } from './controls';
+import { Keycodes, listenKeyboard } from '../controls';
 import { getSegmentHeightList } from './segment_height';
 import { getStraightWidthList } from './straight_segment_width';
 import { getCurvedWidthList } from './curved_segment_width';

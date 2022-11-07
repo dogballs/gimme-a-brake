@@ -3,7 +3,7 @@ import {
   createNumberInput,
   createLabel,
   createSection,
-} from './core/debug';
+} from '../core/debug';
 
 export function installDebug({
   onMove,
