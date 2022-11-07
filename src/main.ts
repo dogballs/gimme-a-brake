@@ -1,15 +1,32 @@
+import {
+  IW,
+  IH,
+  HW,
+  HH,
+  MOVE_SPEED,
+  STEER_SPEED,
+  STEER_LIMIT,
+  STEER_TURN_COUNTER_FORCE,
+} from './config';
 import { Keycodes, listenKeyboard } from './controls';
+import {
+  straightFragment,
+  createTurn,
+  createUphill,
+  createDownhill,
+  steerFragments,
+} from './fragment';
+import { map } from './map';
+import {
+  CoordDescriptor,
+  LineDescriptor,
+  PathDescriptor,
+  Fragment,
+  Section,
+} from './types';
 
 const canvas = document.querySelector('canvas');
 const ctx = canvas.getContext('2d');
-
-const BW = 380;
-const BH = 200;
-
-const IW = BW;
-const IH = BH;
-const HW = IW / 2; // half = 190
-const HH = IH / 2; // half = 100
 
 canvas.width = IW;
 canvas.height = IH;
@@ -20,12 +37,6 @@ canvas.addEventListener('click', (ev) => {
 
 const { getKeys } = listenKeyboard();
 
-const STEER_LIMIT = Infinity;
-const STEER_TURN_COUNTER_FORCE = 3;
-
-const MOVE_SPEED = 3;
-const STEER_SPEED = 5;
-
 const state = {
   moveSpeed: 0,
   moveOffset: 0,
@@ -35,66 +46,11 @@ const state = {
 
 const images = {
   car: undefined,
+  pattern: undefined,
 };
 
-type CoordDescriptor = [number, number];
-type LineDescriptor = [number, number, number, number];
-
-type PathDescriptor = {
-  left: LineDescriptor;
-  right: LineDescriptor;
-  bottomLeft?: CoordDescriptor;
-  bottomRight?: CoordDescriptor;
-};
-
-type Fragment = PathDescriptor & { end: number };
-
-const straightFragment: Fragment = {
-  left: [HW - 10, HH, HW - 10, HH],
-  right: [HW + 10, HH, HW + 10, HH],
-  end: 0,
-};
-
-type Section =
-  | {
-      kind: 'straight' | 'turn-right' | 'turn-left';
-      start: number;
-      size: number;
-    }
-  | {
-      kind: 'downhill' | 'uphill';
-      start: number;
-      size: number;
-      steepness: number;
-    };
-
-const config: {
-  sections: Section[];
-} = {
-  sections: [
-    {
-      kind: 'uphill',
-      start: 100,
-      size: 700,
-      steepness: 30,
-    },
-    {
-      kind: 'turn-left',
-      start: 1000,
-      size: 600,
-    },
-    {
-      kind: 'turn-right',
-      start: 1500,
-      size: 1000,
-    },
-    {
-      kind: 'downhill',
-      start: 2600,
-      size: 700,
-      steepness: 50,
-    },
-  ],
+const patterns = {
+  left: undefined,
 };
 
 function draw() {
@@ -102,7 +58,7 @@ function draw() {
 
   grid();
 
-  let activeSection: Section = config.sections.find((s) => {
+  let activeSection: Section = map.sections.find((s) => {
     return state.moveOffset >= s.start && state.moveOffset <= s.start + s.size;
   });
   if (!activeSection || hasSectionEnded(activeSection)) {
@@ -179,6 +135,7 @@ function draw() {
       size: activeSection.size,
       inOffset: inSectionOffset,
       steepness: activeSection.steepness,
+      steerOffset: state.steerOffset,
     });
     const steeredFragments = steerFragments(fragments, state.steerOffset);
 
@@ -231,173 +188,6 @@ function hasSectionEnded(section: Section) {
   return section.start + section.size < state.moveOffset;
 }
 
-function createDownhill({
-  size,
-  steepness,
-  inOffset,
-}: {
-  size: number;
-  steepness: number;
-  inOffset: number;
-}): Fragment[] {
-  const halfSize = size / 2;
-  const d = 1 - Math.abs((inOffset - halfSize) / halfSize);
-  const yOffset = -steepness * d;
-  const y = HH + yOffset;
-  const minY = HH - steepness;
-
-  return [
-    {
-      left: [HW, HH, HW - 10, y],
-      right: [HW, HH, HW + 10, y],
-      end: 100,
-    },
-    {
-      left: [HW - 25, HH + 25, HW - 10, minY],
-      right: [HW + 25, HH + 25, HW + 10, minY],
-      end: 200,
-    },
-    {
-      left: [HW - 25, HH + 15, HW - 10, minY],
-      right: [HW + 25, HH + 15, HW + 10, minY],
-      end: size - 200,
-    },
-    {
-      left: [HW - 30, HH + 25, HW - 10, y],
-      right: [HW + 30, HH + 25, HW + 10, y],
-      end: size - 100,
-    },
-    {
-      ...straightFragment,
-      end: size,
-    },
-  ];
-}
-
-function createUphill({
-  size,
-  steepness,
-  inOffset,
-}: {
-  size: number;
-  steepness: number;
-  inOffset: number;
-}): Fragment[] {
-  const halfSize = size / 2;
-  const d = 1 - Math.abs((inOffset - halfSize) / halfSize);
-  const yOffset = steepness * d;
-  const y = HH + yOffset;
-  const maxY = HH + steepness;
-
-  const xCorrection = state.steerOffset * 0.15;
-  const bottomLeftCorrection = state.steerOffset * 0.1;
-  const cxCorrection = state.steerOffset * 0.2;
-
-  return [
-    {
-      left: [HW - 70, y - 5, HW - 60 + xCorrection, y],
-      right: [HW + 70, y - 5, HW + 60 + xCorrection, y],
-      bottomLeft: [-180 - bottomLeftCorrection, 0],
-      bottomRight: [560 - bottomLeftCorrection, 0],
-      end: 200,
-    },
-    {
-      left: [HW - 120 + cxCorrection, HH + 30, HW - 90 + xCorrection, maxY],
-      right: [HW + 120 + cxCorrection, HH + 30, HW + 90 + xCorrection, maxY],
-      bottomLeft: [-180 - bottomLeftCorrection, 0],
-      bottomRight: [560 - bottomLeftCorrection, 0],
-      end: 300,
-    },
-    {
-      left: [HW - 120 + cxCorrection, HH + 30, HW - 90 + xCorrection, maxY],
-      right: [HW + 120 + cxCorrection, HH + 30, HW + 90 + xCorrection, maxY],
-      bottomLeft: [-180 - bottomLeftCorrection, 0],
-      bottomRight: [560 - bottomLeftCorrection, 0],
-      end: size - 200,
-    },
-    {
-      ...straightFragment,
-      end: size,
-    },
-  ];
-}
-
-function createTurn({
-  size,
-  direction,
-}: {
-  size: number;
-  direction: 'right' | 'left';
-}): Fragment[] {
-  console.assert(size >= 600, 'turn too quick: %d', size);
-  const fragments: Fragment[] = [
-    // {
-    //   left: [HW - 10, HH - 5, HW - 10, HH],
-    //   right: [HW + 190, HH + 50, HW + 10, HH],
-    //   end: 100,
-    // },
-    {
-      left: [HW - 20, HH - 5, HW + 20, HH],
-      right: [HW + 10, HH, HW + 20, HH],
-      end: 100,
-    },
-    {
-      left: [HW - 50, HH - 5, HW + 115, HH],
-      right: [HW - 15, HH, HW + 115, HH],
-      end: 200,
-    },
-    {
-      left: [HW - 30, HH - 5, HW + 80, HH],
-      right: [HW - 15, HH + 5, HW + 115, HH],
-      end: size - 200,
-    },
-    {
-      left: [HW - 30, HH - 5, HW + 60, HH],
-      right: [HW + 0, HH + 20, HW + 80, HH],
-      end: size - 100,
-    },
-    {
-      ...straightFragment,
-      end: size,
-    },
-  ];
-
-  if (direction === 'left') {
-    return mirrorFragments(fragments);
-  }
-
-  return fragments;
-}
-
-function mirrorFragments(fragments: Fragment[]): Fragment[] {
-  return fragments.map((f) => {
-    const l = f.left;
-    const r = f.right;
-    return {
-      ...f,
-      left: [HW + (HW - r[0]), r[1], HW + (HW - r[2]), r[3]],
-      right: [HW + (HW - l[0]), l[1], HW + (HW - l[2]), l[3]],
-    };
-  });
-}
-
-function steerFragments(
-  fragments: Fragment[],
-  steerOffset: number,
-): Fragment[] {
-  const topOffset = steerOffset * 0.01;
-
-  return fragments.map((f) => {
-    const l = f.left;
-    const r = f.right;
-    return {
-      ...f,
-      left: [l[0] + topOffset, l[1], l[2] + topOffset, l[3]],
-      right: [r[0] + topOffset, r[1], r[2] + topOffset, r[3]],
-    };
-  });
-}
-
 function lerpPath(
   p1: PathDescriptor,
   p2: PathDescriptor,
@@ -426,6 +216,7 @@ function lerpLine(
 
 function drawHorizon({ yOverride }: { yOverride?: number } = {}) {
   ctx.strokeStyle = 'green';
+  ctx.lineWidth = 1;
   ctx.setLineDash([]);
 
   ctx.beginPath();
@@ -455,26 +246,6 @@ function drawInfo({ section }: { section?: string } = {}) {
   }
 }
 
-function getScale() {
-  const pl1 = { x: 180, y: 100 };
-  const pl2 = { x: 0, y: 150 };
-  const pl3 = { x: -180, y: 200 };
-
-  const l1 = lineLength(pl1, pl2);
-  const l2 = lineLength(pl1, pl3);
-
-  const dx = (pl2.x - pl1.x) / (pl3.x - pl1.x);
-
-  console.log({ l1, l2, d: l1 / l2, dx });
-}
-
-function lineLength(
-  p1: { x: number; y: number },
-  p2: { x: number; y: number },
-) {
-  return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
-}
-
 function drawPath(
   { left, right, bottomLeft, bottomRight }: PathDescriptor,
   { color = 'red' }: { color?: string } = {},
@@ -482,6 +253,9 @@ function drawPath(
   ctx.strokeStyle = color;
   ctx.setLineDash([10]);
   ctx.lineDashOffset = state.moveOffset;
+
+  // ctx.lineWidth = 2;
+  // ctx.strokeStyle = patterns.left;
 
   // (0, 150) (180, 100)
   // 5x + 18y = 2700
@@ -536,6 +310,9 @@ async function loadImage(imagePath: string) {
 
 async function main() {
   images.car = await loadImage('data/graphics/car.png');
+  images.pattern = await loadImage('data/graphics/pattern.png');
+
+  patterns.left = ctx.createPattern(images.pattern, 'repeat');
 
   loop();
 }
