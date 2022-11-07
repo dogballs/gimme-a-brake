@@ -14,7 +14,7 @@ import {
   createTurn,
   createUphill,
   createDownhill,
-  steerFragments,
+  lerpFragments,
 } from './fragment';
 import { map } from './map';
 import {
@@ -91,13 +91,12 @@ function draw() {
     const fragments = createTurn({
       size: activeSection.size,
       direction: activeSection.kind === 'turn-right' ? 'right' : 'left',
+      steerOffset: state.steerOffset,
     });
 
-    const strFragments = steerFragments(fragments, state.steerOffset);
-
-    const path = lerpSectionFragments({
-      fragments: strFragments,
-      inSectionOffset,
+    const path = lerpFragments({
+      fragments,
+      inOffset: inSectionOffset,
     });
 
     drawHorizon();
@@ -111,12 +110,12 @@ function draw() {
       size: activeSection.size,
       inOffset: inSectionOffset,
       steepness: activeSection.steepness,
+      steerOffset: state.steerOffset,
     });
-    const steeredFragments = steerFragments(fragments, state.steerOffset);
 
-    const path = lerpSectionFragments({
-      fragments: steeredFragments,
-      inSectionOffset,
+    const path = lerpFragments({
+      fragments,
+      inOffset: inSectionOffset,
     });
 
     const yOverride = path.left[3];
@@ -137,11 +136,10 @@ function draw() {
       steepness: activeSection.steepness,
       steerOffset: state.steerOffset,
     });
-    const steeredFragments = steerFragments(fragments, state.steerOffset);
 
-    const path = lerpSectionFragments({
-      fragments: steeredFragments,
-      inSectionOffset,
+    const path = lerpFragments({
+      fragments,
+      inOffset: inSectionOffset,
     });
 
     const yOverride = path.left[3];
@@ -156,62 +154,8 @@ function draw() {
   }
 }
 
-function lerpSectionFragments({
-  fragments,
-  inSectionOffset,
-}: {
-  fragments: Fragment[];
-  inSectionOffset: number;
-}) {
-  const activeIndex = fragments.findIndex((fragment) => {
-    return inSectionOffset < fragment.end;
-  });
-  const prevIndex = activeIndex !== -1 ? activeIndex - 1 : -1;
-
-  const prevFragment = fragments[prevIndex] || straightFragment;
-  const activeFragment = fragments[activeIndex] || straightFragment;
-
-  let d = 0;
-
-  const fragmentSize = activeFragment.end - prevFragment.end;
-  const inFragmentOffset = inSectionOffset - prevFragment.end;
-  if (fragmentSize !== 0) {
-    d = inFragmentOffset / fragmentSize;
-  }
-
-  const path = lerpPath(prevFragment, activeFragment, d);
-
-  return path;
-}
-
 function hasSectionEnded(section: Section) {
   return section.start + section.size < state.moveOffset;
-}
-
-function lerpPath(
-  p1: PathDescriptor,
-  p2: PathDescriptor,
-  d: number,
-): PathDescriptor {
-  return {
-    left: lerpLine(p1.left, p2.left, d),
-    right: lerpLine(p1.right, p2.right, d),
-  };
-}
-
-function lerpLine(
-  l1: LineDescriptor,
-  l2: LineDescriptor,
-  d: number,
-): LineDescriptor {
-  console.assert(d >= 0 && d <= 1, 'd must be normalized: %d', d);
-
-  const cpx = l1[0] + (l2[0] - l1[0]) * d;
-  const cpy = l1[1] + (l2[1] - l1[1]) * d;
-  const x = l1[2] + (l2[2] - l1[2]) * d;
-  const y = l1[3] + (l2[3] - l1[3]) * d;
-
-  return [cpx, cpy, x, y];
 }
 
 function drawHorizon({ yOverride }: { yOverride?: number } = {}) {

@@ -1,5 +1,5 @@
 import { HW, HH } from './config';
-import { Fragment } from './types';
+import { Fragment, LineDescriptor, PathDescriptor } from './types';
 
 export const straightFragment: Fragment = {
   left: [HW - 10, HH, HW - 10, HH],
@@ -11,10 +11,12 @@ export function createDownhill({
   size,
   steepness,
   inOffset,
+  steerOffset,
 }: {
   size: number;
   steepness: number;
   inOffset: number;
+  steerOffset: number;
 }): Fragment[] {
   const halfSize = size / 2;
   const d = 1 - Math.abs((inOffset - halfSize) / halfSize);
@@ -22,7 +24,7 @@ export function createDownhill({
   const y = HH + yOffset;
   const minY = HH - steepness;
 
-  return [
+  let fragments: Fragment[] = [
     {
       left: [HW, HH, HW - 10, y],
       right: [HW, HH, HW + 10, y],
@@ -48,6 +50,10 @@ export function createDownhill({
       end: size,
     },
   ];
+
+  fragments = steerFragments(fragments, steerOffset);
+
+  return fragments;
 }
 
 export function createUphill({
@@ -71,7 +77,7 @@ export function createUphill({
   const bottomLeftCorrection = steerOffset * 0.1;
   const cxCorrection = steerOffset * 0.2;
 
-  return [
+  let fragments: Fragment[] = [
     {
       left: [HW - 70, y - 5, HW - 60 + xCorrection, y],
       right: [HW + 70, y - 5, HW + 60 + xCorrection, y],
@@ -98,17 +104,23 @@ export function createUphill({
       end: size,
     },
   ];
+
+  fragments = steerFragments(fragments, steerOffset);
+
+  return fragments;
 }
 
 export function createTurn({
   size,
   direction,
+  steerOffset,
 }: {
   size: number;
   direction: 'right' | 'left';
+  steerOffset: number;
 }): Fragment[] {
   console.assert(size >= 600, 'turn too quick: %d', size);
-  const fragments: Fragment[] = [
+  let fragments: Fragment[] = [
     // {
     //   left: [HW - 10, HH - 5, HW - 10, HH],
     //   right: [HW + 190, HH + 50, HW + 10, HH],
@@ -141,8 +153,10 @@ export function createTurn({
   ];
 
   if (direction === 'left') {
-    return mirrorFragments(fragments);
+    fragments = mirrorFragments(fragments);
   }
+
+  fragments = steerFragments(fragments, steerOffset);
 
   return fragments;
 }
@@ -159,7 +173,7 @@ function mirrorFragments(fragments: Fragment[]): Fragment[] {
   });
 }
 
-export function steerFragments(
+function steerFragments(
   fragments: Fragment[],
   steerOffset: number,
 ): Fragment[] {
@@ -174,4 +188,58 @@ export function steerFragments(
       right: [r[0] + topOffset, r[1], r[2] + topOffset, r[3]],
     };
   });
+}
+
+export function lerpFragments({
+  fragments,
+  inOffset,
+}: {
+  fragments: Fragment[];
+  inOffset: number;
+}) {
+  const activeIndex = fragments.findIndex((fragment) => {
+    return inOffset < fragment.end;
+  });
+  const prevIndex = activeIndex !== -1 ? activeIndex - 1 : -1;
+
+  const prevFragment = fragments[prevIndex] || straightFragment;
+  const activeFragment = fragments[activeIndex] || straightFragment;
+
+  let d = 0;
+
+  const fragmentSize = activeFragment.end - prevFragment.end;
+  const inFragmentOffset = inOffset - prevFragment.end;
+  if (fragmentSize !== 0) {
+    d = inFragmentOffset / fragmentSize;
+  }
+
+  const path = lerpPath(prevFragment, activeFragment, d);
+
+  return path;
+}
+
+function lerpPath(
+  p1: PathDescriptor,
+  p2: PathDescriptor,
+  d: number,
+): PathDescriptor {
+  return {
+    left: lerpLine(p1.left, p2.left, d),
+    right: lerpLine(p1.right, p2.right, d),
+  };
+}
+
+function lerpLine(
+  l1: LineDescriptor,
+  l2: LineDescriptor,
+  d: number,
+): LineDescriptor {
+  console.assert(d >= 0 && d <= 1, 'd must be normalized: %d', d);
+
+  const cpx = l1[0] + (l2[0] - l1[0]) * d;
+  const cpy = l1[1] + (l2[1] - l1[1]) * d;
+  const x = l1[2] + (l2[2] - l1[2]) * d;
+  const y = l1[3] + (l2[3] - l1[3]) * d;
+
+  return [cpx, cpy, x, y];
 }
