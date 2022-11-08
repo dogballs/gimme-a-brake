@@ -17,7 +17,8 @@ import {
   lerpFragments,
 } from './fragment';
 import { straightMap, coolMap } from './map';
-import { stripesHeightList } from './stripe';
+import { drawRoadMask, drawRoadCurb } from './road';
+import { drawGroundStripes, drawRoadStripes } from './stripes';
 import {
   CoordDescriptor,
   LineDescriptor,
@@ -147,23 +148,27 @@ function drawObjects({
   yOverride?: number;
 }) {
   // Draw the road stripes full widths
-  drawRoadStripes({ yOverride });
+  drawRoadStripes(ctx, { moveOffset: state.moveOffset, yOverride });
 
   // Then cut it out and keep the area that is actually covered by the road
   // (the ground area will become transparent again).
   ctx.globalCompositeOperation = 'destination-in';
-  drawRoadMask(path);
+  drawRoadMask(ctx, path, { steerOffset: state.steerOffset });
 
   // Then draw the ground stripes full widths but behind the road - it will keep
   // the road that was drawn on the previous step and only fill in the ground
   // stripes on the sides.
   ctx.globalCompositeOperation = 'destination-over';
-  drawGroundStripes({ yOverride });
+  drawGroundStripes(ctx, { moveOffset: state.moveOffset, yOverride });
 
   // Then draw everything on top
   ctx.globalCompositeOperation = 'source-over';
 
-  drawCurb(path);
+  drawRoadCurb(ctx, path, {
+    moveOffset: state.moveOffset,
+    steerOffset: state.steerOffset,
+  });
+
   drawHorizon({ yOverride });
   drawGrid();
   drawCar();
@@ -173,36 +178,6 @@ function drawObjects({
 
 function hasSectionEnded(section: Section) {
   return section.start + section.size < state.moveOffset;
-}
-
-function drawStripes({
-  colors,
-  yOverride,
-}: {
-  colors: [string, string];
-  yOverride?: number;
-}) {
-  const roadHeight = IH - (yOverride ?? HH);
-
-  const moveOffset = state.moveOffset * 2;
-
-  const heightList = stripesHeightList({
-    roadHeight,
-    moveOffset,
-  });
-
-  for (const heightEntry of heightList) {
-    ctx.fillStyle = colors[heightEntry.textureIndex];
-    ctx.fillRect(0, IH - heightEntry.y2, IW, heightEntry.height);
-  }
-}
-
-function drawGroundStripes({ yOverride }: { yOverride?: number } = {}) {
-  drawStripes({ colors: ['#81d292', '#a3e9b2'], yOverride });
-}
-
-function drawRoadStripes({ yOverride }: { yOverride?: number } = {}) {
-  drawStripes({ colors: ['#d4d79e', '#e5e9a3'], yOverride });
 }
 
 function drawHorizon({ yOverride }: { yOverride?: number } = {}) {
@@ -234,89 +209,6 @@ function drawDebug({ section }: { section?: string } = {}) {
 
   const activeSection = getActiveSection();
   ctx.strokeText(`section kind: ${activeSection.kind}`, 5, 20);
-}
-
-function drawCurb(
-  { left, right, bottomLeft, bottomRight }: PathDescriptor,
-  { color = 'red' }: { color?: string } = {},
-) {
-  ctx.strokeStyle = color;
-  ctx.setLineDash([10]);
-  ctx.lineDashOffset = state.moveOffset;
-
-  // ctx.lineWidth = 2;
-  // ctx.strokeStyle = patterns.left;
-
-  // (0, 150) (180, 100)
-  // 5x + 18y = 2700
-  // 5x = 2700 - 18y
-  // x = (2700 - 18y) / 5
-  // x = (2700 - 18 * 200) / 5
-
-  const steerOffset = state.steerOffset * 1;
-
-  const bottomLeftX = bottomLeft?.[0] ?? -180;
-  const bottomRightX = bottomRight?.[0] ?? 560;
-
-  ctx.beginPath();
-  ctx.moveTo(bottomLeftX + steerOffset, 200);
-  ctx.quadraticCurveTo(...left);
-  ctx.stroke();
-
-  // 18 y - 5 x = 800
-  // -5x = 800 - 18y
-  // 5x = 18y - 800
-  // x = (18y - 800) / 5
-  // x = (18 * 200 - 800) / 5
-
-  ctx.beginPath();
-  ctx.moveTo(bottomRightX + steerOffset, 200);
-  ctx.quadraticCurveTo(...right);
-  ctx.stroke();
-}
-
-function drawRoadMask(
-  { left, right, bottomLeft, bottomRight }: PathDescriptor,
-  { color = 'red' }: { color?: string } = {},
-) {
-  const steerOffset = state.steerOffset * 1;
-
-  const bottomLeftX = bottomLeft?.[0] ?? -180;
-  const bottomRightX = bottomRight?.[0] ?? 560;
-
-  ctx.fillStyle = 'black';
-
-  ctx.beginPath();
-  ctx.moveTo(bottomLeftX + steerOffset, 200);
-  ctx.quadraticCurveTo(...left);
-  ctx.lineTo(right[2], right[3]);
-  ctx.quadraticCurveTo(right[0], right[1], bottomRightX + steerOffset, 200);
-  ctx.lineTo(bottomLeftX + steerOffset, 200);
-  ctx.fill();
-
-  // ctx.beginPath();
-  // ctx.moveTo(bottomLeftX + steerOffset, 200);
-  // ctx.quadraticCurveTo(...left);
-  // ctx.stroke();
-
-  // ctx.beginPath();
-  // ctx.moveTo(bottomRightX + steerOffset, 200);
-  // ctx.quadraticCurveTo(...right);
-  // ctx.stroke();
-
-  // ctx.beginPath();
-  // ctx.moveTo(bottomLeftX + steerOffset, 200);
-  // ctx.quadraticCurveTo(...left);
-  // ctx.lineTo(0, left[3]);
-  // ctx.lineTo(0, IH);
-  // ctx.fill();
-
-  // ctx.beginPath();
-  // ctx.moveTo(bottomRightX + steerOffset, 200);
-  // ctx.quadraticCurveTo(...right);
-  // ctx.lineTo(IW, right[3]);
-  // ctx.lineTo(IW, IH);
-  // ctx.fill();
 }
 
 function drawCar() {

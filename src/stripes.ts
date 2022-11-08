@@ -1,4 +1,54 @@
-export function stripesHeightList({
+import { IW, IH, HH } from './config';
+
+type DrawStripesArgs = {
+  moveOffset: number;
+  yOverride?: number;
+};
+type DrawStripesColors = [string, string];
+
+export function drawGroundStripes(
+  ctx: CanvasRenderingContext2D,
+  args: DrawStripesArgs,
+) {
+  const colors: DrawStripesColors = ['#81d292', '#a3e9b2'];
+  drawStripes(ctx, { ...args, colors });
+}
+
+export function drawRoadStripes(
+  ctx: CanvasRenderingContext2D,
+  args: DrawStripesArgs,
+) {
+  const colors: DrawStripesColors = ['#d4d79e', '#e5e9a3'];
+  drawStripes(ctx, { ...args, colors });
+}
+
+function drawStripes(
+  ctx: CanvasRenderingContext2D,
+  {
+    colors,
+    moveOffset,
+    yOverride,
+  }: {
+    colors: DrawStripesColors;
+  } & DrawStripesArgs,
+) {
+  const roadHeight = IH - (yOverride ?? HH);
+
+  const speedEffectMultiplier = 2;
+  const spedUpMoveOffset = moveOffset * speedEffectMultiplier;
+
+  const heightList = stripesHeightList({
+    roadHeight,
+    moveOffset: spedUpMoveOffset,
+  });
+
+  for (const heightEntry of heightList) {
+    ctx.fillStyle = colors[heightEntry.textureIndex];
+    ctx.fillRect(0, IH - heightEntry.y2, IW, heightEntry.height);
+  }
+}
+
+function stripesHeightList({
   roadHeight,
   moveOffset,
   nearTextureHeight = 32,
@@ -9,7 +59,6 @@ export function stripesHeightList({
 }) {
   const heightList = [];
 
-  // const { moveOffset } = state;
   const isNegativeMoveOffset = moveOffset < 0;
 
   // Will be used in a function to calculate how much the next road segment will
