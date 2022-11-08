@@ -55,16 +55,8 @@ const images = {
 function draw() {
   ctx.clearRect(0, 0, IW, IH);
 
-  let activeSection: Section = state.map.sections.find((s) => {
-    return state.moveOffset >= s.start && state.moveOffset <= s.start + s.size;
-  });
-  if (!activeSection || hasSectionEnded(activeSection)) {
-    activeSection = { start: state.moveOffset, kind: 'straight', size: 0 };
-  }
-
+  const activeSection = getActiveSection();
   const inSectionOffset = state.moveOffset - activeSection.start;
-
-  drawInfo({ section: activeSection.kind });
 
   if (activeSection.kind === 'straight') {
     drawObjects({ path: straightFragment });
@@ -137,6 +129,16 @@ function draw() {
   }
 }
 
+function getActiveSection() {
+  let activeSection: Section = state.map.sections.find((s) => {
+    return state.moveOffset >= s.start && state.moveOffset <= s.start + s.size;
+  });
+  if (!activeSection || hasSectionEnded(activeSection)) {
+    activeSection = { start: state.moveOffset, kind: 'straight', size: 0 };
+  }
+  return activeSection;
+}
+
 function drawObjects({
   path,
   yOverride,
@@ -144,31 +146,63 @@ function drawObjects({
   path: PathDescriptor;
   yOverride?: number;
 }) {
+  // Draw the road stripes full widths
   drawRoadStripes({ yOverride });
-  drawPath(path);
+
+  // Then cut it out and keep the area that is actually covered by the road
+  // (the ground area will become transparent again).
+  ctx.globalCompositeOperation = 'destination-in';
+  drawRoadMask(path);
+
+  // Then draw the ground stripes full widths but behind the road - it will keep
+  // the road that was drawn on the previous step and only fill in the ground
+  // stripes on the sides.
+  ctx.globalCompositeOperation = 'destination-over';
+  drawGroundStripes({ yOverride });
+
+  // Then draw everything on top
+  ctx.globalCompositeOperation = 'source-over';
+
+  drawCurb(path);
   drawHorizon({ yOverride });
   drawGrid();
   drawCar();
+
+  drawDebug();
 }
 
 function hasSectionEnded(section: Section) {
   return section.start + section.size < state.moveOffset;
 }
 
-function drawRoadStripes({ yOverride }: { yOverride?: number } = {}) {
+function drawStripes({
+  colors,
+  yOverride,
+}: {
+  colors: [string, string];
+  yOverride?: number;
+}) {
   const roadHeight = IH - (yOverride ?? HH);
+
+  const moveOffset = state.moveOffset * 2;
 
   const heightList = stripesHeightList({
     roadHeight,
-    moveOffset: state.moveOffset,
+    moveOffset,
   });
 
-  const groundColors = ['#d4d79e', '#e5e9a3'];
-
   for (const heightEntry of heightList) {
-    ctx.fillStyle = groundColors[heightEntry.textureIndex];
+    ctx.fillStyle = colors[heightEntry.textureIndex];
     ctx.fillRect(0, IH - heightEntry.y2, IW, heightEntry.height);
   }
+}
+
+function drawGroundStripes({ yOverride }: { yOverride?: number } = {}) {
+  drawStripes({ colors: ['#81d292', '#a3e9b2'], yOverride });
+}
+
+function drawRoadStripes({ yOverride }: { yOverride?: number } = {}) {
+  drawStripes({ colors: ['#d4d79e', '#e5e9a3'], yOverride });
 }
 
 function drawHorizon({ yOverride }: { yOverride?: number } = {}) {
@@ -191,19 +225,18 @@ function drawGrid() {
   ctx.stroke();
 }
 
-function drawInfo({ section }: { section?: string } = {}) {
+function drawDebug({ section }: { section?: string } = {}) {
   ctx.strokeStyle = '#000';
   ctx.font = '8px serif';
 
   ctx.strokeText(`move offset: ${state.moveOffset}`, 5, 10);
   ctx.strokeText(`steer: ${state.steerOffset}`, 5, 30);
 
-  if (section) {
-    ctx.strokeText(`section kind: ${section}`, 5, 20);
-  }
+  const activeSection = getActiveSection();
+  ctx.strokeText(`section kind: ${activeSection.kind}`, 5, 20);
 }
 
-function drawPath(
+function drawCurb(
   { left, right, bottomLeft, bottomRight }: PathDescriptor,
   { color = 'red' }: { color?: string } = {},
 ) {
@@ -242,6 +275,50 @@ function drawPath(
   ctx.stroke();
 }
 
+function drawRoadMask(
+  { left, right, bottomLeft, bottomRight }: PathDescriptor,
+  { color = 'red' }: { color?: string } = {},
+) {
+  const steerOffset = state.steerOffset * 1;
+
+  const bottomLeftX = bottomLeft?.[0] ?? -180;
+  const bottomRightX = bottomRight?.[0] ?? 560;
+
+  ctx.fillStyle = 'black';
+
+  ctx.beginPath();
+  ctx.moveTo(bottomLeftX + steerOffset, 200);
+  ctx.quadraticCurveTo(...left);
+  ctx.lineTo(right[2], right[3]);
+  ctx.quadraticCurveTo(right[0], right[1], bottomRightX + steerOffset, 200);
+  ctx.lineTo(bottomLeftX + steerOffset, 200);
+  ctx.fill();
+
+  // ctx.beginPath();
+  // ctx.moveTo(bottomLeftX + steerOffset, 200);
+  // ctx.quadraticCurveTo(...left);
+  // ctx.stroke();
+
+  // ctx.beginPath();
+  // ctx.moveTo(bottomRightX + steerOffset, 200);
+  // ctx.quadraticCurveTo(...right);
+  // ctx.stroke();
+
+  // ctx.beginPath();
+  // ctx.moveTo(bottomLeftX + steerOffset, 200);
+  // ctx.quadraticCurveTo(...left);
+  // ctx.lineTo(0, left[3]);
+  // ctx.lineTo(0, IH);
+  // ctx.fill();
+
+  // ctx.beginPath();
+  // ctx.moveTo(bottomRightX + steerOffset, 200);
+  // ctx.quadraticCurveTo(...right);
+  // ctx.lineTo(IW, right[3]);
+  // ctx.lineTo(IW, IH);
+  // ctx.fill();
+}
+
 function drawCar() {
   const image = images.car;
   const scale = 0.6;
@@ -269,9 +346,6 @@ async function main() {
   images.car = await loadImage('data/graphics/car.png');
   images.pattern = await loadImage('data/graphics/pattern.png');
   images.road = await loadImage('data/graphics/road3.png');
-
-  // drawRoadStripes();
-  // drawHorizon();
 
   loop();
 }

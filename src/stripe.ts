@@ -44,13 +44,13 @@ export function stripesHeightList({
   let roadLeftToParse = roadHeight;
 
   while (roadLeftToParse >= 0) {
-    const downscaleMultiplier = 1.2 / downscaleIndex;
-    const segmentHeight = Math.round(downscaleMultiplier * nearTextureHeight);
+    const downscaleMultiplier = 1 / downscaleIndex;
+    const segmentHeight = Math.ceil(downscaleMultiplier * nearTextureHeight);
 
     // Segment is split into two sub-segments based on the global offset.
     // Each segment has it's own texture.
-    const primTextureHeight = segmentHeight * primFillPercent;
-    const restTextureHeight = segmentHeight - primTextureHeight;
+    const primTextureHeight = Math.round(segmentHeight * primFillPercent);
+    const restTextureHeight = Math.round(segmentHeight - primTextureHeight);
 
     // Add both sub-segments as separate entries of their own height with
     // corresponding texture indexes
@@ -58,12 +58,12 @@ export function stripesHeightList({
       const y = currentY;
 
       let y2 = currentY + primTextureHeight;
-      let height = primTextureHeight;
+      let height = Math.max(1, primTextureHeight);
       let heightOverflow = 0;
       if (y2 > roadHeight) {
         heightOverflow = y2 - roadHeight;
         y2 = roadHeight;
-        height = height - heightOverflow;
+        height = Math.max(1, height - heightOverflow);
       }
 
       heightList.push({
@@ -77,12 +77,12 @@ export function stripesHeightList({
       const y = currentY + primTextureHeight;
       if (y < roadHeight) {
         let y2 = currentY + segmentHeight;
-        let height = restTextureHeight;
+        let height = Math.max(1, restTextureHeight);
         let heightOverflow = 0;
         if (y2 > roadHeight) {
           heightOverflow = y2 - roadHeight;
           y2 = roadHeight;
-          height = height - heightOverflow;
+          height = Math.max(1, height - heightOverflow);
         }
 
         heightList.push({
