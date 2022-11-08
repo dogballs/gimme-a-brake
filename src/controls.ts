@@ -1,29 +1,45 @@
-export enum Keycodes {
-  Up = 87,
-  Left = 65,
-  Right = 68,
-  Down = 83,
+enum KeyboardButtonCode {
+  Left = 37,
+  Up = 38,
+  Right = 39,
+  Down = 40,
+  W = 87,
+  A = 65,
+  D = 68,
+  S = 83,
 }
 
-let keys = [];
+export enum InputControl {
+  Up,
+  Down,
+  Left,
+  Right,
+}
+
+const binding = {
+  [InputControl.Up]: [KeyboardButtonCode.Up, KeyboardButtonCode.W],
+  [InputControl.Down]: [KeyboardButtonCode.Down, KeyboardButtonCode.S],
+  [InputControl.Left]: [KeyboardButtonCode.Left, KeyboardButtonCode.A],
+  [InputControl.Right]: [KeyboardButtonCode.Right, KeyboardButtonCode.D],
+};
+
+let internalCodes = [];
 
 export function listenKeyboard() {
   document.addEventListener('keydown', (ev) => {
-    if (!keys.includes(ev.keyCode)) {
-      keys.push(ev.keyCode);
+    if (!internalCodes.includes(ev.keyCode)) {
+      internalCodes.push(ev.keyCode);
     }
   });
 
   document.addEventListener('keyup', (ev) => {
-    keys = keys.filter((k) => k !== ev.keyCode);
+    internalCodes = internalCodes.filter((k) => k !== ev.keyCode);
   });
 
   return {
-    getKeys() {
-      return keys;
-    },
-    isDown(key: Keycodes) {
-      return keys.includes(key);
+    isDown(control: InputControl) {
+      const codes = binding[control];
+      return codes.some((code) => internalCodes.includes(code));
     },
   };
 }

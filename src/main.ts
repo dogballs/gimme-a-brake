@@ -8,7 +8,7 @@ import {
   STEER_LIMIT,
   STEER_TURN_COUNTER_FORCE,
 } from './config';
-import { Keycodes, listenKeyboard } from './controls';
+import { InputControl, listenKeyboard } from './controls';
 import {
   straightFragment,
   createTurn,
@@ -37,7 +37,7 @@ canvas.addEventListener('click', (ev) => {
   console.log(ev.clientX / 2, ev.clientY / 2);
 });
 
-const { getKeys } = listenKeyboard();
+const keyboardListener = listenKeyboard();
 
 const state = {
   map: coolMap,
@@ -243,21 +243,21 @@ async function main() {
 }
 
 function loop() {
-  if (getKeys().includes(Keycodes.Up)) {
+  if (keyboardListener.isDown(InputControl.Up)) {
     state.moveSpeed = MOVE_SPEED;
     state.moveOffset += state.moveSpeed;
-  } else if (getKeys().includes(Keycodes.Down)) {
+  } else if (keyboardListener.isDown(InputControl.Down)) {
     state.moveSpeed = MOVE_SPEED;
     state.moveOffset -= state.moveSpeed;
   } else {
     state.moveSpeed = 0;
   }
 
-  if (getKeys().includes(Keycodes.Left)) {
+  if (keyboardListener.isDown(InputControl.Left)) {
     state.steerSpeed = STEER_SPEED;
     const nextOffset = state.steerOffset + state.steerSpeed;
     state.steerOffset = Math.min(STEER_LIMIT, nextOffset);
-  } else if (getKeys().includes(Keycodes.Right)) {
+  } else if (keyboardListener.isDown(InputControl.Right)) {
     state.steerSpeed = STEER_SPEED;
     const nextOffset = state.steerOffset - state.steerSpeed;
     state.steerOffset = Math.max(-STEER_LIMIT, nextOffset);
