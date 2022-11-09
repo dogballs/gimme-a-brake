@@ -17,6 +17,7 @@ export function drawRoadStripes(ctx: Context2D, opts: DrawStripesOpts) {
   drawStripes(ctx, { ...opts, colors });
 }
 
+// TODO: make them appear more often?? but keep stripes match with bigger ones
 export function drawCurbStripes(ctx: Context2D, opts: DrawStripesOpts) {
   const colors: DrawStripesColors = ['#c5bfbf', '#dc3961'];
   drawStripes(ctx, { ...opts, colors });

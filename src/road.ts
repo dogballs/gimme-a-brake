@@ -48,6 +48,7 @@ export function drawCurbMask(
   const { left, right, bottomLeft, bottomRight } = applyCurbAddons(
     steeredPath,
     {
+      // TODO: maybe make it wider for uphills
       topAddon: 1,
       bottomAddon: 50,
     },

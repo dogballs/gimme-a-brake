@@ -3,12 +3,14 @@ import {
   IH,
   HW,
   HH,
+  BG_SPEED,
   MOVE_SPEED,
   STEER_SPEED,
   STEER_LIMIT,
   STEER_TURN_COUNTER_FORCE,
 } from './config';
 import { InputControl, listenKeyboard } from './controls';
+import { drawBackground } from './background';
 import {
   straightFragment,
   createTurn,
@@ -16,7 +18,7 @@ import {
   createDownhill,
   lerpFragments,
 } from './fragment';
-import { straightMap, coolMap } from './map';
+import { straightMap, coolMap, longLeftTurnMap } from './map';
 import { drawCurbMask, drawRoadMask, drawRoadLines } from './road';
 import { drawCurbStripes, drawGroundStripes, drawRoadStripes } from './stripes';
 import {
@@ -49,12 +51,13 @@ const state = {
   moveOffset: 0,
   steerSpeed: 0,
   steerOffset: 0,
+  bgOffset: 0,
 };
 
 const images = {
   car: undefined,
-  road: undefined,
-  pattern: undefined,
+  bg1: undefined,
+  bg2: undefined,
 };
 
 function draw() {
@@ -75,8 +78,14 @@ function draw() {
     if (state.moveSpeed > 0) {
       if (activeSection.kind === 'turn-left') {
         state.steerOffset -= STEER_TURN_COUNTER_FORCE;
+        if (inSectionOffset > 200) {
+          state.bgOffset -= BG_SPEED;
+        }
       } else if (activeSection.kind === 'turn-right') {
         state.steerOffset += STEER_TURN_COUNTER_FORCE;
+        if (inSectionOffset > 200) {
+          state.bgOffset += BG_SPEED;
+        }
       }
     }
 
@@ -179,6 +188,12 @@ function drawObjects({
   // Then draw everything on top
   ctx.globalCompositeOperation = 'source-over';
 
+  drawBackground(ctx, {
+    bgImage: images.bg2,
+    bgOffset: state.bgOffset,
+    yOverride,
+  });
+
   // drawHorizon({ yOverride });
   // drawGrid();
   drawCar();
@@ -214,6 +229,7 @@ function drawDebug({ section }: { section?: string } = {}) {
 
   ctx.strokeText(`move offset: ${state.moveOffset}`, 5, 10);
   ctx.strokeText(`steer: ${state.steerOffset}`, 5, 30);
+  ctx.strokeText(`bg: ${state.bgOffset}`, 5, 40);
 
   const activeSection = getActiveSection();
   ctx.strokeText(`section kind: ${activeSection.kind}`, 5, 20);
@@ -244,8 +260,8 @@ async function loadImage(imagePath: string) {
 
 async function main() {
   images.car = await loadImage('data/graphics/car.png');
-  images.pattern = await loadImage('data/graphics/pattern.png');
-  images.road = await loadImage('data/graphics/road3.png');
+  images.bg1 = await loadImage('data/graphics/bg1.png');
+  images.bg2 = await loadImage('data/graphics/bg2.png');
 
   loop();
 }

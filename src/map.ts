@@ -8,6 +8,16 @@ export const straightMap: Map = {
   sections: [],
 };
 
+export const longLeftTurnMap: Map = {
+  sections: [
+    {
+      kind: 'turn-left',
+      start: 0,
+      size: Infinity,
+    },
+  ],
+};
+
 export const coolMap: Map = {
   sections: [
     {
