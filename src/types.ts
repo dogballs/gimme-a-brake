@@ -22,3 +22,7 @@ export type Section =
       size: number;
       steepness: number;
     };
+
+export type Context2D =
+  | CanvasRenderingContext2D
+  | OffscreenCanvasRenderingContext2D;

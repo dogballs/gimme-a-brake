@@ -17,10 +17,11 @@ import {
   lerpFragments,
 } from './fragment';
 import { straightMap, coolMap } from './map';
-import { drawRoadMask, drawRoadCurb } from './road';
-import { drawGroundStripes, drawRoadStripes } from './stripes';
+import { drawCurbMask, drawRoadMask, drawRoadLines } from './road';
+import { drawCurbStripes, drawGroundStripes, drawRoadStripes } from './stripes';
 import {
   CoordDescriptor,
+  Context2D,
   LineDescriptor,
   PathDescriptor,
   Fragment,
@@ -32,6 +33,9 @@ const ctx = canvas.getContext('2d');
 
 canvas.width = IW;
 canvas.height = IH;
+
+const offCanvas = new OffscreenCanvas(IW, IH);
+const offCtx = offCanvas.getContext('2d');
 
 canvas.addEventListener('click', (ev) => {
   console.log(ev.clientX / 2, ev.clientY / 2);
@@ -147,35 +151,39 @@ function drawObjects({
   path: PathDescriptor;
   yOverride?: number;
 }) {
-  // Draw the road stripes full widths
-  drawRoadStripes(ctx, { moveOffset: state.moveOffset, yOverride });
+  // Draw the road stripes full width. Then cut it out and keep the area that is
+  // actually covered by the road (the ground area will become transparent
+  // again). Do it offscreen because we have to apply another mask and it's hard
+  // to do on a single canvas.
+  offCtx.globalCompositeOperation = 'source-over';
+  drawRoadStripes(offCtx, { moveOffset: state.moveOffset, yOverride });
+  offCtx.globalCompositeOperation = 'destination-in';
+  drawRoadMask(offCtx, path, { steerOffset: state.steerOffset });
+  ctx.drawImage(offCanvas, 0, 0);
 
-  // Then cut it out and keep the area that is actually covered by the road
-  // (the ground area will become transparent again).
-  ctx.globalCompositeOperation = 'destination-in';
-  drawRoadMask(ctx, path, { steerOffset: state.steerOffset });
+  // Ditto for the road. Except the curbs are drawn to the main canvas behind
+  // the already present road.
+  offCtx.globalCompositeOperation = 'source-over';
+  drawCurbStripes(offCtx, { moveOffset: state.moveOffset, yOverride });
+  offCtx.globalCompositeOperation = 'destination-in';
+  drawCurbMask(offCtx, path, { steerOffset: state.steerOffset });
+  ctx.globalCompositeOperation = 'destination-over';
+  ctx.drawImage(offCanvas, 0, 0);
 
   // Then draw the ground stripes full widths but behind the road - it will keep
-  // the road that was drawn on the previous step and only fill in the ground
-  // stripes on the sides.
+  // the road+curbs that were drawn on the previous step and only fill in the
+  // ground stripes on the sides.
   ctx.globalCompositeOperation = 'destination-over';
   drawGroundStripes(ctx, { moveOffset: state.moveOffset, yOverride });
 
   // Then draw everything on top
   ctx.globalCompositeOperation = 'source-over';
 
-  drawRoadCurb(ctx, path, {
-    moveOffset: state.moveOffset,
-    steerOffset: state.steerOffset,
-  });
-
-  drawHorizon({ yOverride });
-  drawGrid();
+  // drawHorizon({ yOverride });
+  // drawGrid();
   drawCar();
-
   drawDebug();
 }
-
 function hasSectionEnded(section: Section) {
   return section.start + section.size < state.moveOffset;
 }

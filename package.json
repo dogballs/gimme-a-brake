@@ -5,6 +5,7 @@
     "start": "webpack-dev-server --open"
   },
   "devDependencies": {
+    "@types/offscreencanvas": "^2019.7.0",
     "copy-webpack-plugin": "^11.0.0",
     "prettier": "^2.6.2",
     "ts-loader": "^9.3.1",
