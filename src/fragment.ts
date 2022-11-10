@@ -1,9 +1,10 @@
 import { HW, HH } from './config';
-import { Fragment, LineDescriptor, PathDescriptor } from './types';
+import { leftRoadCurve, rightRoadCurve } from './curve';
+import { Curve, Fragment, Path } from './types';
 
 export const straightFragment: Fragment = {
-  left: [HW - 10, HH, HW - 10, HH],
-  right: [HW + 10, HH, HW + 10, HH],
+  left: leftRoadCurve(HW - 10, HH, HW - 10, HH),
+  right: rightRoadCurve(HW + 10, HH, HW + 10, HH),
   end: 0,
 };
 
@@ -26,23 +27,23 @@ export function createDownhill({
 
   let fragments: Fragment[] = [
     {
-      left: [HW, HH, HW - 10, y],
-      right: [HW, HH, HW + 10, y],
+      left: leftRoadCurve(HW, HH, HW - 10, y),
+      right: rightRoadCurve(HW, HH, HW + 10, y),
       end: 100,
     },
     {
-      left: [HW - 25, HH + 25, HW - 10, minY],
-      right: [HW + 25, HH + 25, HW + 10, minY],
+      left: leftRoadCurve(HW - 25, HH + 25, HW - 10, minY),
+      right: rightRoadCurve(HW + 25, HH + 25, HW + 10, minY),
       end: 200,
     },
     {
-      left: [HW - 25, HH + 15, HW - 10, minY],
-      right: [HW + 25, HH + 15, HW + 10, minY],
+      left: leftRoadCurve(HW - 25, HH + 15, HW - 10, minY),
+      right: rightRoadCurve(HW + 25, HH + 15, HW + 10, minY),
       end: size - 200,
     },
     {
-      left: [HW - 30, HH + 25, HW - 10, y],
-      right: [HW + 30, HH + 25, HW + 10, y],
+      left: leftRoadCurve(HW - 30, HH + 25, HW - 10, y),
+      right: rightRoadCurve(HW + 30, HH + 25, HW + 10, y),
       end: size - 100,
     },
     {
@@ -79,24 +80,54 @@ export function createUphill({
 
   let fragments: Fragment[] = [
     {
-      left: [HW - 70, y - 5, HW - 60 + xCorrection, y],
-      right: [HW + 70, y - 5, HW + 60 + xCorrection, y],
-      bottomLeft: [-180 - bottomLeftCorrection, 0],
-      bottomRight: [560 - bottomLeftCorrection, 0],
+      left: leftRoadCurve(
+        HW - 70,
+        y - 5,
+        HW - 60 + xCorrection,
+        y,
+        -180 - bottomLeftCorrection,
+      ),
+      right: rightRoadCurve(
+        HW + 70,
+        y - 5,
+        HW + 60 + xCorrection,
+        y,
+        560 - bottomLeftCorrection,
+      ),
       end: 200,
     },
     {
-      left: [HW - 120 + cxCorrection, HH + 30, HW - 90 + xCorrection, maxY],
-      right: [HW + 120 + cxCorrection, HH + 30, HW + 90 + xCorrection, maxY],
-      bottomLeft: [-180 - bottomLeftCorrection, 0],
-      bottomRight: [560 - bottomLeftCorrection, 0],
+      left: leftRoadCurve(
+        HW - 120 + cxCorrection,
+        HH + 30,
+        HW - 90 + xCorrection,
+        maxY,
+        -180 - bottomLeftCorrection,
+      ),
+      right: rightRoadCurve(
+        HW + 120 + cxCorrection,
+        HH + 30,
+        HW + 90 + xCorrection,
+        maxY,
+        560 - bottomLeftCorrection,
+      ),
       end: 300,
     },
     {
-      left: [HW - 120 + cxCorrection, HH + 30, HW - 90 + xCorrection, maxY],
-      right: [HW + 120 + cxCorrection, HH + 30, HW + 90 + xCorrection, maxY],
-      bottomLeft: [-180 - bottomLeftCorrection, 0],
-      bottomRight: [560 - bottomLeftCorrection, 0],
+      left: leftRoadCurve(
+        HW - 120 + cxCorrection,
+        HH + 30,
+        HW - 90 + xCorrection,
+        maxY,
+        -180 - bottomLeftCorrection,
+      ),
+      right: rightRoadCurve(
+        HW + 120 + cxCorrection,
+        HH + 30,
+        HW + 90 + xCorrection,
+        maxY,
+        560 - bottomLeftCorrection,
+      ),
       end: size - 200,
     },
     {
@@ -127,23 +158,23 @@ export function createTurn({
     //   end: 100,
     // },
     {
-      left: [HW - 20, HH - 5, HW + 20, HH],
-      right: [HW + 10, HH, HW + 20, HH],
+      left: leftRoadCurve(HW - 20, HH - 5, HW + 20, HH),
+      right: rightRoadCurve(HW + 10, HH, HW + 20, HH),
       end: 100,
     },
     {
-      left: [HW - 50, HH - 5, HW + 115, HH],
-      right: [HW - 15, HH, HW + 115, HH],
+      left: leftRoadCurve(HW - 50, HH - 5, HW + 115, HH),
+      right: rightRoadCurve(HW - 15, HH, HW + 115, HH),
       end: 200,
     },
     {
-      left: [HW - 30, HH - 5, HW + 80, HH],
-      right: [HW - 15, HH + 5, HW + 115, HH],
+      left: leftRoadCurve(HW - 30, HH - 5, HW + 80, HH),
+      right: rightRoadCurve(HW - 15, HH + 5, HW + 115, HH),
       end: size - 200,
     },
     {
-      left: [HW - 30, HH - 5, HW + 60, HH],
-      right: [HW + 0, HH + 20, HW + 80, HH],
+      left: leftRoadCurve(HW - 30, HH - 5, HW + 60, HH),
+      right: rightRoadCurve(HW + 0, HH + 20, HW + 80, HH),
       end: size - 100,
     },
     {
@@ -162,13 +193,24 @@ export function createTurn({
 }
 
 function mirrorFragments(fragments: Fragment[]): Fragment[] {
-  return fragments.map((f) => {
-    const l = f.left;
-    const r = f.right;
+  return fragments.map((fragment) => {
+    const { left, right } = fragment;
     return {
-      ...f,
-      left: [HW + (HW - r[0]), r[1], HW + (HW - r[2]), r[3]],
-      right: [HW + (HW - l[0]), l[1], HW + (HW - l[2]), l[3]],
+      ...fragment,
+      left: {
+        ...left,
+        controlX: HW + (HW - right.controlX),
+        controlY: right.controlY,
+        topX: HW + (HW - right.topX),
+        topY: right.topY,
+      },
+      right: {
+        ...right,
+        controlX: HW + (HW - left.controlX),
+        controlY: left.controlY,
+        topX: HW + (HW - left.topX),
+        topY: left.topY,
+      },
     };
   });
 }
@@ -179,13 +221,20 @@ function steerFragments(
 ): Fragment[] {
   const topOffset = steerOffset * 0.01;
 
-  return fragments.map((f) => {
-    const l = f.left;
-    const r = f.right;
+  return fragments.map((fragment) => {
+    const { left, right } = fragment;
     return {
-      ...f,
-      left: [l[0] + topOffset, l[1], l[2] + topOffset, l[3]],
-      right: [r[0] + topOffset, r[1], r[2] + topOffset, r[3]],
+      ...fragment,
+      left: {
+        ...left,
+        controlX: left.controlX + topOffset,
+        topX: left.topX + topOffset,
+      },
+      right: {
+        ...right,
+        controlX: right.controlX + topOffset,
+        topX: right.topX + topOffset,
+      },
     };
   });
 }
@@ -218,28 +267,32 @@ export function lerpFragments({
   return path;
 }
 
-function lerpPath(
-  p1: PathDescriptor,
-  p2: PathDescriptor,
-  d: number,
-): PathDescriptor {
+function lerpPath(p1: Path, p2: Path, d: number): Path {
   return {
-    left: lerpLine(p1.left, p2.left, d),
-    right: lerpLine(p1.right, p2.right, d),
+    left: lerpCurve(p1.left, p2.left, d),
+    right: lerpCurve(p1.right, p2.right, d),
   };
 }
 
-function lerpLine(
-  l1: LineDescriptor,
-  l2: LineDescriptor,
-  d: number,
-): LineDescriptor {
+function lerpCurve(c1: Curve, c2: Curve, d: number): Curve {
   console.assert(d >= 0 && d <= 1, 'd must be normalized: %d', d);
+  console.assert(c1.bottomX === c2.bottomX, 'bottomX must be equal for curves');
+  console.assert(c1.bottomY === c2.bottomY, 'bottomY must be equal for curves');
 
-  const cpx = l1[0] + (l2[0] - l1[0]) * d;
-  const cpy = l1[1] + (l2[1] - l1[1]) * d;
-  const x = l1[2] + (l2[2] - l1[2]) * d;
-  const y = l1[3] + (l2[3] - l1[3]) * d;
+  const controlX = c1.controlX + (c2.controlX - c1.controlX) * d;
+  const controlY = c1.controlY + (c2.controlY - c1.controlY) * d;
+  const topX = c1.topX + (c2.topX - c1.topX) * d;
+  const topY = c1.topY + (c2.topY - c1.topY) * d;
 
-  return [cpx, cpy, x, y];
+  const bottomX = c1.bottomX;
+  const bottomY = c1.bottomY;
+
+  return {
+    controlX,
+    controlY,
+    topX,
+    topY,
+    bottomX,
+    bottomY,
+  };
 }

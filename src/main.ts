@@ -21,14 +21,7 @@ import {
 import { straightMap, coolMap, longLeftTurnMap } from './map';
 import { drawCurbMask, drawRoadMask, drawRoadLines } from './road';
 import { drawCurbStripes, drawGroundStripes, drawRoadStripes } from './stripes';
-import {
-  CoordDescriptor,
-  Context2D,
-  LineDescriptor,
-  PathDescriptor,
-  Fragment,
-  Section,
-} from './types';
+import { Context2D, Path, Fragment, Section } from './types';
 
 const canvas = document.querySelector('canvas');
 const ctx = canvas.getContext('2d');
@@ -117,7 +110,7 @@ function draw() {
       inOffset: inSectionOffset,
     });
 
-    const yOverride = path.left[3];
+    const yOverride = path.left.topY;
 
     drawObjects({ path, yOverride });
     return;
@@ -136,7 +129,7 @@ function draw() {
       inOffset: inSectionOffset,
     });
 
-    const yOverride = path.left[3];
+    const yOverride = path.left.topY;
 
     drawObjects({ path, yOverride });
     return;
@@ -153,13 +146,7 @@ function getActiveSection() {
   return activeSection;
 }
 
-function drawObjects({
-  path,
-  yOverride,
-}: {
-  path: PathDescriptor;
-  yOverride?: number;
-}) {
+function drawObjects({ path, yOverride }: { path: Path; yOverride?: number }) {
   // Draw the road stripes full width. Then cut it out and keep the area that is
   // actually covered by the road (the ground area will become transparent
   // again). Do it offscreen because we have to apply another mask and it's hard

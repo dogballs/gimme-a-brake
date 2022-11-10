@@ -1,14 +1,18 @@
-export type CoordDescriptor = [number, number];
-export type LineDescriptor = [number, number, number, number];
-
-export type PathDescriptor = {
-  left: LineDescriptor;
-  right: LineDescriptor;
-  bottomLeft?: CoordDescriptor;
-  bottomRight?: CoordDescriptor;
+export type Curve = {
+  controlX: number;
+  controlY: number;
+  topX: number;
+  topY: number;
+  bottomX: number;
+  bottomY: number;
 };
 
-export type Fragment = PathDescriptor & { end: number };
+export type Path = {
+  left: Curve;
+  right: Curve;
+};
+
+export type Fragment = Path & { end: number };
 
 export type Section =
   | {
