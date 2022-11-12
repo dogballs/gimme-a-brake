@@ -7,6 +7,16 @@ type DrawStripesOpts = {
 };
 type DrawStripesColors = [string, string];
 
+type Stripe = {
+  height: number;
+  y: number;
+  y2: number;
+};
+
+type TexturedStripe = Stripe & {
+  textureIndex: number;
+};
+
 export function drawGroundStripes(ctx: Context2D, opts: DrawStripesOpts) {
   const colors: DrawStripesColors = ['#889827', '#9aa545'];
   drawStripes(ctx, { ...opts, colors });
@@ -35,37 +45,123 @@ function drawStripes(
 ) {
   const roadHeight = IH - (yOverride ?? HH);
 
-  const speedEffectMultiplier = 2;
-  const spedUpMoveOffset = moveOffset * speedEffectMultiplier;
-
-  const stripes = calculateStripes({
-    roadHeight,
-    moveOffset: spedUpMoveOffset,
+  const stripes = generateStripes({ roadHeight });
+  const texturedStripes = textureSplitStripes(stripes, {
+    moveOffset,
   });
 
-  for (const stripe of stripes) {
+  for (const stripe of texturedStripes) {
     ctx.fillStyle = colors[stripe.textureIndex];
     ctx.fillRect(0, IH - stripe.y2, IW, stripe.height);
   }
 }
 
-function calculateStripes({
+export function stripesUnscaledHeight(stripes: Stripe[]) {
+  const nearTextureHeight = stripes[0].height;
+  return stripes.length * nearTextureHeight;
+}
+
+export function stripesToY(
+  stripes: Stripe[],
+  { inOffset }: { inOffset: number },
+) {
+  // First stripe travels 1 to 1 with the move offset -> 32 to 32.
+  // Let's say second stripe is smaller in size by 2 (32 / 2 = 16), which means
+  // that if inOffset travels +32, then this stripe will travel +16,
+  // or if inOffset travels +16, then this stripe will travel +8.
+  // Find a stripe we are in first using inOffset. Then figure out how much
+  // into a stripe we have travelled and return it as an y position.
+  const nearTextureHeight = stripes[0].height;
+  const roadHeight = stripes[stripes.length - 1].y2;
+
+  let unscaledOffset = 0;
+  let scaledY = 0;
+
+  const unscaledHeight = stripes.length * nearTextureHeight;
+  const unscaledIn = unscaledHeight - inOffset;
+  const unscaledT = unscaledIn / nearTextureHeight;
+
+  const stripeIndex = Math.floor(unscaledT);
+  const inStripeT = unscaledT % 1;
+
+  if (stripeIndex > stripes.length - 1) {
+    const lastStripe = stripes[stripes.length - 1];
+    return lastStripe.y2;
+  }
+
+  const stripe = stripes[stripeIndex];
+
+  const y = stripe.y + stripe.height * inStripeT;
+
+  return y;
+}
+
+export function generateStripes({
   roadHeight,
-  moveOffset,
   nearTextureHeight = 32,
 }: {
   roadHeight: number;
-  moveOffset: number;
   nearTextureHeight?: number;
-}) {
-  const stripes = [];
-
-  const isNegativeMoveOffset = moveOffset < 0;
+}): Stripe[] {
+  const stripes: Stripe[] = [];
 
   // Will be used in a function to calculate how much the next road stripe will
   // be downscaled compared to the previous one because next stripe is further
   // into the road.
   let downscaleIndex = 1;
+
+  let currentY = 0;
+  let roadLeftToParse = roadHeight;
+
+  while (roadLeftToParse >= 0) {
+    const y = currentY;
+    if (y >= roadHeight) {
+      break;
+    }
+
+    const downscaleMultiplier = 1 / downscaleIndex;
+    const stripeHeight = Math.ceil(downscaleMultiplier * nearTextureHeight);
+
+    let y2 = y + stripeHeight;
+    let height = stripeHeight;
+
+    if (y2 > roadHeight) {
+      y2 = roadHeight;
+      height = Math.round(y2 - y);
+    }
+
+    if (height > 0) {
+      stripes.push({
+        y,
+        y2,
+        height,
+      });
+    }
+
+    roadLeftToParse -= stripeHeight;
+    currentY += stripeHeight;
+    downscaleIndex++;
+  }
+  return stripes;
+}
+
+// TODO: allow custom texture count, not just two, to split the curb
+function textureSplitStripes(
+  stripes: Stripe[],
+  {
+    moveOffset,
+  }: {
+    moveOffset: number;
+  },
+) {
+  const splitStripes: TexturedStripe[] = [];
+
+  if (stripes.length === 0) {
+    return splitStripes;
+  }
+
+  const isNegativeMoveOffset = moveOffset < 0;
+  const nearTextureHeight = stripes[0].height;
 
   // Based on the nearest stripe and global offset calculate how much this
   // nearest stripe is offset from zero position. We are going to offset
@@ -90,69 +186,34 @@ function calculateStripes({
     primTextureIndex = 1 - primTextureIndex;
   }
 
-  let currentY = 0;
-  let roadLeftToParse = roadHeight;
+  for (const stripe of stripes) {
+    // Stripe is split into two sub-stripes based on the global offset.
+    // Each stripe has it's own texture.
+    const primTextureHeight = Math.round(stripe.height * primFillPercent);
+    const restTextureHeight = stripe.height - primTextureHeight;
 
-  while (roadLeftToParse >= 0) {
-    const downscaleMultiplier = 1 / downscaleIndex;
-    const stripeHeight = Math.ceil(downscaleMultiplier * nearTextureHeight);
-
-    // Segment is split into two sub-segments based on the global offset.
-    // Each segment has it's own texture.
-    const primTextureHeight = Math.round(stripeHeight * primFillPercent);
-    const restTextureHeight = Math.round(stripeHeight - primTextureHeight);
-
-    // Add both sub-segments as separate entries of their own height with
+    // Add both sub-stripes as separate entries of their own height with
     // corresponding texture indexes
     if (primTextureHeight !== 0) {
-      const y = currentY;
-
-      // 1. Make sure the stripes don't go over the total available height
-      // 2. Make sure min stripe height is 1px, otherwise it will create a lot
-      // of useless stripes that will blink during fast re-rendering
-      let y2 = currentY + primTextureHeight;
-      let height = Math.max(1, primTextureHeight);
-      let heightOverflow = 0;
-      if (y2 > roadHeight) {
-        heightOverflow = y2 - roadHeight;
-        y2 = roadHeight;
-        height = Math.max(1, height - heightOverflow);
-      }
-
-      stripes.push({
-        y,
-        y2,
-        height,
+      splitStripes.push({
+        ...stripe,
+        height: primTextureHeight,
+        y2: stripe.y + primTextureHeight,
         textureIndex: primTextureIndex,
       });
     }
     if (restTextureHeight !== 0) {
-      const y = currentY + primTextureHeight;
-      if (y < roadHeight) {
-        let y2 = currentY + stripeHeight;
-        let height = Math.max(1, restTextureHeight);
-        let heightOverflow = 0;
-        if (y2 > roadHeight) {
-          heightOverflow = y2 - roadHeight;
-          y2 = roadHeight;
-          height = Math.max(1, height - heightOverflow);
-        }
-
-        stripes.push({
-          y,
-          y2,
-          height,
-          textureIndex: 1 - primTextureIndex,
-        });
-      }
+      splitStripes.push({
+        ...stripe,
+        height: restTextureHeight,
+        y: stripe.y2 - restTextureHeight,
+        textureIndex: 1 - primTextureIndex,
+      });
     }
 
-    roadLeftToParse -= stripeHeight;
-    currentY += stripeHeight;
-    downscaleIndex++;
     // Alernate to the other texture and make it primary
     primTextureIndex = 1 - primTextureIndex;
   }
 
-  return stripes;
+  return splitStripes;
 }

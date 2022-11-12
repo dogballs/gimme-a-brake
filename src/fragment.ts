@@ -1,6 +1,8 @@
 import { HW, HH } from './config';
-import { leftRoadCurve, rightRoadCurve } from './curve';
-import { Curve, Fragment, Path } from './types';
+import { Curve, leftRoadCurve, rightRoadCurve } from './curve';
+import { Path, lerpPath } from './path';
+
+export type Fragment = Path & { end: number };
 
 export const straightFragment: Fragment = {
   left: leftRoadCurve(HW - 10, HH, HW - 10, HH),
@@ -265,34 +267,4 @@ export function lerpFragments({
   const path = lerpPath(prevFragment, activeFragment, d);
 
   return path;
-}
-
-function lerpPath(p1: Path, p2: Path, d: number): Path {
-  return {
-    left: lerpCurve(p1.left, p2.left, d),
-    right: lerpCurve(p1.right, p2.right, d),
-  };
-}
-
-function lerpCurve(c1: Curve, c2: Curve, d: number): Curve {
-  console.assert(d >= 0 && d <= 1, 'd must be normalized: %d', d);
-  console.assert(c1.bottomX === c2.bottomX, 'bottomX must be equal for curves');
-  console.assert(c1.bottomY === c2.bottomY, 'bottomY must be equal for curves');
-
-  const controlX = c1.controlX + (c2.controlX - c1.controlX) * d;
-  const controlY = c1.controlY + (c2.controlY - c1.controlY) * d;
-  const topX = c1.topX + (c2.topX - c1.topX) * d;
-  const topY = c1.topY + (c2.topY - c1.topY) * d;
-
-  const bottomX = c1.bottomX;
-  const bottomY = c1.bottomY;
-
-  return {
-    controlX,
-    controlY,
-    topX,
-    topY,
-    bottomX,
-    bottomY,
-  };
 }

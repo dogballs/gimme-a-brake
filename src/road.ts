@@ -1,12 +1,6 @@
 import { IH } from './config';
-import { Context2D, Path } from './types';
-
-// Line equation:
-// left: 5x + 18y = 2700
-// right: 18 y - 5 x = 800
-
-const DEFAULT_BOTTOM_LEFT_X = -180;
-const DEFAULT_BOTTOM_RIGHT_X = 560;
+import { Path, steerPath, translatePath } from './path';
+import { Context2D } from './types';
 
 type DrawRoadOpts = {
   moveOffset: number;
@@ -19,7 +13,7 @@ export function drawRoadMask(
   path: Path,
   { steerOffset, color = 'black' }: Omit<DrawRoadOpts, 'moveOffset'>,
 ) {
-  const { left, right } = applySteerOffset(path, {
+  const { left, right } = steerPath(path, {
     steerOffset,
   });
 
@@ -36,14 +30,18 @@ export function drawRoadMask(
     right.bottomY,
   );
   ctx.lineTo(left.bottomX, left.bottomY);
-
-  // ctx.beginPath();
-  // ctx.moveTo(...bottomLeft);
-  // ctx.quadraticCurveTo(...left);
-  // ctx.lineTo(right[2], right[3]);
-  // ctx.quadraticCurveTo(right[0], right[1], ...bottomRight);
-  // ctx.lineTo(...bottomLeft);
   ctx.fill();
+}
+
+export function getCurbPath(
+  path: Path,
+  { steerOffset }: { steerOffset: number },
+) {
+  return translatePath(path, {
+    // TODO: maybe make it wider for uphills
+    top: 1,
+    bottom: 50,
+  });
 }
 
 export function drawCurbMask(
@@ -54,14 +52,10 @@ export function drawCurbMask(
   const topWidth = 10;
   const bottomWidth = 40;
 
-  const steeredPath = applySteerOffset(path, {
+  const steeredPath = steerPath(path, {
     steerOffset,
   });
-  const { left, right } = applyCurbAddons(steeredPath, {
-    // TODO: maybe make it wider for uphills
-    topAddon: 1,
-    bottomAddon: 50,
-  });
+  const { left, right } = getCurbPath(steeredPath, { steerOffset });
 
   ctx.fillStyle = color;
 
@@ -75,13 +69,6 @@ export function drawCurbMask(
     right.bottomX,
     right.bottomY,
   );
-
-  // ctx.beginPath();
-  // ctx.moveTo(...bottomLeft);
-  // ctx.quadraticCurveTo(...left);
-  // ctx.lineTo(right[2], right[3]);
-  // ctx.quadraticCurveTo(right[0], right[1], ...bottomRight);
-  // ctx.lineTo(...bottomLeft);
   ctx.fill();
 }
 
@@ -94,7 +81,7 @@ export function drawRoadLines(
   ctx.setLineDash([10]);
   ctx.lineDashOffset = moveOffset;
 
-  const { left, right } = applySteerOffset(path, {
+  const { left, right } = steerPath(path, {
     steerOffset,
   });
 
@@ -107,52 +94,4 @@ export function drawRoadLines(
   ctx.moveTo(right.bottomX, right.bottomY);
   ctx.quadraticCurveTo(right.controlX, right.controlY, right.topX, right.topY);
   ctx.stroke();
-}
-
-function applySteerOffset(
-  path: Path,
-  { steerOffset }: { steerOffset: number },
-): Path {
-  const { left, right } = path;
-
-  const adjustedSteerOffset = steerOffset * 1;
-
-  return {
-    ...path,
-    left: {
-      ...left,
-      bottomX: left.bottomX + adjustedSteerOffset,
-    },
-    right: {
-      ...right,
-      bottomX: right.bottomX + adjustedSteerOffset,
-    },
-  };
-}
-
-function applyCurbAddons(
-  path: Path,
-  {
-    topAddon,
-    bottomAddon,
-  }: {
-    topAddon: number;
-    bottomAddon: number;
-  },
-): Path {
-  const { left, right } = path;
-
-  return {
-    ...path,
-    left: {
-      ...left,
-      topX: left.topX - topAddon,
-      bottomX: left.bottomX - bottomAddon,
-    },
-    right: {
-      ...right,
-      topX: right.topX + topAddon,
-      bottomX: right.bottomX + bottomAddon,
-    },
-  };
 }

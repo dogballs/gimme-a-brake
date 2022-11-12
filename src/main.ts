@@ -10,18 +10,24 @@ import {
   STEER_TURN_COUNTER_FORCE,
 } from './config';
 import { InputControl, listenKeyboard } from './controls';
+import { drawCurve } from './curve';
 import { drawBackground } from './background';
+import { drawDecors } from './decor';
 import {
+  Fragment,
   straightFragment,
   createTurn,
   createUphill,
   createDownhill,
   lerpFragments,
 } from './fragment';
+import { loadImages } from './images';
 import { straightMap, coolMap, longLeftTurnMap } from './map';
+import { Path } from './path';
 import { drawCurbMask, drawRoadMask, drawRoadLines } from './road';
+import { Section } from './section';
 import { drawCurbStripes, drawGroundStripes, drawRoadStripes } from './stripes';
-import { Context2D, Path, Fragment, Section } from './types';
+import { Context2D } from './types';
 
 const canvas = document.querySelector('canvas');
 const ctx = canvas.getContext('2d');
@@ -38,8 +44,12 @@ canvas.addEventListener('click', (ev) => {
 
 const keyboardListener = listenKeyboard();
 
-const state = {
+const resources = {
   map: coolMap,
+  images: undefined,
+};
+
+const state = {
   moveSpeed: 0,
   moveOffset: 0,
   steerSpeed: 0,
@@ -51,6 +61,7 @@ const images = {
   car: undefined,
   bg1: undefined,
   bg2: undefined,
+  bush: undefined,
 };
 
 function draw() {
@@ -137,7 +148,7 @@ function draw() {
 }
 
 function getActiveSection() {
-  let activeSection: Section = state.map.sections.find((s) => {
+  let activeSection: Section = resources.map.sections.find((s) => {
     return state.moveOffset >= s.start && state.moveOffset <= s.start + s.size;
   });
   if (!activeSection || hasSectionEnded(activeSection)) {
@@ -147,22 +158,24 @@ function getActiveSection() {
 }
 
 function drawObjects({ path, yOverride }: { path: Path; yOverride?: number }) {
+  const { bgOffset, moveOffset, steerOffset } = state;
+
   // Draw the road stripes full width. Then cut it out and keep the area that is
   // actually covered by the road (the ground area will become transparent
   // again). Do it offscreen because we have to apply another mask and it's hard
   // to do on a single canvas.
   offCtx.globalCompositeOperation = 'source-over';
-  drawRoadStripes(offCtx, { moveOffset: state.moveOffset, yOverride });
+  drawRoadStripes(offCtx, { moveOffset, yOverride });
   offCtx.globalCompositeOperation = 'destination-in';
-  drawRoadMask(offCtx, path, { steerOffset: state.steerOffset });
+  drawRoadMask(offCtx, path, { steerOffset });
   ctx.drawImage(offCanvas, 0, 0);
 
   // Ditto for the road. Except the curbs are drawn to the main canvas behind
   // the already present road.
   offCtx.globalCompositeOperation = 'source-over';
-  drawCurbStripes(offCtx, { moveOffset: state.moveOffset, yOverride });
+  drawCurbStripes(offCtx, { moveOffset, yOverride });
   offCtx.globalCompositeOperation = 'destination-in';
-  drawCurbMask(offCtx, path, { steerOffset: state.steerOffset });
+  drawCurbMask(offCtx, path, { steerOffset });
   ctx.globalCompositeOperation = 'destination-over';
   ctx.drawImage(offCanvas, 0, 0);
 
@@ -170,20 +183,30 @@ function drawObjects({ path, yOverride }: { path: Path; yOverride?: number }) {
   // the road+curbs that were drawn on the previous step and only fill in the
   // ground stripes on the sides.
   ctx.globalCompositeOperation = 'destination-over';
-  drawGroundStripes(ctx, { moveOffset: state.moveOffset, yOverride });
+  drawGroundStripes(ctx, { moveOffset, yOverride });
 
   // Then draw everything on top
   ctx.globalCompositeOperation = 'source-over';
 
   drawBackground(ctx, {
-    bgImage: images.bg2,
-    bgOffset: state.bgOffset,
+    bgImage: resources.images.bg2,
+    bgOffset,
     yOverride,
   });
 
   // drawHorizon({ yOverride });
   // drawGrid();
+  drawDecors(ctx, {
+    decors: resources.map.decors,
+    images: resources.images,
+    path,
+    moveOffset,
+    steerOffset,
+    yOverride,
+  });
+
   drawCar();
+
   drawDebug();
 }
 function hasSectionEnded(section: Section) {
@@ -211,6 +234,7 @@ function drawGrid() {
 }
 
 function drawDebug({ section }: { section?: string } = {}) {
+  ctx.setLineDash([]);
   ctx.strokeStyle = '#000';
   ctx.font = '8px serif';
 
@@ -223,7 +247,7 @@ function drawDebug({ section }: { section?: string } = {}) {
 }
 
 function drawCar() {
-  const image = images.car;
+  const image = resources.images.car;
   const scale = 0.6;
 
   const centerX = (IW - image.width * scale) / 2;
@@ -232,23 +256,11 @@ function drawCar() {
   const x = centerX + steerOffset;
   const y = 130;
 
-  ctx.drawImage(images.car, x, y, image.width * scale, image.height * scale);
-}
-
-async function loadImage(imagePath: string) {
-  return new Promise<HTMLImageElement>((resolve) => {
-    const image = new Image();
-    image.src = imagePath;
-    image.addEventListener('load', () => {
-      resolve(image);
-    });
-  });
+  ctx.drawImage(image, x, y, image.width * scale, image.height * scale);
 }
 
 async function main() {
-  images.car = await loadImage('data/graphics/car.png');
-  images.bg1 = await loadImage('data/graphics/bg1.png');
-  images.bg2 = await loadImage('data/graphics/bg2.png');
+  resources.images = await loadImages();
 
   loop();
 }
