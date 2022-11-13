@@ -1,12 +1,18 @@
-import { HW, HH } from './config';
-import { Curve, leftRoadCurve, rightRoadCurve } from './curve';
+import { HW, HH, RS } from './config';
+import {
+  Curve,
+  leftRoadCurve,
+  rightRoadCurve,
+  DEFAULT_BOTTOM_LEFT_X,
+  DEFAULT_BOTTOM_RIGHT_X,
+} from './curve';
 import { Path, lerpPath } from './path';
 
 export type Fragment = Path & { end: number };
 
 export const straightFragment: Fragment = {
-  left: leftRoadCurve(HW - 10, HH, HW - 10, HH),
-  right: rightRoadCurve(HW + 10, HH, HW + 10, HH),
+  left: leftRoadCurve(HW - 10 * RS, HH, HW - 10 * RS, HH),
+  right: rightRoadCurve(HW + 10 * RS, HH, HW + 10 * RS, HH),
   end: 0,
 };
 
@@ -31,17 +37,17 @@ export function createDownhill({
     {
       left: leftRoadCurve(HW, HH, HW - 10, y),
       right: rightRoadCurve(HW, HH, HW + 10, y),
-      end: 100,
+      end: 100 * RS,
     },
     {
       left: leftRoadCurve(HW - 25, HH + 25, HW - 10, minY),
       right: rightRoadCurve(HW + 25, HH + 25, HW + 10, minY),
-      end: 200,
+      end: 200 * RS,
     },
     {
       left: leftRoadCurve(HW - 25, HH + 15, HW - 10, minY),
       right: rightRoadCurve(HW + 25, HH + 15, HW + 10, minY),
-      end: size - 200,
+      end: size - 200 * RS,
     },
     // {
     //   left: leftRoadCurve(HW - 30, HH + 25, HW - 10, y),
@@ -100,37 +106,37 @@ export function createUphill({
     // },
     {
       left: leftRoadCurve(
-        HW - 120 + cxCorrection,
-        HH + 30,
-        HW - 90 + xCorrection,
+        HW - 120 * RS + cxCorrection,
+        HH + 30 * RS,
+        HW - 90 * RS + xCorrection,
         maxY,
-        -180 - bottomLeftCorrection,
+        DEFAULT_BOTTOM_LEFT_X - bottomLeftCorrection,
       ),
       right: rightRoadCurve(
-        HW + 120 + cxCorrection,
-        HH + 30,
-        HW + 90 + xCorrection,
+        HW + 120 * RS + cxCorrection,
+        HH + 30 * RS,
+        HW + 90 * RS + xCorrection,
         maxY,
-        560 - bottomLeftCorrection,
+        DEFAULT_BOTTOM_RIGHT_X - bottomLeftCorrection,
       ),
-      end: 400,
+      end: 400 * RS,
     },
     {
       left: leftRoadCurve(
-        HW - 120 + cxCorrection,
-        HH + 30,
-        HW - 90 + xCorrection,
+        HW - 120 * RS + cxCorrection,
+        HH + 30 * RS,
+        HW - 90 * RS + xCorrection,
         maxY,
-        -180 - bottomLeftCorrection,
+        DEFAULT_BOTTOM_LEFT_X - bottomLeftCorrection,
       ),
       right: rightRoadCurve(
-        HW + 120 + cxCorrection,
-        HH + 30,
-        HW + 90 + xCorrection,
+        HW + 120 * RS + cxCorrection,
+        HH + 30 * RS,
+        HW + 90 * RS + xCorrection,
         maxY,
-        560 - bottomLeftCorrection,
+        DEFAULT_BOTTOM_RIGHT_X - bottomLeftCorrection,
       ),
-      end: size - 200,
+      end: size - 200 * RS,
     },
     {
       ...straightFragment,
@@ -152,7 +158,7 @@ export function createTurn({
   direction: 'right' | 'left';
   steerOffset: number;
 }): Fragment[] {
-  console.assert(size >= 600, 'turn too quick: %d', size);
+  console.assert(size >= 600 * RS, 'turn too quick: %d', size);
   let fragments: Fragment[] = [
     // {
     //   left: [HW - 10, HH - 5, HW - 10, HH],
@@ -160,24 +166,24 @@ export function createTurn({
     //   end: 100,
     // },
     {
-      left: leftRoadCurve(HW - 20, HH - 5, HW + 20, HH),
-      right: rightRoadCurve(HW + 10, HH, HW + 20, HH),
-      end: 100,
+      left: leftRoadCurve(HW - 20 * RS, HH - 5 * RS, HW + 20 * RS, HH),
+      right: rightRoadCurve(HW + 10 * RS, HH, HW + 20 * RS, HH),
+      end: 100 * RS,
     },
     {
-      left: leftRoadCurve(HW - 50, HH - 5, HW + 115, HH),
-      right: rightRoadCurve(HW - 15, HH, HW + 115, HH),
-      end: 200,
+      left: leftRoadCurve(HW - 50 * RS, HH - 5 * RS, HW + 115 * RS, HH),
+      right: rightRoadCurve(HW - 15 * RS, HH, HW + 115 * RS, HH),
+      end: 200 * RS,
     },
     {
-      left: leftRoadCurve(HW - 30, HH - 5, HW + 80, HH),
-      right: rightRoadCurve(HW - 15, HH + 5, HW + 115, HH),
-      end: size - 200,
+      left: leftRoadCurve(HW - 30 * RS, HH - 5 * RS, HW + 80 * RS, HH),
+      right: rightRoadCurve(HW - 15 * RS, HH + 5 * RS, HW + 115 * RS, HH),
+      end: size - 200 * RS,
     },
     {
-      left: leftRoadCurve(HW - 30, HH - 5, HW + 60, HH),
-      right: rightRoadCurve(HW + 0, HH + 20, HW + 80, HH),
-      end: size - 100,
+      left: leftRoadCurve(HW - 30 * RS, HH - 5 * RS, HW + 60 * RS, HH),
+      right: rightRoadCurve(HW + 0 * RS, HH + 20 * RS, HW + 80 * RS, HH),
+      end: size - 100 * RS,
     },
     {
       ...straightFragment,

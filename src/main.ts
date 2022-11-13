@@ -9,6 +9,7 @@ import {
   STEER_LIMIT,
   STEER_TURN_COUNTER_FORCE,
 } from './config';
+import { drawCar } from './car';
 import { InputControl, listenKeyboard } from './controls';
 import { drawCurve } from './curve';
 import { drawBackground } from './background';
@@ -212,7 +213,7 @@ function drawObjects({
     yOverride,
   });
 
-  drawCar();
+  drawCar(ctx, { images: resources.images, steerOffset });
 
   drawDebug();
 }
@@ -251,19 +252,6 @@ function drawDebug({ section }: { section?: string } = {}) {
 
   const activeSection = getActiveSection();
   ctx.strokeText(`section kind: ${activeSection.kind}`, 5, 20);
-}
-
-function drawCar() {
-  const image = resources.images.car;
-  const scale = 0.6;
-
-  const centerX = (IW - image.width * scale) / 2;
-  const steerOffset = -1 * state.steerOffset * 0.02;
-
-  const x = centerX + steerOffset;
-  const y = 130;
-
-  ctx.drawImage(image, x, y, image.width * scale, image.height * scale);
 }
 
 async function main() {

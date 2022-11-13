@@ -1,11 +1,12 @@
-import { IH } from './config';
+import { IW, IH, RENDER_SCALE } from './config';
 import { Context2D } from './types';
 
 // Line equation:
 // left: 5x + 18y = 2700
 // right: 18 y - 5 x = 800
-const DEFAULT_BOTTOM_LEFT_X = -180;
-const DEFAULT_BOTTOM_RIGHT_X = 560;
+export const DEFAULT_BOTTOM_DELTA = 180 * RENDER_SCALE;
+export const DEFAULT_BOTTOM_LEFT_X = -DEFAULT_BOTTOM_DELTA;
+export const DEFAULT_BOTTOM_RIGHT_X = IW + DEFAULT_BOTTOM_DELTA;
 
 export type Curve = {
   controlX: number;

@@ -1,4 +1,4 @@
-import { IH, HH } from './config';
+import { IH, HH, RENDER_SCALE } from './config';
 import {
   translateCurve,
   translateCurveUniform,
@@ -105,7 +105,7 @@ export function drawDecors(
 
       const image = imageByKind(images, decor.kind);
 
-      let imageScale = Math.max(0, 1 - 0.95 * hhDecorT);
+      let imageScale = Math.max(0, 1 - (1 - 0.1 * RENDER_SCALE) * hhDecorT);
       if (roadHeight > HH && decorY < HH) {
         imageScale = 0.05;
       }

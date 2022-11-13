@@ -1,4 +1,4 @@
-import { IW, IH, HH } from './config';
+import { IW, IH, HH, RENDER_SCALE } from './config';
 import { Context2D } from './types';
 
 type DrawStripesOpts = {
@@ -21,6 +21,8 @@ type TexturedStripe = Stripe & {
 // when the stripes are not moving.
 // TODO: figure out another way to move stripes
 const SPEED_EFFECT_MULTIPLIER = 1;
+
+const NEAR_TEXTURE_HEIGHT = 32 * RENDER_SCALE;
 
 export function drawGroundStripes(ctx: Context2D, opts: DrawStripesOpts) {
   const colors: DrawStripesColors = ['#889827', '#9aa545'];
@@ -113,7 +115,7 @@ export function stripesToY(
 
 export function generateStripes({
   roadHeight,
-  nearTextureHeight = 32,
+  nearTextureHeight = NEAR_TEXTURE_HEIGHT,
 }: {
   roadHeight: number;
   nearTextureHeight?: number;

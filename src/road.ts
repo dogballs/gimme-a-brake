@@ -1,4 +1,4 @@
-import { IH } from './config';
+import { IH, RS } from './config';
 import { Path, steerPath, translatePath } from './path';
 import { Context2D } from './types';
 
@@ -39,8 +39,8 @@ export function getCurbPath(
 ) {
   return translatePath(path, {
     // TODO: maybe make it wider for uphills
-    top: 1,
-    bottom: 50,
+    top: 1 * RS,
+    bottom: 50 * RS,
   });
 }
 
@@ -49,9 +49,6 @@ export function drawCurbMask(
   path: Path,
   { steerOffset, color = 'black' }: Omit<DrawRoadOpts, 'moveOffset'>,
 ) {
-  const topWidth = 10;
-  const bottomWidth = 40;
-
   const steeredPath = steerPath(path, {
     steerOffset,
   });
