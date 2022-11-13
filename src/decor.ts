@@ -1,6 +1,7 @@
 import { IH, HH } from './config';
 import {
   translateCurve,
+  translateCurveUniform,
   steerCurve,
   pointOnCurve,
   drawCurve,
@@ -10,18 +11,22 @@ import { ImageMap } from './images';
 import { getCurbPath } from './road';
 import { generateStripes, stripesToY, stripesUnscaledHeight } from './stripes';
 import { Path } from './path';
+import { randomElement, randomNumber } from './random';
 import { Section } from './section';
 import { Context2D } from './types';
 
+type DecorKind = 'bush' | 'tree' | 'rock';
+type DecorPlacement = 'left' | 'right';
+
 export type Decor = {
-  kind: 'bush';
-  placement: 'left' | 'right';
+  kind: DecorKind;
+  placement: DecorPlacement;
   start: number;
+  driftOffset?: number;
 };
 
 // TODO: they disappear when the bottom of the image hits the bottom of the screen
 //   -> better top of the image hits the bottom of the screen
-// TODO: variation in X position
 // TODO: variation in sizes
 // TODO: z-index with the car?
 export function drawDecors(
@@ -76,6 +81,11 @@ export function drawDecors(
         bottom: 20 * placementSign,
       });
 
+      const driftedCurve = translateCurveUniform(
+        decorCurve,
+        (decor.driftOffset ?? 0) * placementSign,
+      );
+
       const inOffset = moveOffset - decor.start + travelDistance;
       const stripesY = stripesToY(stripes, { inOffset });
       if (stripesY === undefined) {
@@ -83,14 +93,17 @@ export function drawDecors(
       }
 
       const decorY = IH - stripesY;
-      const decorX = curveXByY(steerCurve(decorCurve, { steerOffset }), decorY);
+      const decorX = curveXByY(
+        steerCurve(driftedCurve, { steerOffset }),
+        decorY,
+      );
       if (decorX === undefined) {
         continue;
       }
 
       const hhDecorT = stripesY / HH;
 
-      const image = images.bush;
+      const image = imageByKind(images, decor.kind);
 
       let imageScale = Math.max(0, 1 - 0.95 * hhDecorT);
       if (roadHeight > HH && decorY < HH) {
@@ -102,7 +115,58 @@ export function drawDecors(
       const imageX = decor.placement === 'right' ? decorX : decorX - imageWidth;
       const imageY = decorY - imageHeight;
 
-      ctx.drawImage(images.bush, imageX, imageY, imageWidth, imageHeight);
+      ctx.drawImage(image, imageX, imageY, imageWidth, imageHeight);
     }
   }
+}
+
+function imageByKind(images: ImageMap, kind: DecorKind) {
+  switch (kind) {
+    case 'bush':
+      return images.bush;
+    case 'tree':
+      return images.tree;
+    case 'rock':
+      return images.rock;
+    default:
+      throw new Error(`Unsupported decor kind: "${kind}"`);
+  }
+}
+
+export function generateDecor({
+  startOffset,
+  // inBetweenOffset,
+  size,
+  amount,
+}: {
+  startOffset: number;
+  // inBetweenOffset: number;
+  size: number;
+  amount: number;
+}) {
+  const decors: Decor[] = [];
+
+  const areaSize = size / amount;
+
+  // Go reverse to have the farthest decors in the array first, which means the
+  // closest will be rendered last, which is better for zindex.
+  for (let i = amount - 1; i >= 0; i--) {
+    const areaStart = i * areaSize;
+    const inAreaOffset = randomNumber(0, areaSize);
+
+    const start = startOffset + areaStart + inAreaOffset;
+    const kind = randomElement<DecorKind>(['bush', 'tree', 'rock']);
+    const driftOffset = randomNumber(0, 50);
+    const flipX = randomElement([true, false]);
+    const placement = randomElement<DecorPlacement>(['left', 'right']);
+
+    decors.push({
+      start,
+      kind,
+      placement,
+      driftOffset,
+    });
+  }
+
+  return decors;
 }

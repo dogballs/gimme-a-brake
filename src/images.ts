@@ -8,6 +8,8 @@ export async function loadImages(): Promise<ImageMap> {
     bg1: await loadImage('data/graphics/bg1.png'),
     bg2: await loadImage('data/graphics/bg2.png'),
     bush: await loadImage('data/graphics/bush.png'),
+    tree: await loadImage('data/graphics/tree.png'),
+    rock: await loadImage('data/graphics/rock.png'),
   };
 }
 

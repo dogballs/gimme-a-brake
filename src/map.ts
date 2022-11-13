@@ -1,4 +1,4 @@
-import { Decor } from './decor';
+import { Decor, generateDecor } from './decor';
 import { Section } from './section';
 
 type Map = {
@@ -9,10 +9,11 @@ type Map = {
 export const straightMap: Map = {
   sections: [],
   decors: [
-    ...generateBushes({
+    ...generateDecor({
       startOffset: 100,
-      inBetweenOffset: 200,
+      amount: 1,
       size: 5000,
+      // inBetweenOffset: 200,
     }),
   ],
 };
@@ -27,11 +28,11 @@ export const longUphillMap: Map = {
     },
   ],
   decors: [
-    ...generateBushes({
-      startOffset: 0,
-      inBetweenOffset: 200,
-      size: 2000,
-    }),
+    // ...generateDecor({
+    //   startOffset: 0,
+    //   inBetweenOffset: 200,
+    //   size: 2000,
+    // }),
   ],
 };
 
@@ -72,41 +73,10 @@ export const coolMap: Map = {
     },
   ],
   decors: [
-    ...generateBushes({
-      startOffset: 200,
-      inBetweenOffset: 100,
+    ...generateDecor({
+      startOffset: 300,
       size: 5000,
+      amount: 100,
     }),
   ],
 };
-
-function generateBushes({
-  startOffset,
-  inBetweenOffset,
-  size,
-}: {
-  startOffset: number;
-  inBetweenOffset: number;
-  size: number;
-}) {
-  const decors: Decor[] = [];
-
-  for (
-    let start = startOffset;
-    start <= startOffset + size;
-    start += inBetweenOffset
-  ) {
-    decors.push({
-      kind: 'bush',
-      start,
-      placement: 'left',
-    });
-    decors.push({
-      kind: 'bush',
-      start,
-      placement: 'right',
-    });
-  }
-
-  return decors;
-}

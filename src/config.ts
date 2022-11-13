@@ -9,7 +9,7 @@ export const HH = IH / 2; // half = 100
 export const STEER_LIMIT = Infinity;
 export const STEER_TURN_COUNTER_FORCE = 3;
 
-export const MOVE_SPEED = 5;
+export const MOVE_SPEED = 4;
 export const STEER_SPEED = 5;
 
 export const BG_SPEED = 2;
