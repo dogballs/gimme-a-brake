@@ -17,6 +17,24 @@ export const straightMap: Map = {
   ],
 };
 
+export const longUphillMap: Map = {
+  sections: [
+    {
+      kind: 'downhill',
+      start: 100,
+      size: 1000,
+      steepness: 30,
+    },
+  ],
+  decors: [
+    ...generateBushes({
+      startOffset: 0,
+      inBetweenOffset: 100,
+      size: 2000,
+    }),
+  ],
+};
+
 export const longLeftTurnMap: Map = {
   sections: [
     {

@@ -120,7 +120,7 @@ export function curveXByY(curve: Curve, y: number) {
       return p.x;
     }
   }
-  return -1;
+  return undefined;
 }
 
 export function drawCurve(

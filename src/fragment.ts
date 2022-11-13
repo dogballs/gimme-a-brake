@@ -96,7 +96,7 @@ export function createUphill({
         y,
         560 - bottomLeftCorrection,
       ),
-      end: 200,
+      end: 300,
     },
     {
       left: leftRoadCurve(
@@ -113,7 +113,7 @@ export function createUphill({
         maxY,
         560 - bottomLeftCorrection,
       ),
-      end: 300,
+      end: 400,
     },
     {
       left: leftRoadCurve(

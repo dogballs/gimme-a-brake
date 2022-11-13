@@ -10,6 +10,7 @@ import { ImageMap } from './images';
 import { getCurbPath } from './road';
 import { generateStripes, stripesToY, stripesUnscaledHeight } from './stripes';
 import { Path } from './path';
+import { Section } from './section';
 import { Context2D } from './types';
 
 export type Decor = {
@@ -22,13 +23,14 @@ export type Decor = {
 //   -> better top of the image hits the bottom of the screen
 // TODO: variation in X position
 // TODO: variation in sizes
-// TODO: does not behave nice uphills/downhills
+// TODO: z-index with the car?
 export function drawDecors(
   ctx: Context2D,
   {
     decors,
     images,
     path,
+    section,
     moveOffset,
     steerOffset,
     yOverride,
@@ -36,17 +38,32 @@ export function drawDecors(
     decors: Decor[];
     images: ImageMap;
     path: Path;
+    section: Section;
     moveOffset: number;
     steerOffset: number;
     yOverride?: number;
   },
 ) {
-  const roadHeight = IH - (yOverride ?? HH);
+  let roadHeight = IH - (yOverride ?? HH);
+
+  // Not using yOverride because it will re-create the stripes when the road
+  // is transitioning from straight to uphill/downhill.
+  if (section.kind === 'uphill') {
+    roadHeight = HH;
+  } else if (section.kind === 'downhill') {
+    roadHeight = HH + section.steepness;
+  }
+
   const stripes = generateStripes({ roadHeight });
-  const decorWindow = stripesUnscaledHeight(stripes);
+  const travelDistance = stripesUnscaledHeight(stripes);
 
   for (const decor of decors) {
-    if (moveOffset >= decor.start && moveOffset <= decor.start + decorWindow) {
+    // Offset appearance so that decor positioned at 0 in the map is actually
+    // rendered visually at 0 right from the start.
+    const appearStart = decor.start - travelDistance;
+    const appearEnd = decor.start;
+
+    if (moveOffset >= appearStart && moveOffset <= appearEnd) {
       const curbPath = getCurbPath(path, { steerOffset });
 
       const sourceCurve =
@@ -59,16 +76,27 @@ export function drawDecors(
         bottom: 20 * placementSign,
       });
 
-      const inOffset = moveOffset - decor.start;
+      const inOffset = moveOffset - decor.start + travelDistance;
       const stripesY = stripesToY(stripes, { inOffset });
-      const decorT = stripesY / roadHeight;
-      const decorY = IH - stripesY;
+      if (stripesY === undefined) {
+        continue;
+      }
 
+      const decorY = IH - stripesY;
       const decorX = curveXByY(steerCurve(decorCurve, { steerOffset }), decorY);
+      if (decorX === undefined) {
+        continue;
+      }
+
+      const hhDecorT = stripesY / HH;
 
       const image = images.bush;
 
-      const imageScale = 1 - 0.95 * decorT;
+      let imageScale = Math.max(0, 1 - 0.95 * hhDecorT);
+      if (roadHeight > HH && decorY < HH) {
+        imageScale = 0.05;
+      }
+
       const imageWidth = image.width * imageScale;
       const imageHeight = image.height * imageScale;
       const imageX = decor.placement === 'right' ? decorX : decorX - imageWidth;

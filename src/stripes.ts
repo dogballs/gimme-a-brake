@@ -17,6 +17,11 @@ type TexturedStripe = Stripe & {
   textureIndex: number;
 };
 
+// It messes with the offsets but fixes weird transitions for uphill/downhill
+// when the stripes are not moving.
+// TODO: figure out another way to move stripes
+const SPEED_EFFECT_MULTIPLIER = 1;
+
 export function drawGroundStripes(ctx: Context2D, opts: DrawStripesOpts) {
   const colors: DrawStripesColors = ['#889827', '#9aa545'];
   drawStripes(ctx, { ...opts, colors });
@@ -44,10 +49,13 @@ function drawStripes(
   } & DrawStripesOpts,
 ) {
   const roadHeight = IH - (yOverride ?? HH);
+  // const roadHeight = HH;
+
+  const spedUpMoveOffset = moveOffset * SPEED_EFFECT_MULTIPLIER;
 
   const stripes = generateStripes({ roadHeight });
   const texturedStripes = textureSplitStripes(stripes, {
-    moveOffset,
+    moveOffset: spedUpMoveOffset,
   });
 
   for (const stripe of texturedStripes) {
@@ -78,15 +86,22 @@ export function stripesToY(
   let scaledY = 0;
 
   const unscaledHeight = stripes.length * nearTextureHeight;
-  const unscaledIn = unscaledHeight - inOffset;
+  const unscaledIn = unscaledHeight - inOffset * SPEED_EFFECT_MULTIPLIER;
   const unscaledT = unscaledIn / nearTextureHeight;
 
   const stripeIndex = Math.floor(unscaledT);
   const inStripeT = unscaledT % 1;
 
+  if (stripeIndex < 0) {
+    const firstStripe = stripes[0];
+    return undefined;
+    // return firstStripe.y2;
+  }
+
   if (stripeIndex > stripes.length - 1) {
     const lastStripe = stripes[stripes.length - 1];
-    return lastStripe.y2;
+    return undefined;
+    // return lastStripe.y2;
   }
 
   const stripe = stripes[stripeIndex];

@@ -22,7 +22,7 @@ import {
   lerpFragments,
 } from './fragment';
 import { loadImages } from './images';
-import { straightMap, coolMap, longLeftTurnMap } from './map';
+import { straightMap, coolMap, longLeftTurnMap, longUphillMap } from './map';
 import { Path } from './path';
 import { drawCurbMask, drawRoadMask, drawRoadLines } from './road';
 import { Section } from './section';
@@ -67,25 +67,22 @@ const images = {
 function draw() {
   ctx.clearRect(0, 0, IW, IH);
 
-  const activeSection = getActiveSection();
-  const inSectionOffset = state.moveOffset - activeSection.start;
+  const section = getActiveSection();
+  const inSectionOffset = state.moveOffset - section.start;
 
-  if (activeSection.kind === 'straight') {
-    drawObjects({ path: straightFragment });
+  if (section.kind === 'straight') {
+    drawObjects({ path: straightFragment, section });
     return;
   }
 
-  if (
-    activeSection.kind === 'turn-right' ||
-    activeSection.kind === 'turn-left'
-  ) {
+  if (section.kind === 'turn-right' || section.kind === 'turn-left') {
     if (state.moveSpeed > 0) {
-      if (activeSection.kind === 'turn-left') {
+      if (section.kind === 'turn-left') {
         state.steerOffset -= STEER_TURN_COUNTER_FORCE;
         if (inSectionOffset > 200) {
           state.bgOffset -= BG_SPEED;
         }
-      } else if (activeSection.kind === 'turn-right') {
+      } else if (section.kind === 'turn-right') {
         state.steerOffset += STEER_TURN_COUNTER_FORCE;
         if (inSectionOffset > 200) {
           state.bgOffset += BG_SPEED;
@@ -94,8 +91,8 @@ function draw() {
     }
 
     const fragments = createTurn({
-      size: activeSection.size,
-      direction: activeSection.kind === 'turn-right' ? 'right' : 'left',
+      size: section.size,
+      direction: section.kind === 'turn-right' ? 'right' : 'left',
       steerOffset: state.steerOffset,
     });
 
@@ -104,15 +101,15 @@ function draw() {
       inOffset: inSectionOffset,
     });
 
-    drawObjects({ path });
+    drawObjects({ path, section });
     return;
   }
 
-  if (activeSection.kind === 'downhill') {
+  if (section.kind === 'downhill') {
     const fragments = createDownhill({
-      size: activeSection.size,
+      size: section.size,
       inOffset: inSectionOffset,
-      steepness: activeSection.steepness,
+      steepness: section.steepness,
       steerOffset: state.steerOffset,
     });
 
@@ -123,15 +120,15 @@ function draw() {
 
     const yOverride = path.left.topY;
 
-    drawObjects({ path, yOverride });
+    drawObjects({ path, section, yOverride });
     return;
   }
 
-  if (activeSection.kind === 'uphill') {
+  if (section.kind === 'uphill') {
     const fragments = createUphill({
-      size: activeSection.size,
+      size: section.size,
       inOffset: inSectionOffset,
-      steepness: activeSection.steepness,
+      steepness: section.steepness,
       steerOffset: state.steerOffset,
     });
 
@@ -142,7 +139,7 @@ function draw() {
 
     const yOverride = path.left.topY;
 
-    drawObjects({ path, yOverride });
+    drawObjects({ path, section, yOverride });
     return;
   }
 }
@@ -157,7 +154,15 @@ function getActiveSection() {
   return activeSection;
 }
 
-function drawObjects({ path, yOverride }: { path: Path; yOverride?: number }) {
+function drawObjects({
+  path,
+  section,
+  yOverride,
+}: {
+  path: Path;
+  section: Section;
+  yOverride?: number;
+}) {
   const { bgOffset, moveOffset, steerOffset } = state;
 
   // Draw the road stripes full width. Then cut it out and keep the area that is
@@ -196,10 +201,12 @@ function drawObjects({ path, yOverride }: { path: Path; yOverride?: number }) {
 
   // drawHorizon({ yOverride });
   // drawGrid();
+
   drawDecors(ctx, {
     decors: resources.map.decors,
     images: resources.images,
     path,
+    section,
     moveOffset,
     steerOffset,
     yOverride,
