@@ -43,11 +43,11 @@ export function createDownhill({
       right: rightRoadCurve(HW + 25, HH + 15, HW + 10, minY),
       end: size - 200,
     },
-    {
-      left: leftRoadCurve(HW - 30, HH + 25, HW - 10, y),
-      right: rightRoadCurve(HW + 30, HH + 25, HW + 10, y),
-      end: size - 100,
-    },
+    // {
+    //   left: leftRoadCurve(HW - 30, HH + 25, HW - 10, y),
+    //   right: rightRoadCurve(HW + 30, HH + 25, HW + 10, y),
+    //   end: size - 100,
+    // },
     {
       ...straightFragment,
       end: size,
@@ -81,23 +81,23 @@ export function createUphill({
   const cxCorrection = steerOffset * 0.2;
 
   let fragments: Fragment[] = [
-    {
-      left: leftRoadCurve(
-        HW - 70,
-        y - 5,
-        HW - 60 + xCorrection,
-        y,
-        -180 - bottomLeftCorrection,
-      ),
-      right: rightRoadCurve(
-        HW + 70,
-        y - 5,
-        HW + 60 + xCorrection,
-        y,
-        560 - bottomLeftCorrection,
-      ),
-      end: 300,
-    },
+    // {
+    //   left: leftRoadCurve(
+    //     HW - 70,
+    //     y - 5,
+    //     HW - 60 + xCorrection,
+    //     y,
+    //     -180 - bottomLeftCorrection,
+    //   ),
+    //   right: rightRoadCurve(
+    //     HW + 70,
+    //     y - 5,
+    //     HW + 60 + xCorrection,
+    //     y,
+    //     560 - bottomLeftCorrection,
+    //   ),
+    //   end: 300,
+    // },
     {
       left: leftRoadCurve(
         HW - 120 + cxCorrection,

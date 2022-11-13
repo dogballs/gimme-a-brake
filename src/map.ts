@@ -11,7 +11,7 @@ export const straightMap: Map = {
   decors: [
     ...generateBushes({
       startOffset: 100,
-      inBetweenOffset: 100,
+      inBetweenOffset: 200,
       size: 5000,
     }),
   ],
@@ -29,7 +29,7 @@ export const longUphillMap: Map = {
   decors: [
     ...generateBushes({
       startOffset: 0,
-      inBetweenOffset: 100,
+      inBetweenOffset: 200,
       size: 2000,
     }),
   ],
@@ -73,7 +73,7 @@ export const coolMap: Map = {
   ],
   decors: [
     ...generateBushes({
-      startOffset: 100,
+      startOffset: 200,
       inBetweenOffset: 100,
       size: 5000,
     }),
