@@ -9,7 +9,7 @@ import {
   STEER_LIMIT,
   STEER_TURN_COUNTER_FORCE,
 } from './config';
-import { drawCar, updateMoveSpeed, MoveSpeedState } from './car';
+import { drawCar, updateMoveSpeed, MoveSpeedState, MoveAudio } from './car';
 import { InputControl, listenKeyboard } from './controls';
 import { drawCurve } from './curve';
 import { drawBackground } from './background';
@@ -44,6 +44,12 @@ canvas.addEventListener('click', (ev) => {
 });
 
 const keyboardListener = listenKeyboard();
+
+const muteControl = document.querySelector<HTMLInputElement>(
+  '[data-control="mute"]',
+);
+const audioCtx = new AudioContext();
+const moveAudio = new MoveAudio(audioCtx);
 
 const resources = {
   map: coolMap,
@@ -298,6 +304,15 @@ function loop() {
   }
 
   draw();
+
+  const isMuted = !muteControl.checked;
+  if (isMuted && audioCtx.state === 'running') {
+    audioCtx.suspend();
+  } else if (!isMuted && audioCtx.state !== 'running') {
+    audioCtx.resume();
+  }
+
+  moveAudio.update({ isMuted, ...state.moveSpeed });
 
   requestAnimationFrame(loop);
 }

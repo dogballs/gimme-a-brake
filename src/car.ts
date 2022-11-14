@@ -64,8 +64,10 @@ export function updateMoveSpeed({
     }
   }
 
+  const maxGear = Number(Object.keys(MOVE_GEARS).pop());
+
   if (speed > gearDesc.endAt) {
-    gear = Math.min(gear + 1, 5);
+    gear = Math.min(gear + 1, maxGear);
   } else if (speed < gearDesc.startAt) {
     gear = Math.max(gear - 1, 1);
   }
@@ -77,4 +79,26 @@ export function updateMoveSpeed({
     speedChange,
     speed,
   };
+}
+
+export class MoveAudio {
+  private readonly osc: OscillatorNode;
+  private isMuted: boolean = true;
+
+  constructor(audioCtx: AudioContext) {
+    this.osc = audioCtx.createOscillator();
+    this.osc.type = 'sawtooth';
+
+    const biquadFilter = audioCtx.createBiquadFilter();
+
+    this.osc.connect(biquadFilter);
+    this.osc.start();
+
+    biquadFilter.connect(audioCtx.destination);
+  }
+
+  update({ isMuted, speed, gear }: { isMuted: boolean } & MoveSpeedState) {
+    this.osc.detune.value = 0 + speed;
+    this.osc.frequency.value = 30 + speed * 1 * (gear * 3);
+  }
 }

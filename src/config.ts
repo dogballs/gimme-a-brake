@@ -21,9 +21,9 @@ export const MOVE_ACCELERATION = 0.03;
 export const MOVE_DECELERATION = 0.05;
 
 export const MOVE_GEARS = {
-  1: { delim: 3, startAt: 0, endAt: 1.1 },
-  2: { delim: 4, startAt: 1, endAt: 2.6 },
-  3: { delim: 5, startAt: 2.5, endAt: 4.1 },
-  4: { delim: 6, startAt: 4, endAt: 6.1 },
-  5: { delim: 7, startAt: 6, endAt: 8 },
+  1: { delim: 4, startAt: 0, endAt: 1.1 },
+  2: { delim: 5, startAt: 1, endAt: 2.6 },
+  3: { delim: 6, startAt: 2.5, endAt: 4.1 },
+  4: { delim: 7, startAt: 4, endAt: 6.1 },
+  5: { delim: 8, startAt: 6, endAt: 8 },
 };
