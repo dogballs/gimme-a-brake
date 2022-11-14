@@ -16,3 +16,14 @@ export const MOVE_SPEED = 4 * RS;
 export const STEER_SPEED = 5 * RS;
 
 export const BG_SPEED = 2 * RS;
+
+export const MOVE_ACCELERATION = 0.03;
+export const MOVE_DECELERATION = 0.05;
+
+export const MOVE_GEARS = {
+  1: { delim: 3, startAt: 0, endAt: 1.1 },
+  2: { delim: 4, startAt: 1, endAt: 2.6 },
+  3: { delim: 5, startAt: 2.5, endAt: 4.1 },
+  4: { delim: 6, startAt: 4, endAt: 6.1 },
+  5: { delim: 7, startAt: 6, endAt: 8 },
+};

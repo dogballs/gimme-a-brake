@@ -9,7 +9,7 @@ import {
   STEER_LIMIT,
   STEER_TURN_COUNTER_FORCE,
 } from './config';
-import { drawCar } from './car';
+import { drawCar, updateMoveSpeed, MoveSpeedState } from './car';
 import { InputControl, listenKeyboard } from './controls';
 import { drawCurve } from './curve';
 import { drawBackground } from './background';
@@ -50,8 +50,18 @@ const resources = {
   images: undefined,
 };
 
-const state = {
-  moveSpeed: 0,
+const state: {
+  moveSpeed: MoveSpeedState;
+  moveOffset: number;
+  steerSpeed: number;
+  steerOffset: number;
+  bgOffset: number;
+} = {
+  moveSpeed: {
+    gear: 1,
+    speedChange: 0,
+    speed: 0,
+  },
   moveOffset: 0,
   steerSpeed: 0,
   steerOffset: 0,
@@ -77,7 +87,7 @@ function draw() {
   }
 
   if (section.kind === 'turn-right' || section.kind === 'turn-left') {
-    if (state.moveSpeed > 0) {
+    if (state.moveSpeed.speed > 0) {
       if (section.kind === 'turn-left') {
         state.steerOffset -= STEER_TURN_COUNTER_FORCE;
         if (inSectionOffset > 200) {
@@ -246,12 +256,18 @@ function drawDebug({ section }: { section?: string } = {}) {
   ctx.strokeStyle = '#000';
   ctx.font = '8px serif';
 
-  ctx.strokeText(`move offset: ${state.moveOffset}`, 5, 10);
-  ctx.strokeText(`steer: ${state.steerOffset}`, 5, 30);
-  ctx.strokeText(`bg: ${state.bgOffset}`, 5, 40);
-
   const activeSection = getActiveSection();
-  ctx.strokeText(`section kind: ${activeSection.kind}`, 5, 20);
+  ctx.strokeText(`section kind: ${activeSection.kind}`, 5, 10);
+  ctx.strokeText(`bg: ${state.bgOffset}`, 5, 20);
+  ctx.strokeText(`steer: ${state.steerOffset}`, 5, 30);
+  ctx.strokeText(`move offset: ${state.moveOffset}`, 5, 40);
+  ctx.strokeText(`move speed: ${state.moveSpeed.speed.toFixed(5)}`, 5, 50);
+  ctx.strokeText(
+    `move speed change: ${state.moveSpeed.speedChange.toFixed(5)}`,
+    5,
+    60,
+  );
+  ctx.strokeText(`move gear: ${state.moveSpeed.gear}`, 5, 70);
 }
 
 async function main() {
@@ -261,16 +277,14 @@ async function main() {
 }
 
 function loop() {
-  if (keyboardListener.isDown(InputControl.Up)) {
-    state.moveSpeed = MOVE_SPEED;
-    state.moveOffset += state.moveSpeed;
-  } else if (keyboardListener.isDown(InputControl.Down)) {
-    state.moveSpeed = MOVE_SPEED;
-    state.moveOffset -= state.moveSpeed;
-  } else {
-    state.moveSpeed = 0;
-  }
+  state.moveSpeed = updateMoveSpeed({
+    isAccelerating: keyboardListener.isDown(InputControl.Up),
+    ...state.moveSpeed,
+  });
 
+  state.moveOffset += state.moveSpeed.speed;
+
+  // TODO: Make steer speed depend on move speed
   if (keyboardListener.isDown(InputControl.Left)) {
     state.steerSpeed = STEER_SPEED;
     const nextOffset = state.steerOffset + state.steerSpeed;

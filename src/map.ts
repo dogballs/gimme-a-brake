@@ -75,7 +75,7 @@ export const coolMap: Map = {
   decors: [
     ...generateDecor({
       startOffset: 300,
-      size: 5000,
+      size: 15000,
       amount: 100,
     }),
   ],
