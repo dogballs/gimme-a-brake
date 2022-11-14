@@ -5,6 +5,7 @@ import {
   HH,
   BG_SPEED,
   MOVE_SPEED,
+  MOVE_SPEED_MAX,
   STEER_SPEED,
   STEER_LIMIT,
   STEER_TURN_COUNTER_FORCE,
@@ -95,12 +96,14 @@ function draw() {
   if (section.kind === 'turn-right' || section.kind === 'turn-left') {
     if (state.moveSpeed.speed > 0) {
       if (section.kind === 'turn-left') {
-        state.steerOffset -= STEER_TURN_COUNTER_FORCE;
+        state.steerOffset -=
+          STEER_TURN_COUNTER_FORCE * (state.moveSpeed.speed / MOVE_SPEED_MAX);
         if (inSectionOffset > 200) {
           state.bgOffset -= BG_SPEED;
         }
       } else if (section.kind === 'turn-right') {
-        state.steerOffset += STEER_TURN_COUNTER_FORCE;
+        state.steerOffset +=
+          STEER_TURN_COUNTER_FORCE * (state.moveSpeed.speed / MOVE_SPEED_MAX);
         if (inSectionOffset > 200) {
           state.bgOffset += BG_SPEED;
         }
