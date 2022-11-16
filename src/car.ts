@@ -3,10 +3,13 @@ import {
   IH,
   RENDER_SCALE,
   MOVE_GEARS,
+  MOVE_GEAR_MIN,
+  MOVE_GEAR_MAX,
   MOVE_ACCELERATION,
   MOVE_DECELERATION,
 } from './config';
 import { ImageMap } from './images';
+import { SectionKind } from './section';
 import { Context2D } from './types';
 
 export function drawCar(
@@ -38,12 +41,14 @@ export type MoveSpeedState = {
 };
 
 export function updateMoveSpeed({
-  isAccelerating,
+  isThrottleActive,
+  sectionKind,
   gear: currentGear,
   speedChange: currentSpeedChange,
   speed: currentSpeed,
 }: {
-  isAccelerating;
+  isThrottleActive: boolean;
+  sectionKind: SectionKind;
 } & MoveSpeedState): MoveSpeedState {
   let gear = currentGear;
   let speedChange = currentSpeedChange;
@@ -51,7 +56,7 @@ export function updateMoveSpeed({
 
   const gearDesc = MOVE_GEARS[gear];
 
-  if (isAccelerating) {
+  if (isThrottleActive) {
     if (speedChange < 0) {
       speedChange = 0;
     }
@@ -64,12 +69,10 @@ export function updateMoveSpeed({
     }
   }
 
-  const maxGear = Number(Object.keys(MOVE_GEARS).pop());
-
   if (speed > gearDesc.endAt) {
-    gear = Math.min(gear + 1, maxGear);
+    gear = Math.min(gear + 1, MOVE_GEAR_MAX);
   } else if (speed < gearDesc.startAt) {
-    gear = Math.max(gear - 1, 1);
+    gear = Math.max(gear - 1, MOVE_GEAR_MIN);
   }
 
   speed = Math.min(speed, gearDesc.endAt);

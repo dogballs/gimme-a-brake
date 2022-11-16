@@ -6,6 +6,7 @@ import {
   BG_SPEED,
   MOVE_SPEED,
   MOVE_SPEED_MAX,
+  MOVE_GEAR_MIN,
   STEER_SPEED,
   STEER_LIMIT,
   STEER_TURN_COUNTER_FORCE,
@@ -65,7 +66,7 @@ const state: {
   bgOffset: number;
 } = {
   moveSpeed: {
-    gear: 1,
+    gear: MOVE_GEAR_MIN,
     speedChange: 0,
     speed: 0,
   },
@@ -286,19 +287,25 @@ async function main() {
 }
 
 function loop() {
+  const section = getActiveSection();
+
   state.moveSpeed = updateMoveSpeed({
-    isAccelerating: keyboardListener.isDown(InputControl.Up),
+    isThrottleActive: keyboardListener.isDown(InputControl.Up),
+    sectionKind: section.kind,
     ...state.moveSpeed,
   });
 
   state.moveOffset += state.moveSpeed.speed;
 
-  // TODO: Make steer speed depend on move speed
-  if (keyboardListener.isDown(InputControl.Left)) {
+  // TODO: make steering speed depend on speed
+  if (keyboardListener.isDown(InputControl.Left) && state.moveSpeed.speed > 0) {
     state.steerSpeed = STEER_SPEED;
     const nextOffset = state.steerOffset + state.steerSpeed;
     state.steerOffset = Math.min(STEER_LIMIT, nextOffset);
-  } else if (keyboardListener.isDown(InputControl.Right)) {
+  } else if (
+    keyboardListener.isDown(InputControl.Right) &&
+    state.moveSpeed.speed > 0
+  ) {
     state.steerSpeed = STEER_SPEED;
     const nextOffset = state.steerOffset - state.steerSpeed;
     state.steerOffset = Math.max(-STEER_LIMIT, nextOffset);

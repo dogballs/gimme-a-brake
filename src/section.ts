@@ -1,3 +1,9 @@
+export type SectionKind =
+  | 'straight'
+  | 'turn-right'
+  | 'turn-left'
+  | 'downhill'
+  | 'uphill';
 export type Section =
   | {
       kind: 'straight' | 'turn-right' | 'turn-left';
