@@ -7,9 +7,13 @@ import {
   MOVE_GEAR_MAX,
   MOVE_ACCELERATION,
   MOVE_DECELERATION,
+  MOVE_SPEED_MAX,
+  STEER_LIMIT,
+  STEER_SPEED,
+  STEER_TURN_COUNTER_FORCE,
 } from './config';
 import { ImageMap } from './images';
-import { SectionKind } from './section';
+import { Section } from './section';
 import { Context2D } from './types';
 
 export function drawCar(
@@ -35,24 +39,28 @@ export function drawCar(
 }
 
 export type MoveSpeedState = {
-  gear: number;
-  speedChange: number;
-  speed: number;
+  moveGear: number;
+  moveSpeedChange: number;
+  moveSpeed: number;
 };
 
-export function updateMoveSpeed({
+export const defaultMoveSpeedState: MoveSpeedState = {
+  moveGear: MOVE_GEAR_MIN,
+  moveSpeedChange: 0,
+  moveSpeed: 0,
+};
+
+export function updateMoveSpeedState({
   isThrottleActive,
-  sectionKind,
-  gear: currentGear,
-  speedChange: currentSpeedChange,
-  speed: currentSpeed,
+  moveGear: currentMoveGear,
+  moveSpeedChange: currentMoveSpeedChange,
+  moveSpeed: currentMoveSpeed,
 }: {
   isThrottleActive: boolean;
-  sectionKind: SectionKind;
 } & MoveSpeedState): MoveSpeedState {
-  let gear = currentGear;
-  let speedChange = currentSpeedChange;
-  let speed = currentSpeed;
+  let gear = currentMoveGear;
+  let speedChange = currentMoveSpeedChange;
+  let speed = currentMoveSpeed;
 
   const gearDesc = MOVE_GEARS[gear];
 
@@ -78,9 +86,71 @@ export function updateMoveSpeed({
   speed = Math.min(speed, gearDesc.endAt);
 
   return {
-    gear,
-    speedChange,
-    speed,
+    moveGear: gear,
+    moveSpeedChange: speedChange,
+    moveSpeed: speed,
+  };
+}
+
+export type SteerState = {
+  steerOffset: number;
+  steerSpeed: number;
+};
+
+export const defaultSteerState: SteerState = {
+  steerOffset: 0,
+  steerSpeed: 0,
+};
+
+const STEER_REDUCE_TILL_SPEED = 3;
+
+export function updateSteerState({
+  steerOffset: currentSteerOffset,
+  steerSpeed: currentSteerSpeed,
+  section,
+  isLeftTurnActive,
+  isRightTurnActive,
+  moveSpeed,
+  moveOffset,
+}: {
+  section: Section;
+  isLeftTurnActive: boolean;
+  isRightTurnActive: boolean;
+  moveSpeed: number;
+  moveOffset: number;
+} & SteerState): SteerState {
+  let steerOffset = currentSteerOffset;
+  let steerSpeed = currentSteerSpeed;
+
+  const inSectionOffset = moveOffset - section.start;
+
+  if (moveSpeed > 0) {
+    let t = 1;
+    if (moveSpeed < STEER_REDUCE_TILL_SPEED) {
+      t = moveSpeed / STEER_REDUCE_TILL_SPEED;
+    }
+    const steerSpeed = STEER_SPEED * t;
+    if (isLeftTurnActive) {
+      steerOffset = Math.min(STEER_LIMIT, steerOffset + steerSpeed);
+    } else if (isRightTurnActive) {
+      steerOffset = Math.max(-STEER_LIMIT, steerOffset - steerSpeed);
+    }
+  } else {
+    steerSpeed = 0;
+  }
+
+  // The faster the car is going - turn will generate more counter-force
+  const turnCounterForce =
+    STEER_TURN_COUNTER_FORCE * (moveSpeed / MOVE_SPEED_MAX);
+  if (section.kind === 'turn-left') {
+    steerOffset -= turnCounterForce;
+  } else if (section.kind === 'turn-right') {
+    steerOffset += turnCounterForce;
+  }
+
+  return {
+    steerSpeed,
+    steerOffset,
   };
 }
 
@@ -100,8 +170,12 @@ export class MoveAudio {
     biquadFilter.connect(audioCtx.destination);
   }
 
-  update({ isMuted, speed, gear }: { isMuted: boolean } & MoveSpeedState) {
-    this.osc.detune.value = 0 + speed;
-    this.osc.frequency.value = 30 + speed * 1 * (gear * 3);
+  update({
+    isMuted,
+    moveSpeed,
+    moveGear,
+  }: { isMuted: boolean } & MoveSpeedState) {
+    this.osc.detune.value = 0 + moveSpeed;
+    this.osc.frequency.value = 30 + moveSpeed * 1 * (moveGear * 3);
   }
 }

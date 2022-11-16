@@ -6,15 +6,23 @@ import {
   BG_SPEED,
   MOVE_SPEED,
   MOVE_SPEED_MAX,
-  MOVE_GEAR_MIN,
   STEER_SPEED,
   STEER_LIMIT,
   STEER_TURN_COUNTER_FORCE,
 } from './config';
-import { drawCar, updateMoveSpeed, MoveSpeedState, MoveAudio } from './car';
+import {
+  drawCar,
+  defaultSteerState,
+  defaultMoveSpeedState,
+  updateMoveSpeedState,
+  updateSteerState,
+  MoveSpeedState,
+  SteerState,
+  MoveAudio,
+} from './car';
 import { InputControl, listenKeyboard } from './controls';
 import { drawCurve } from './curve';
-import { drawBackground } from './background';
+import { drawBackground, updateBackgroundOffset } from './background';
 import { drawDecors } from './decor';
 import {
   Fragment,
@@ -59,20 +67,14 @@ const resources = {
 };
 
 const state: {
-  moveSpeed: MoveSpeedState;
+  speedState: MoveSpeedState;
+  steerState: SteerState;
   moveOffset: number;
-  steerSpeed: number;
-  steerOffset: number;
   bgOffset: number;
 } = {
-  moveSpeed: {
-    gear: MOVE_GEAR_MIN,
-    speedChange: 0,
-    speed: 0,
-  },
+  speedState: defaultMoveSpeedState,
+  steerState: defaultSteerState,
   moveOffset: 0,
-  steerSpeed: 0,
-  steerOffset: 0,
   bgOffset: 0,
 };
 
@@ -95,26 +97,10 @@ function draw() {
   }
 
   if (section.kind === 'turn-right' || section.kind === 'turn-left') {
-    if (state.moveSpeed.speed > 0) {
-      if (section.kind === 'turn-left') {
-        state.steerOffset -=
-          STEER_TURN_COUNTER_FORCE * (state.moveSpeed.speed / MOVE_SPEED_MAX);
-        if (inSectionOffset > 200) {
-          state.bgOffset -= BG_SPEED;
-        }
-      } else if (section.kind === 'turn-right') {
-        state.steerOffset +=
-          STEER_TURN_COUNTER_FORCE * (state.moveSpeed.speed / MOVE_SPEED_MAX);
-        if (inSectionOffset > 200) {
-          state.bgOffset += BG_SPEED;
-        }
-      }
-    }
-
     const fragments = createTurn({
       size: section.size,
       direction: section.kind === 'turn-right' ? 'right' : 'left',
-      steerOffset: state.steerOffset,
+      steerOffset: state.steerState.steerOffset,
     });
 
     const path = lerpFragments({
@@ -131,7 +117,7 @@ function draw() {
       size: section.size,
       inOffset: inSectionOffset,
       steepness: section.steepness,
-      steerOffset: state.steerOffset,
+      steerOffset: state.steerState.steerOffset,
     });
 
     const path = lerpFragments({
@@ -150,7 +136,7 @@ function draw() {
       size: section.size,
       inOffset: inSectionOffset,
       steepness: section.steepness,
-      steerOffset: state.steerOffset,
+      steerOffset: state.steerState.steerOffset,
     });
 
     const path = lerpFragments({
@@ -184,7 +170,11 @@ function drawObjects({
   section: Section;
   yOverride?: number;
 }) {
-  const { bgOffset, moveOffset, steerOffset } = state;
+  const {
+    bgOffset,
+    moveOffset,
+    steerState: { steerOffset },
+  } = state;
 
   // Draw the road stripes full width. Then cut it out and keep the area that is
   // actually covered by the road (the ground area will become transparent
@@ -269,15 +259,15 @@ function drawDebug({ section }: { section?: string } = {}) {
   const activeSection = getActiveSection();
   ctx.strokeText(`section kind: ${activeSection.kind}`, 5, 10);
   ctx.strokeText(`bg: ${state.bgOffset}`, 5, 20);
-  ctx.strokeText(`steer: ${state.steerOffset}`, 5, 30);
+  ctx.strokeText(`steer: ${state.steerState.steerOffset}`, 5, 30);
   ctx.strokeText(`move offset: ${state.moveOffset}`, 5, 40);
-  ctx.strokeText(`move speed: ${state.moveSpeed.speed.toFixed(5)}`, 5, 50);
+  ctx.strokeText(`move speed: ${state.speedState.moveSpeed.toFixed(5)}`, 5, 50);
   ctx.strokeText(
-    `move speed change: ${state.moveSpeed.speedChange.toFixed(5)}`,
+    `move speed change: ${state.speedState.moveSpeedChange.toFixed(5)}`,
     5,
     60,
   );
-  ctx.strokeText(`move gear: ${state.moveSpeed.gear}`, 5, 70);
+  ctx.strokeText(`move gear: ${state.speedState.moveGear}`, 5, 70);
 }
 
 async function main() {
@@ -289,29 +279,31 @@ async function main() {
 function loop() {
   const section = getActiveSection();
 
-  state.moveSpeed = updateMoveSpeed({
-    isThrottleActive: keyboardListener.isDown(InputControl.Up),
-    sectionKind: section.kind,
-    ...state.moveSpeed,
+  const isThrottleActive = keyboardListener.isDown(InputControl.Up);
+  const isLeftTurnActive = keyboardListener.isDown(InputControl.Left);
+  const isRightTurnActive = keyboardListener.isDown(InputControl.Right);
+
+  state.speedState = updateMoveSpeedState({
+    isThrottleActive,
+    ...state.speedState,
   });
 
-  state.moveOffset += state.moveSpeed.speed;
+  state.moveOffset += state.speedState.moveSpeed;
 
-  // TODO: make steering speed depend on speed
-  if (keyboardListener.isDown(InputControl.Left) && state.moveSpeed.speed > 0) {
-    state.steerSpeed = STEER_SPEED;
-    const nextOffset = state.steerOffset + state.steerSpeed;
-    state.steerOffset = Math.min(STEER_LIMIT, nextOffset);
-  } else if (
-    keyboardListener.isDown(InputControl.Right) &&
-    state.moveSpeed.speed > 0
-  ) {
-    state.steerSpeed = STEER_SPEED;
-    const nextOffset = state.steerOffset - state.steerSpeed;
-    state.steerOffset = Math.max(-STEER_LIMIT, nextOffset);
-  } else {
-    state.steerSpeed = 0;
-  }
+  state.steerState = updateSteerState({
+    section,
+    isLeftTurnActive,
+    isRightTurnActive,
+    moveSpeed: state.speedState.moveSpeed,
+    moveOffset: state.moveOffset,
+    ...state.steerState,
+  });
+
+  state.bgOffset = updateBackgroundOffset({
+    section,
+    bgOffset: state.bgOffset,
+    moveOffset: state.moveOffset,
+  });
 
   draw();
 
@@ -322,7 +314,7 @@ function loop() {
     audioCtx.resume();
   }
 
-  moveAudio.update({ isMuted, ...state.moveSpeed });
+  moveAudio.update({ isMuted, ...state.speedState });
 
   requestAnimationFrame(loop);
 }

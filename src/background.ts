@@ -1,4 +1,5 @@
-import { IW, IH, HH } from './config';
+import { IW, IH, HH, BG_SPEED } from './config';
+import { Section } from './section';
 import { Context2D } from './types';
 
 export function drawBackground(
@@ -94,4 +95,24 @@ export function drawBackground(
   }
 
   ctx.globalAlpha = 1;
+}
+
+export function updateBackgroundOffset({
+  section,
+  bgOffset,
+  moveOffset,
+}: {
+  section: Section;
+  bgOffset: number;
+  moveOffset: number;
+}) {
+  const inSectionOffset = moveOffset - section.start;
+
+  if (section.kind === 'turn-left' && inSectionOffset > 200) {
+    return bgOffset - BG_SPEED;
+  }
+  if (section.kind === 'turn-right' && inSectionOffset > 200) {
+    return bgOffset + BG_SPEED;
+  }
+  return bgOffset;
 }
