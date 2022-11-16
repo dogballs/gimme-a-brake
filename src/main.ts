@@ -1,15 +1,4 @@
-import {
-  IW,
-  IH,
-  HW,
-  HH,
-  BG_SPEED,
-  MOVE_SPEED,
-  MOVE_SPEED_MAX,
-  STEER_SPEED,
-  STEER_LIMIT,
-  STEER_TURN_COUNTER_FORCE,
-} from './config';
+import { IW, IH } from './config';
 import {
   drawCar,
   defaultSteerState,
@@ -23,6 +12,7 @@ import {
 import { InputControl, listenKeyboard } from './controls';
 import { drawCurve } from './curve';
 import { drawBackground, updateBackgroundOffset } from './background';
+import { drawDebug } from './debug';
 import { drawDecors } from './decor';
 import {
   Fragment,
@@ -49,10 +39,6 @@ canvas.height = IH;
 const offCanvas = new OffscreenCanvas(IW, IH);
 const offCtx = offCanvas.getContext('2d');
 
-canvas.addEventListener('click', (ev) => {
-  console.log(ev.clientX / 2, ev.clientY / 2);
-});
-
 const keyboardListener = listenKeyboard();
 
 const muteControl = document.querySelector<HTMLInputElement>(
@@ -76,13 +62,6 @@ const state: {
   steerState: defaultSteerState,
   moveOffset: 0,
   bgOffset: 0,
-};
-
-const images = {
-  car: undefined,
-  bg1: undefined,
-  bg2: undefined,
-  bush: undefined,
 };
 
 function draw() {
@@ -210,9 +189,6 @@ function drawObjects({
     yOverride,
   });
 
-  // drawHorizon({ yOverride });
-  // drawGrid();
-
   drawDecors(ctx, {
     decors: resources.map.decors,
     images: resources.images,
@@ -225,49 +201,16 @@ function drawObjects({
 
   drawCar(ctx, { images: resources.images, steerOffset });
 
-  drawDebug();
+  drawDebug(ctx, {
+    section,
+    bgOffset,
+    moveOffset,
+    ...state.speedState,
+    ...state.steerState,
+  });
 }
 function hasSectionEnded(section: Section) {
   return section.start + section.size < state.moveOffset;
-}
-
-function drawHorizon({ yOverride }: { yOverride?: number } = {}) {
-  ctx.strokeStyle = 'green';
-  ctx.lineWidth = 1;
-  ctx.setLineDash([]);
-
-  ctx.beginPath();
-  ctx.moveTo(0, yOverride ?? HH);
-  ctx.lineTo(IW, yOverride ?? HH);
-  ctx.stroke();
-}
-
-function drawGrid() {
-  ctx.setLineDash([]);
-  ctx.strokeStyle = '#cccccc77';
-
-  ctx.moveTo(HW, 0);
-  ctx.lineTo(HW, IH);
-  ctx.stroke();
-}
-
-function drawDebug({ section }: { section?: string } = {}) {
-  ctx.setLineDash([]);
-  ctx.strokeStyle = '#000';
-  ctx.font = '8px serif';
-
-  const activeSection = getActiveSection();
-  ctx.strokeText(`section kind: ${activeSection.kind}`, 5, 10);
-  ctx.strokeText(`bg: ${state.bgOffset}`, 5, 20);
-  ctx.strokeText(`steer: ${state.steerState.steerOffset}`, 5, 30);
-  ctx.strokeText(`move offset: ${state.moveOffset}`, 5, 40);
-  ctx.strokeText(`move speed: ${state.speedState.moveSpeed.toFixed(5)}`, 5, 50);
-  ctx.strokeText(
-    `move speed change: ${state.speedState.moveSpeedChange.toFixed(5)}`,
-    5,
-    60,
-  );
-  ctx.strokeText(`move gear: ${state.speedState.moveGear}`, 5, 70);
 }
 
 async function main() {
@@ -277,6 +220,8 @@ async function main() {
 }
 
 function loop() {
+  // NOTE: don't destructure the state here because it is constantly updated
+
   const section = getActiveSection();
 
   const isThrottleActive = keyboardListener.isDown(InputControl.Up);

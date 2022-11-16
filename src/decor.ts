@@ -135,12 +135,10 @@ function imageByKind(images: ImageMap, kind: DecorKind) {
 
 export function generateDecor({
   startOffset,
-  // inBetweenOffset,
   size,
   amount,
 }: {
   startOffset: number;
-  // inBetweenOffset: number;
   size: number;
   amount: number;
 }) {
