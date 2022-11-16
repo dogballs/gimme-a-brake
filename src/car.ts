@@ -1,7 +1,7 @@
 import {
   IW,
   IH,
-  RENDER_SCALE,
+  RS,
   MOVE_GEARS,
   MOVE_GEAR_MIN,
   MOVE_GEAR_MAX,
@@ -12,6 +12,7 @@ import {
   STEER_SPEED,
   STEER_TURN_COUNTER_FORCE,
 } from './config';
+import { CollisionBox } from './collision';
 import { ImageMap } from './images';
 import { Section } from './section';
 import { Context2D } from './types';
@@ -27,15 +28,49 @@ export function drawCar(
   },
 ) {
   const image = images.car;
-  const scale = 0.6 * RENDER_SCALE;
+  const scale = 0.6 * RS;
 
   const centerX = (IW - image.width * scale) / 2;
   const carSteerOffset = -1 * steerOffset * 0.02;
 
   const x = centerX + carSteerOffset;
-  const y = IH - 70 * RENDER_SCALE;
+  const y = IH - 70 * RS;
 
   ctx.drawImage(image, x, y, image.width * scale, image.height * scale);
+}
+
+export function getCarBox({
+  images,
+  roadDepth,
+  moveOffset,
+  steerOffset,
+}: {
+  images: ImageMap;
+  roadDepth: number;
+  moveOffset: number;
+  steerOffset: number;
+}): CollisionBox {
+  const image = images.car;
+  const scale = 0.6 * RS;
+
+  const centerX = (IW - image.width * scale) / 2;
+  const carSteerOffset = -1 * steerOffset * 0.02;
+
+  const width = image.width * scale;
+  const height = image.height * scale;
+  const depth = 32;
+  const x = centerX + carSteerOffset;
+  const y = IH - 70 * RS;
+  const z = 16;
+
+  return {
+    x,
+    y,
+    z,
+    width,
+    height,
+    depth,
+  };
 }
 
 export type MoveSpeedState = {
@@ -124,11 +159,11 @@ export function updateSteerState({
 
   const inSectionOffset = moveOffset - section.start;
 
-  if (moveSpeed > 0) {
+  if (moveSpeed >= 0) {
     let t = 1;
-    if (moveSpeed < STEER_REDUCE_TILL_SPEED) {
-      t = moveSpeed / STEER_REDUCE_TILL_SPEED;
-    }
+    // if (moveSpeed < STEER_REDUCE_TILL_SPEED) {
+    //   t = moveSpeed / STEER_REDUCE_TILL_SPEED;
+    // }
     const steerSpeed = STEER_SPEED * t;
     if (isLeftTurnActive) {
       steerOffset = Math.min(STEER_LIMIT, steerOffset + steerSpeed);

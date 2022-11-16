@@ -133,7 +133,7 @@ function imageByKind(images: ImageMap, kind: DecorKind) {
   }
 }
 
-export function generateDecor({
+export function generateDecors({
   startOffset,
   size,
   amount,
@@ -155,7 +155,6 @@ export function generateDecor({
     const start = startOffset + areaStart + inAreaOffset;
     const kind = randomElement<DecorKind>(['bush', 'tree', 'rock']);
     const driftOffset = randomNumber(0, 50);
-    const flipX = randomElement([true, false]);
     const placement = randomElement<DecorPlacement>(['left', 'right']);
 
     decors.push({

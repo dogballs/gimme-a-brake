@@ -1,20 +1,29 @@
-import { Decor, generateDecor } from './decor';
+import { Decor, generateDecors } from './decor';
+import { Prop, generateProps } from './prop';
 import { Section } from './section';
 
 type Map = {
   sections: Section[];
   decors: Decor[];
+  props: Prop[];
 };
 
 export const straightMap: Map = {
   sections: [],
   decors: [
-    ...generateDecor({
+    ...generateDecors({
       startOffset: 100,
       amount: 1,
       size: 5000,
-      // inBetweenOffset: 200,
     }),
+  ],
+  props: [
+    {
+      kind: 'rock',
+      start: 100,
+      placement: 'right',
+      driftOffset: 100,
+    },
   ],
 };
 
@@ -27,13 +36,8 @@ export const longUphillMap: Map = {
       steepness: 30,
     },
   ],
-  decors: [
-    // ...generateDecor({
-    //   startOffset: 0,
-    //   inBetweenOffset: 200,
-    //   size: 2000,
-    // }),
-  ],
+  decors: [],
+  props: [],
 };
 
 export const longLeftTurnMap: Map = {
@@ -45,6 +49,7 @@ export const longLeftTurnMap: Map = {
     },
   ],
   decors: [],
+  props: [],
 };
 
 export const coolMap: Map = {
@@ -73,10 +78,17 @@ export const coolMap: Map = {
     },
   ],
   decors: [
-    ...generateDecor({
+    ...generateDecors({
       startOffset: 300,
       size: 15000,
       amount: 100,
+    }),
+  ],
+  props: [
+    ...generateProps({
+      startOffset: 300,
+      size: 15000,
+      amount: 30,
     }),
   ],
 };

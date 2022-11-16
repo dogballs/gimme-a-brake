@@ -7,7 +7,7 @@ type DrawStripesOpts = {
 };
 type DrawStripesColors = [string, string];
 
-type Stripe = {
+export type Stripe = {
   height: number;
   y: number;
   y2: number;

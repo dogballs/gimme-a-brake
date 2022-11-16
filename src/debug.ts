@@ -57,3 +57,9 @@ export function drawGrid(ctx: Context2D) {
   ctx.lineTo(HW, IH);
   ctx.stroke();
 }
+
+export function logClientCoordsOnClick(canvas: HTMLCanvasElement) {
+  canvas.addEventListener('click', (ev) => {
+    console.log(ev.clientX / 2, ev.clientY / 2);
+  });
+}

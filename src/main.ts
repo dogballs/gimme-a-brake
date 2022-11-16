@@ -1,6 +1,7 @@
-import { IW, IH } from './config';
+import { IW, IH, HH } from './config';
 import {
   drawCar,
+  getCarBox,
   defaultSteerState,
   defaultMoveSpeedState,
   updateMoveSpeedState,
@@ -9,10 +10,11 @@ import {
   SteerState,
   MoveAudio,
 } from './car';
+import { findCollisions, drawCollisionBoxes } from './collision';
 import { InputControl, listenKeyboard } from './controls';
 import { drawCurve } from './curve';
 import { drawBackground, updateBackgroundOffset } from './background';
-import { drawDebug } from './debug';
+import { drawDebug, logClientCoordsOnClick } from './debug';
 import { drawDecors } from './decor';
 import {
   Fragment,
@@ -25,9 +27,17 @@ import {
 import { loadImages } from './images';
 import { straightMap, coolMap, longLeftTurnMap, longUphillMap } from './map';
 import { Path } from './path';
+import { getPropBoxes, drawProps, PropBox } from './prop';
 import { drawCurbMask, drawRoadMask, drawRoadLines } from './road';
-import { Section } from './section';
-import { drawCurbStripes, drawGroundStripes, drawRoadStripes } from './stripes';
+import { Section, createSectionFragments, getActiveSection } from './section';
+import {
+  Stripe,
+  drawCurbStripes,
+  drawGroundStripes,
+  drawRoadStripes,
+  generateStripes,
+  stripesUnscaledHeight,
+} from './stripes';
 import { Context2D } from './types';
 
 const canvas = document.querySelector('canvas');
@@ -64,91 +74,21 @@ const state: {
   bgOffset: 0,
 };
 
-function draw() {
-  ctx.clearRect(0, 0, IW, IH);
+logClientCoordsOnClick(canvas);
 
-  const section = getActiveSection();
-  const inSectionOffset = state.moveOffset - section.start;
-
-  if (section.kind === 'straight') {
-    drawObjects({ path: straightFragment, section });
-    return;
-  }
-
-  if (section.kind === 'turn-right' || section.kind === 'turn-left') {
-    const fragments = createTurn({
-      size: section.size,
-      direction: section.kind === 'turn-right' ? 'right' : 'left',
-      steerOffset: state.steerState.steerOffset,
-    });
-
-    const path = lerpFragments({
-      fragments,
-      inOffset: inSectionOffset,
-    });
-
-    drawObjects({ path, section });
-    return;
-  }
-
-  if (section.kind === 'downhill') {
-    const fragments = createDownhill({
-      size: section.size,
-      inOffset: inSectionOffset,
-      steepness: section.steepness,
-      steerOffset: state.steerState.steerOffset,
-    });
-
-    const path = lerpFragments({
-      fragments,
-      inOffset: inSectionOffset,
-    });
-
-    const yOverride = path.left.topY;
-
-    drawObjects({ path, section, yOverride });
-    return;
-  }
-
-  if (section.kind === 'uphill') {
-    const fragments = createUphill({
-      size: section.size,
-      inOffset: inSectionOffset,
-      steepness: section.steepness,
-      steerOffset: state.steerState.steerOffset,
-    });
-
-    const path = lerpFragments({
-      fragments,
-      inOffset: inSectionOffset,
-    });
-
-    const yOverride = path.left.topY;
-
-    drawObjects({ path, section, yOverride });
-    return;
-  }
-}
-
-function getActiveSection() {
-  let activeSection: Section = resources.map.sections.find((s) => {
-    return state.moveOffset >= s.start && state.moveOffset <= s.start + s.size;
-  });
-  if (!activeSection || hasSectionEnded(activeSection)) {
-    activeSection = { start: state.moveOffset, kind: 'straight', size: 0 };
-  }
-  return activeSection;
-}
-
-function drawObjects({
-  path,
+function draw({
   section,
+  path,
+  propBoxes,
   yOverride,
 }: {
-  path: Path;
   section: Section;
+  path: Path;
+  propBoxes: PropBox[];
   yOverride?: number;
 }) {
+  ctx.clearRect(0, 0, IW, IH);
+
   const {
     bgOffset,
     moveOffset,
@@ -199,6 +139,11 @@ function drawObjects({
     yOverride,
   });
 
+  drawProps(ctx, {
+    propBoxes,
+    images: resources.images,
+  });
+
   drawCar(ctx, { images: resources.images, steerOffset });
 
   drawDebug(ctx, {
@@ -209,9 +154,6 @@ function drawObjects({
     ...state.steerState,
   });
 }
-function hasSectionEnded(section: Section) {
-  return section.start + section.size < state.moveOffset;
-}
 
 async function main() {
   resources.images = await loadImages();
@@ -219,10 +161,13 @@ async function main() {
   loop();
 }
 
-function loop() {
+function updateState() {
   // NOTE: don't destructure the state here because it is constantly updated
 
-  const section = getActiveSection();
+  const section = getActiveSection({
+    sections: resources.map.sections,
+    moveOffset: state.moveOffset,
+  });
 
   const isThrottleActive = keyboardListener.isDown(InputControl.Up);
   const isLeftTurnActive = keyboardListener.isDown(InputControl.Left);
@@ -249,8 +194,85 @@ function loop() {
     bgOffset: state.bgOffset,
     moveOffset: state.moveOffset,
   });
+}
 
-  draw();
+function updateCollisions({
+  path,
+  section,
+  roadDepth,
+  yOverride,
+}: {
+  path: Path;
+  section: Section;
+  roadDepth: number;
+  yOverride?: number;
+}) {
+  const carBox = getCarBox({
+    images: resources.images,
+    roadDepth,
+    moveOffset: state.moveOffset,
+    steerOffset: state.steerState.steerOffset,
+  });
+
+  const propBoxes = getPropBoxes({
+    props: resources.map.props,
+    images: resources.images,
+    path,
+    section,
+    moveOffset: state.moveOffset,
+    steerOffset: state.steerState.steerOffset,
+    yOverride,
+  });
+
+  const collidedBoxes = [];
+  const uncollidedBoxes = [];
+
+  const targetIndexes = findCollisions(carBox, propBoxes);
+  if (targetIndexes.length > 0) {
+    collidedBoxes.push(carBox);
+    collidedBoxes.push(...targetIndexes.map((index) => propBoxes[index]));
+  } else {
+    uncollidedBoxes.push(carBox, ...propBoxes);
+  }
+
+  return {
+    collidedBoxes,
+    uncollidedBoxes,
+    propBoxes,
+  };
+}
+
+function loop() {
+  updateState();
+
+  const section = getActiveSection({
+    sections: resources.map.sections,
+    moveOffset: state.moveOffset,
+  });
+
+  const { path, yOverride } = createSectionFragments({
+    section,
+    moveOffset: state.moveOffset,
+    steerOffset: state.steerState.steerOffset,
+  });
+
+  let roadHeight = IH - (yOverride ?? HH);
+  const stripes = generateStripes({ roadHeight });
+  const roadDepth = stripesUnscaledHeight(stripes);
+
+  const { collidedBoxes, uncollidedBoxes, propBoxes } = updateCollisions({
+    section,
+    path,
+    roadDepth,
+    yOverride,
+  });
+
+  draw({ section, path, yOverride, propBoxes });
+
+  drawCollisionBoxes(ctx, collidedBoxes, uncollidedBoxes, {
+    stripes,
+    roadDepth,
+  });
 
   const isMuted = !muteControl.checked;
   if (isMuted && audioCtx.state === 'running') {
