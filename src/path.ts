@@ -5,6 +5,18 @@ export type Path = {
   right: Curve;
 };
 
+export function getCenterCurve(path: Path): Curve {
+  return {
+    topX: path.left.topX + (path.right.topX - path.left.topX) / 2,
+    topY: path.left.topY,
+    controlX:
+      path.left.controlX + (path.right.controlX - path.left.controlX) / 2,
+    controlY: path.left.controlY,
+    bottomX: path.left.bottomX + (path.right.bottomX - path.left.bottomX) / 2,
+    bottomY: path.left.bottomY,
+  };
+}
+
 export function steerPath(
   path: Path,
   { steerOffset }: { steerOffset: number },

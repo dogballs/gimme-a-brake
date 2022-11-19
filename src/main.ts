@@ -147,6 +147,8 @@ function draw({
   drawProps(ctx, {
     propBoxes,
     images: resources.images,
+    moveOffset,
+    steerOffset,
   });
 
   drawCar(ctx, { images: resources.images, steerOffset });

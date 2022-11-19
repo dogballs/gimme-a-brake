@@ -1,33 +1,40 @@
 import { IH, HH, RS } from './config';
 import { CollisionBox } from './collision';
 import {
+  Curve,
   translateCurve,
   translateCurveUniform,
   steerCurve,
   pointOnCurve,
   drawCurve,
   curveXByY,
+  lerpCurve,
 } from './curve';
 import { ImageMap } from './images';
 import { getCurbPath } from './road';
 import { Section } from './section';
 import { generateStripes, stripesToY, stripesUnscaledHeight } from './stripes';
 import { randomElement, randomNumber } from './random';
-import { Path } from './path';
+import { Path, getCenterCurve } from './path';
 import { Context2D } from './types';
 
 type PropKind = 'bush' | 'tree' | 'rock';
-type PropPlacement = 'left' | 'right';
+type PropPlacement =
+  | 'center'
+  | 'far-left'
+  | 'far-right'
+  | 'close-left'
+  | 'close-right';
 
 export type Prop = {
   kind: PropKind;
   start: number;
-  placement: PropPlacement;
-  driftOffset?: number;
+  position: number;
 };
 
 export type PropBox = CollisionBox & {
   prop: Prop;
+  curve: Curve;
 };
 
 export function getPropBoxes({
@@ -71,14 +78,16 @@ export function getPropBoxes({
     if (moveOffset >= preshowAppearStart && moveOffset <= appearEnd) {
       const isPreshow = moveOffset < appearStart;
 
-      const sourceCurve = prop.placement === 'right' ? path.right : path.left;
-      const placementSign = prop.placement === 'left' ? 1 : -1;
+      const centerCurve = getCenterCurve(path);
 
-      const propCurve = translateCurve(sourceCurve, {
-        top: 5 * placementSign,
-        control: 5 * placementSign,
-        bottom: (30 + (prop.driftOffset ?? 0)) * placementSign,
-      });
+      let curve = centerCurve;
+      if (prop.position > 0.5) {
+        curve = lerpCurve(centerCurve, path.right, (prop.position - 0.5) * 2);
+      } else if (prop.position < 0.5) {
+        curve = lerpCurve(path.left, centerCurve, prop.position * 2);
+      }
+
+      const steeredCurve = steerCurve(curve, { steerOffset });
 
       let inOffset = moveOffset - prop.start + roadDepth;
       if (isPreshow) {
@@ -91,7 +100,7 @@ export function getPropBoxes({
       }
 
       const propY = IH - stripesY;
-      const propX = curveXByY(steerCurve(propCurve, { steerOffset }), propY);
+      const propX = curveXByY(steeredCurve, propY);
       if (propX === undefined) {
         continue;
       }
@@ -100,24 +109,12 @@ export function getPropBoxes({
 
       let imageScale = Math.max(0, 1 - (1 - 0.1 * RS) * inHalfHeightT);
 
-      // Downhill
       if (roadHeight > HH && propY < HH) {
         const inOverHeightT = Math.max(0, 1 - (HH - propY) / (roadHeight - HH));
-        // console.log(inOverHeightT);
-        // imageScale = 0.05 * inOverHeightT;
         imageScale = 0.1 * inOverHeightT;
-        // imageScale = hhScale;
-
-        // console.log();
-        // imageScale *=
-        // if (isPreshow) {
-        //   imageScale *= 1 - (appearStart - moveOffset) / preshowSize;
-        // }
       } else if (isPreshow) {
         imageScale *= 1 - (appearStart - moveOffset) / preshowSize;
       }
-
-      // console.log(imageScale);
 
       const image = imageByKind(images, prop.kind);
 
@@ -128,6 +125,7 @@ export function getPropBoxes({
 
       propBoxes.push({
         prop,
+        curve: steeredCurve,
         x: imageX,
         y: imageY,
         z: roadDepth - inOffset,
@@ -143,10 +141,22 @@ export function getPropBoxes({
 
 export function drawProps(
   ctx: Context2D,
-  { propBoxes, images }: { propBoxes: PropBox[]; images: ImageMap },
+  {
+    propBoxes,
+    images,
+    moveOffset,
+    steerOffset,
+  }: {
+    propBoxes: PropBox[];
+    images: ImageMap;
+    moveOffset: number;
+    steerOffset: number;
+  },
 ) {
   for (const propBox of propBoxes) {
     const image = imageByKind(images, propBox.prop.kind);
+
+    // drawCurve(ctx, propBox.curve, { moveOffset, steerOffset: 0 });
 
     ctx.drawImage(image, propBox.x, propBox.y, propBox.width, propBox.height);
   }
@@ -186,14 +196,12 @@ export function generateProps({
 
     const start = startOffset + areaStart + inAreaOffset;
     const kind = randomElement<PropKind>(['bush', 'tree', 'rock']);
-    const driftOffset = randomNumber(0, 300);
-    const placement = randomElement<PropPlacement>(['left', 'right']);
+    const position = randomNumber(10, 90) / 100;
 
     props.push({
       start,
       kind,
-      placement,
-      driftOffset,
+      position,
     });
   }
 

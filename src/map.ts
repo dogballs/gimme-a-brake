@@ -21,8 +21,7 @@ export const straightMap: Map = {
     {
       kind: 'rock',
       start: 1000,
-      placement: 'right',
-      driftOffset: 0,
+      position: 0.1,
     },
   ],
 };
@@ -38,11 +37,16 @@ export const longUphillMap: Map = {
   ],
   decors: [],
   props: [
-    ...generateProps({
-      startOffset: 300,
-      size: 15000,
-      amount: 30,
-    }),
+    {
+      kind: 'rock',
+      start: 1000,
+      position: 0.1,
+    },
+    // ...generateProps({
+    //   startOffset: 300,
+    //   size: 15000,
+    //   amount: 30,
+    // }),
   ],
 };
 
@@ -55,7 +59,13 @@ export const longLeftTurnMap: Map = {
     },
   ],
   decors: [],
-  props: [],
+  props: [
+    ...generateProps({
+      startOffset: 300,
+      size: 15000,
+      amount: 30,
+    }),
+  ],
 };
 
 export const coolMap: Map = {
