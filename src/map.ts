@@ -54,7 +54,7 @@ export const longUphillMap: Map = {
 export const longLeftTurnMap: Map = {
   sections: [
     {
-      kind: 'turn-left',
+      kind: 'turn-right',
       start: 0,
       size: Infinity,
     },

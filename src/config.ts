@@ -15,7 +15,7 @@ export const STEER_TURN_COUNTER_FORCE = 4 * RS;
 export const MOVE_SPEED = 4 * RS;
 export const STEER_SPEED = 8 * RS;
 
-export const BG_SPEED = 2 * RS;
+export const BG_SPEED_PER_MOVE_OFFSET = 0.4;
 
 export const MOVE_ACCELERATION = 0.03;
 export const MOVE_DECELERATION = 0.05;

@@ -71,11 +71,13 @@ const state: {
   speedState: MoveSpeedState;
   steerState: SteerState;
   moveOffset: number;
+  moveOffsetChange: number;
   bgOffset: number;
 } = {
   speedState: defaultMoveSpeedState,
   steerState: defaultSteerState,
   moveOffset: 0,
+  moveOffsetChange: 0,
   bgOffset: 0,
 };
 
@@ -219,7 +221,8 @@ function updateState() {
     ...state.speedState,
   });
 
-  state.moveOffset += state.speedState.moveSpeed;
+  state.moveOffsetChange = state.speedState.moveSpeed;
+  state.moveOffset += state.moveOffsetChange;
 
   state.steerState = updateSteerState({
     section,
@@ -234,6 +237,8 @@ function updateState() {
     section,
     bgOffset: state.bgOffset,
     moveOffset: state.moveOffset,
+    moveOffsetChange: state.moveOffsetChange,
+    moveSpeed: state.speedState.moveSpeed,
   });
 }
 

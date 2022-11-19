@@ -1,4 +1,4 @@
-import { IW, IH, HH, BG_SPEED } from './config';
+import { IW, IH, HH, BG_SPEED_PER_MOVE_OFFSET, MOVE_SPEED_MAX } from './config';
 import { Section } from './section';
 import { Context2D } from './types';
 
@@ -101,18 +101,28 @@ export function updateBackgroundOffset({
   section,
   bgOffset,
   moveOffset,
+  moveOffsetChange,
+  moveSpeed,
 }: {
   section: Section;
   bgOffset: number;
   moveOffset: number;
+  moveOffsetChange: number;
+  moveSpeed: number;
 }) {
-  const inSectionOffset = moveOffset - section.start;
+  const entryGap = 200;
 
-  if (section.kind === 'turn-left' && inSectionOffset > 200) {
-    return bgOffset - BG_SPEED;
+  if (moveSpeed > 0) {
+    const inSectionOffset = moveOffset - section.start;
+    const bgOffsetChange = moveOffsetChange * BG_SPEED_PER_MOVE_OFFSET;
+
+    if (section.kind === 'turn-left' && inSectionOffset > entryGap) {
+      return bgOffset - bgOffsetChange;
+    }
+    if (section.kind === 'turn-right' && inSectionOffset > entryGap) {
+      return bgOffset + bgOffsetChange;
+    }
   }
-  if (section.kind === 'turn-right' && inSectionOffset > 200) {
-    return bgOffset + BG_SPEED;
-  }
+
   return bgOffset;
 }
