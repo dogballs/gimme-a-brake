@@ -13,7 +13,7 @@ export const STEER_LIMIT = Infinity;
 export const STEER_TURN_COUNTER_FORCE = 4 * RS;
 
 export const MOVE_SPEED = 4 * RS;
-export const STEER_SPEED = 6 * RS;
+export const STEER_SPEED = 8 * RS;
 
 export const BG_SPEED = 2 * RS;
 

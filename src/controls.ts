@@ -41,5 +41,23 @@ export function listenKeyboard() {
       const codes = binding[control];
       return codes.some((code) => internalCodes.includes(code));
     },
+    getDownLastOf(controls: InputControl[]): InputControl | undefined {
+      let latestIndex = -1;
+      let latestControl: InputControl = undefined;
+
+      for (const control of controls) {
+        const codes = binding[control];
+
+        for (const code of codes) {
+          const codeIndex = internalCodes.indexOf(code);
+          if (codeIndex !== -1 && codeIndex > latestIndex) {
+            latestIndex = codeIndex;
+            latestControl = control;
+          }
+        }
+      }
+
+      return latestControl;
+    },
   };
 }

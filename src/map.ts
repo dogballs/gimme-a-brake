@@ -38,16 +38,16 @@ export const longUphillMap: Map = {
   ],
   decors: [],
   props: [
-    {
-      kind: 'rock',
-      start: 500,
-      position: 0.1,
-    },
-    // ...generateProps({
-    //   startOffset: 300,
-    //   size: 15000,
-    //   amount: 30,
-    // }),
+    // {
+    //   kind: 'rock',
+    //   start: 500,
+    //   position: 0.1,
+    // },
+    ...generateProps({
+      startOffset: 300,
+      size: 15000,
+      amount: 30,
+    }),
   ],
 };
 

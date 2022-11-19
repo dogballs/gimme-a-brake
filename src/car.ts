@@ -87,11 +87,13 @@ export const defaultMoveSpeedState: MoveSpeedState = {
 
 export function updateMoveSpeedState({
   isThrottleActive,
+  isReverseActive,
   moveGear: currentMoveGear,
   moveSpeedChange: currentMoveSpeedChange,
   moveSpeed: currentMoveSpeed,
 }: {
   isThrottleActive: boolean;
+  isReverseActive: boolean;
 } & MoveSpeedState): MoveSpeedState {
   let gear = currentMoveGear;
   let speedChange = currentMoveSpeedChange;
@@ -161,9 +163,9 @@ export function updateSteerState({
 
   if (moveSpeed >= 0) {
     let t = 1;
-    // if (moveSpeed < STEER_REDUCE_TILL_SPEED) {
-    //   t = moveSpeed / STEER_REDUCE_TILL_SPEED;
-    // }
+    if (moveSpeed < STEER_REDUCE_TILL_SPEED) {
+      t = moveSpeed / STEER_REDUCE_TILL_SPEED;
+    }
     const steerSpeed = STEER_SPEED * t;
     if (isLeftTurnActive) {
       steerOffset = Math.min(STEER_LIMIT, steerOffset + steerSpeed);

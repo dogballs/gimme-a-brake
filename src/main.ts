@@ -170,20 +170,52 @@ async function main() {
   loop();
 }
 
+function getInput() {
+  const isUp = keyboardListener.isDown(InputControl.Up);
+  const isDown = keyboardListener.isDown(InputControl.Down);
+
+  const lastPressedThrottleControl = keyboardListener.getDownLastOf([
+    InputControl.Up,
+    InputControl.Down,
+  ]);
+
+  const isThrottleActive = lastPressedThrottleControl === InputControl.Up;
+  const isReverseActive = lastPressedThrottleControl === InputControl.Down;
+
+  const lastPressedTurnControl = keyboardListener.getDownLastOf([
+    InputControl.Left,
+    InputControl.Right,
+  ]);
+
+  const isLeftTurnActive = lastPressedTurnControl === InputControl.Left;
+  const isRightTurnActive = lastPressedTurnControl === InputControl.Right;
+
+  return {
+    isThrottleActive,
+    isReverseActive,
+    isRightTurnActive,
+    isLeftTurnActive,
+  };
+}
+
 function updateState() {
   // NOTE: don't destructure the state here because it is constantly updated
+
+  const {
+    isThrottleActive,
+    isReverseActive,
+    isRightTurnActive,
+    isLeftTurnActive,
+  } = getInput();
 
   const section = getActiveSection({
     sections: resources.map.sections,
     moveOffset: state.moveOffset,
   });
 
-  const isThrottleActive = keyboardListener.isDown(InputControl.Up);
-  const isLeftTurnActive = keyboardListener.isDown(InputControl.Left);
-  const isRightTurnActive = keyboardListener.isDown(InputControl.Right);
-
   state.speedState = updateMoveSpeedState({
     isThrottleActive,
+    isReverseActive,
     ...state.speedState,
   });
 
