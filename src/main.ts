@@ -14,7 +14,7 @@ import { findCollisions, drawCollisionBoxes } from './collision';
 import { InputControl, listenKeyboard } from './controls';
 import { drawCurve } from './curve';
 import { drawBackground, updateBackgroundOffset } from './background';
-import { drawDebug, logClientCoordsOnClick } from './debug';
+import { drawDebug, drawHorizon, logClientCoordsOnClick } from './debug';
 import { drawDecors } from './decor';
 import {
   Fragment,
@@ -29,7 +29,12 @@ import { straightMap, coolMap, longLeftTurnMap, longUphillMap } from './map';
 import { Path } from './path';
 import { getPropBoxes, drawProps, PropBox } from './prop';
 import { drawCurbMask, drawRoadMask, drawRoadLines } from './road';
-import { Section, createSectionFragments, getActiveSection } from './section';
+import {
+  Section,
+  createSectionFragments,
+  getActiveSection,
+  getNextSection,
+} from './section';
 import {
   Stripe,
   drawCurbStripes,
@@ -153,6 +158,8 @@ function draw({
     ...state.speedState,
     ...state.steerState,
   });
+
+  // drawHorizon(ctx);
 }
 
 async function main() {
@@ -199,11 +206,13 @@ function updateState() {
 function updateCollisions({
   path,
   section,
+  nextSection,
   roadDepth,
   yOverride,
 }: {
   path: Path;
   section: Section;
+  nextSection: Section | undefined;
   roadDepth: number;
   yOverride?: number;
 }) {
@@ -219,6 +228,7 @@ function updateCollisions({
     images: resources.images,
     path,
     section,
+    nextSection,
     moveOffset: state.moveOffset,
     steerOffset: state.steerState.steerOffset,
     yOverride,
@@ -250,6 +260,11 @@ function loop() {
     moveOffset: state.moveOffset,
   });
 
+  const nextSection = getNextSection({
+    sections: resources.map.sections,
+    moveOffset: state.moveOffset,
+  });
+
   const { path, yOverride } = createSectionFragments({
     section,
     moveOffset: state.moveOffset,
@@ -262,6 +277,7 @@ function loop() {
 
   const { collidedBoxes, uncollidedBoxes, propBoxes } = updateCollisions({
     section,
+    nextSection,
     path,
     roadDepth,
     yOverride,
@@ -269,10 +285,10 @@ function loop() {
 
   draw({ section, path, yOverride, propBoxes });
 
-  drawCollisionBoxes(ctx, collidedBoxes, uncollidedBoxes, {
-    stripes,
-    roadDepth,
-  });
+  // drawCollisionBoxes(ctx, collidedBoxes, uncollidedBoxes, {
+  //   stripes,
+  //   roadDepth,
+  // });
 
   const isMuted = !muteControl.checked;
   if (isMuted && audioCtx.state === 'running') {

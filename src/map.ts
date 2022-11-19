@@ -20,9 +20,9 @@ export const straightMap: Map = {
   props: [
     {
       kind: 'rock',
-      start: 100,
+      start: 1000,
       placement: 'right',
-      driftOffset: 100,
+      driftOffset: 0,
     },
   ],
 };
@@ -30,14 +30,20 @@ export const straightMap: Map = {
 export const longUphillMap: Map = {
   sections: [
     {
-      kind: 'downhill',
+      kind: 'uphill',
       start: 100,
-      size: 1000,
+      size: 15000,
       steepness: 30,
     },
   ],
   decors: [],
-  props: [],
+  props: [
+    ...generateProps({
+      startOffset: 300,
+      size: 15000,
+      amount: 30,
+    }),
+  ],
 };
 
 export const longLeftTurnMap: Map = {

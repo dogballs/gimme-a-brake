@@ -35,6 +35,7 @@ export function getPropBoxes({
   images,
   path,
   section,
+  nextSection,
   moveOffset,
   steerOffset,
   yOverride,
@@ -43,6 +44,7 @@ export function getPropBoxes({
   images: ImageMap;
   path: Path;
   section: Section;
+  nextSection: Section | undefined;
   moveOffset: number;
   steerOffset: number;
   yOverride?: number;
@@ -54,26 +56,35 @@ export function getPropBoxes({
 
   const propBoxes: PropBox[] = [];
 
+  let preshowSize = 700;
+  if (section.kind === 'uphill' || nextSection?.kind === 'uphill') {
+    preshowSize = 400;
+  } else if (section.kind === 'downhill' || nextSection?.kind === 'downhill') {
+    preshowSize = 0;
+  }
+
   for (const prop of props) {
     const appearStart = prop.start - roadDepth;
     const appearEnd = prop.start;
+    const preshowAppearStart = appearStart - preshowSize;
 
-    if (moveOffset >= appearStart && moveOffset <= appearEnd) {
+    if (moveOffset >= preshowAppearStart && moveOffset <= appearEnd) {
+      const isPreshow = moveOffset < appearStart;
+
       const sourceCurve = prop.placement === 'right' ? path.right : path.left;
       const placementSign = prop.placement === 'left' ? 1 : -1;
 
       const propCurve = translateCurve(sourceCurve, {
         top: 5 * placementSign,
         control: 5 * placementSign,
-        bottom: 30 * placementSign + (prop.driftOffset ?? 0) * placementSign,
+        bottom: (30 + (prop.driftOffset ?? 0)) * placementSign,
       });
 
-      // const driftedCurve = translateCurveUniform(
-      //   propCurve,
-      //   (prop.driftOffset ?? 0) * placementSign,
-      // );
+      let inOffset = moveOffset - prop.start + roadDepth;
+      if (isPreshow) {
+        inOffset = 1;
+      }
 
-      const inOffset = moveOffset - prop.start + roadDepth;
       const stripesY = stripesToY(stripes, { inOffset });
       if (stripesY === undefined) {
         continue;
@@ -85,12 +96,28 @@ export function getPropBoxes({
         continue;
       }
 
-      const hhPropT = stripesY / HH;
+      let inHalfHeightT = stripesY / HH;
 
-      let imageScale = Math.max(0, 1 - (1 - 0.1 * RS) * hhPropT);
+      let imageScale = Math.max(0, 1 - (1 - 0.1 * RS) * inHalfHeightT);
+
+      // Downhill
       if (roadHeight > HH && propY < HH) {
-        imageScale = 0.05;
+        const inOverHeightT = Math.max(0, 1 - (HH - propY) / (roadHeight - HH));
+        // console.log(inOverHeightT);
+        // imageScale = 0.05 * inOverHeightT;
+        imageScale = 0.1 * inOverHeightT;
+        // imageScale = hhScale;
+
+        // console.log();
+        // imageScale *=
+        // if (isPreshow) {
+        //   imageScale *= 1 - (appearStart - moveOffset) / preshowSize;
+        // }
+      } else if (isPreshow) {
+        imageScale *= 1 - (appearStart - moveOffset) / preshowSize;
       }
+
+      // console.log(imageScale);
 
       const image = imageByKind(images, prop.kind);
 
@@ -159,7 +186,7 @@ export function generateProps({
 
     const start = startOffset + areaStart + inAreaOffset;
     const kind = randomElement<PropKind>(['bush', 'tree', 'rock']);
-    const driftOffset = randomNumber(0, 200);
+    const driftOffset = randomNumber(0, 300);
     const placement = randomElement<PropPlacement>(['left', 'right']);
 
     props.push({

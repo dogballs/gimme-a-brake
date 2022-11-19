@@ -29,6 +29,7 @@ export type Decor = {
 //   -> better top of the image hits the bottom of the screen
 // TODO: variation in sizes
 // TODO: z-index with the car?
+// TODO: add preshow too?
 export function drawDecors(
   ctx: Context2D,
   {
@@ -86,7 +87,7 @@ export function drawDecors(
         (decor.driftOffset ?? 0) * placementSign,
       );
 
-      const inOffset = moveOffset - decor.start + travelDistance;
+      let inOffset = moveOffset - decor.start + travelDistance;
       const stripesY = stripesToY(stripes, { inOffset });
       if (stripesY === undefined) {
         continue;

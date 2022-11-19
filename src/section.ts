@@ -115,6 +115,25 @@ export function getActiveSection({
   return activeSection;
 }
 
+export function getNextSection({
+  sections,
+  moveOffset,
+}: {
+  sections: Section[];
+  moveOffset: number;
+}): Section | undefined {
+  const activeSectionIndex = sections.findIndex((s) => {
+    return moveOffset >= s.start && moveOffset <= s.start + s.size;
+  });
+  if (activeSectionIndex !== -1) {
+    const nextSectionIndex = activeSectionIndex + 1;
+    return sections[nextSectionIndex];
+  }
+  return sections.find((s) => {
+    return s.start > moveOffset;
+  });
+}
+
 function hasSectionEnded(section: Section, moveOffset: number) {
   return section.start + section.size < moveOffset;
 }
