@@ -6,7 +6,8 @@ import {
   MOVE_GEAR_MIN,
   MOVE_GEAR_MAX,
   MOVE_ACCELERATION,
-  MOVE_DECELERATION,
+  MOVE_DECELERATION_FREE,
+  MOVE_DECELERATION_REVERSE,
   MOVE_SPEED_MAX,
   STEER_LIMIT,
   STEER_SPEED,
@@ -109,8 +110,14 @@ export function updateMoveSpeedState({
     speed += speedChange;
   } else {
     if (speed > 0) {
-      speedChange = (speedChange - MOVE_DECELERATION) / gearDesc.delim;
-      speed = Math.max(0, speed + speedChange);
+      if (isReverseActive) {
+        speedChange =
+          (speedChange - MOVE_DECELERATION_REVERSE) / gearDesc.delim;
+        speed = Math.max(0, speed + speedChange);
+      } else {
+        speedChange = (speedChange - MOVE_DECELERATION_FREE) / gearDesc.delim;
+        speed = Math.max(0, speed + speedChange);
+      }
     }
   }
 
@@ -210,9 +217,20 @@ export class MoveAudio {
   update({
     isMuted,
     moveSpeed,
+    moveSpeedChange,
     moveGear,
   }: { isMuted: boolean } & MoveSpeedState) {
-    this.osc.detune.value = 0 + moveSpeed;
-    this.osc.frequency.value = 30 + moveSpeed * 1 * (moveGear * 3);
+    const gear = MOVE_GEARS[moveGear];
+    const gearT = (moveSpeed - gear.startAt) / (gear.endAt - gear.startAt);
+
+    let soundStart = 30 + moveGear * 10;
+    let soundEnd = soundStart + moveGear * 15;
+    if (moveSpeedChange < 0) {
+      soundEnd = soundStart + moveGear * 8;
+    }
+
+    const soundValue = soundStart + (soundEnd - soundStart) * gearT;
+
+    this.osc.frequency.value = soundValue;
   }
 }
