@@ -107,6 +107,9 @@ export function stripesToY(
   }
 
   const stripe = stripes[stripeIndex];
+  if (stripe == null) {
+    return undefined;
+  }
 
   const y = stripe.y + stripe.height * inStripeT;
 

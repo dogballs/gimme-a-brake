@@ -19,9 +19,10 @@ export const straightMap: Map = {
   ],
   props: [
     {
-      kind: 'rock',
-      start: 1000,
-      position: 0.1,
+      kind: 'tree',
+      start: 500,
+      position: 0.2,
+      moveSpeed: 1,
     },
   ],
 };
@@ -39,7 +40,7 @@ export const longUphillMap: Map = {
   props: [
     {
       kind: 'rock',
-      start: 1000,
+      start: 500,
       position: 0.1,
     },
     // ...generateProps({

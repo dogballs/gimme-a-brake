@@ -19,17 +19,13 @@ import { Path, getCenterCurve } from './path';
 import { Context2D } from './types';
 
 type PropKind = 'bush' | 'tree' | 'rock';
-type PropPlacement =
-  | 'center'
-  | 'far-left'
-  | 'far-right'
-  | 'close-left'
-  | 'close-right';
 
 export type Prop = {
   kind: PropKind;
   start: number;
   position: number;
+  moveOffset?: number;
+  moveSpeed?: number;
 };
 
 export type PropBox = CollisionBox & {
@@ -71,8 +67,10 @@ export function getPropBoxes({
   }
 
   for (const prop of props) {
-    const appearStart = prop.start - roadDepth;
-    const appearEnd = prop.start;
+    const propMoveOffset = prop.moveOffset ?? 0;
+
+    const appearStart = prop.start - propMoveOffset - roadDepth;
+    const appearEnd = prop.start - propMoveOffset;
     const preshowAppearStart = appearStart - preshowSize;
 
     if (moveOffset >= preshowAppearStart && moveOffset <= appearEnd) {
@@ -89,7 +87,11 @@ export function getPropBoxes({
 
       const steeredCurve = steerCurve(curve, { steerOffset });
 
-      let inOffset = moveOffset - prop.start + roadDepth;
+      if (prop.moveSpeed != null) {
+        prop.moveOffset = propMoveOffset - prop.moveSpeed;
+      }
+
+      let inOffset = moveOffset - prop.start + roadDepth + propMoveOffset;
       if (isPreshow) {
         inOffset = 1;
       }
