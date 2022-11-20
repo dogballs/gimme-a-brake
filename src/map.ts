@@ -14,21 +14,30 @@ const zones: Zone[] = [
   {
     start: 0,
     kind: 'green',
+    decorAmount: 0,
+  },
+  {
+    start: 200,
+    kind: 'green',
+    offerUpgrade: true,
     decorAmount: 60,
   },
   {
     start: 6000,
     kind: 'desert',
+    offerUpgrade: true,
     decorAmount: 60,
   },
   {
     start: 12000,
     kind: 'beach',
+    offerUpgrade: true,
     decorAmount: 10,
   },
   {
     start: 18000,
     kind: 'forest',
+    offerUpgrade: true,
     decorAmount: 1000,
   },
   {

@@ -1,5 +1,6 @@
 import { IW, IH, HW, HH } from './config';
 import { Section } from './section';
+import { Upgrade } from './upgrade';
 import { Context2D } from './types';
 
 export function drawDebug(
@@ -12,6 +13,7 @@ export function drawDebug(
     moveSpeed,
     moveSpeedChange,
     moveGear,
+    upgrades,
   }: {
     section: Section;
     bgOffset: number;
@@ -20,11 +22,13 @@ export function drawDebug(
     moveSpeed: number;
     moveSpeedChange: number;
     moveGear: number;
+    upgrades: Upgrade[];
   },
 ) {
   ctx.setLineDash([]);
   ctx.strokeStyle = '#000';
   ctx.font = '8px serif';
+  ctx.lineWidth = 1;
 
   ctx.strokeText(`section kind: ${section.kind}`, 5, 10);
   ctx.strokeText(`bg: ${bgOffset.toFixed(5)}`, 5, 20);
@@ -33,6 +37,11 @@ export function drawDebug(
   ctx.strokeText(`move speed: ${moveSpeed.toFixed(5)}`, 5, 50);
   ctx.strokeText(`move speed change: ${moveSpeedChange.toFixed(5)}`, 5, 60);
   ctx.strokeText(`move gear: ${moveGear}`, 5, 70);
+  ctx.strokeText(
+    'upgrades: [' + upgrades.map((u) => u.kind).join() + ']',
+    5,
+    80,
+  );
 }
 
 export function drawHorizon(

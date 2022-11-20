@@ -44,6 +44,12 @@ import {
   stripesUnscaledHeight,
 } from './stripes';
 import { Zone, getActiveZone, getNextZone } from './zone';
+import {
+  drawUpgradeDialog,
+  defaultUpgradeState,
+  UpgradeState,
+  updateUpgradeState,
+} from './upgrade';
 import { Context2D } from './types';
 
 const canvas = document.querySelector('canvas');
@@ -71,12 +77,14 @@ const resources = {
 const state: {
   speedState: MoveSpeedState;
   steerState: SteerState;
+  upgradeState: UpgradeState;
   moveOffset: number;
   moveOffsetChange: number;
   bgOffset: number;
 } = {
   speedState: defaultMoveSpeedState,
   steerState: defaultSteerState,
+  upgradeState: defaultUpgradeState,
   moveOffset: 0,
   moveOffsetChange: 0,
   bgOffset: 0,
@@ -167,11 +175,14 @@ function draw({
     section,
     bgOffset,
     moveOffset,
+    upgrades: state.upgradeState.upgrades,
     ...state.speedState,
     ...state.steerState,
   });
 
   // drawHorizon(ctx);
+
+  drawUpgradeDialog(ctx, state.upgradeState);
 }
 
 async function main() {
@@ -181,10 +192,10 @@ async function main() {
 }
 
 function getInput() {
-  const isUp = keyboardListener.isDown(InputControl.Up);
-  const isDown = keyboardListener.isDown(InputControl.Down);
+  const isUp = keyboardListener.isHold(InputControl.Up);
+  const isDown = keyboardListener.isHold(InputControl.Down);
 
-  const lastPressedThrottleControl = keyboardListener.getDownLastOf([
+  const lastPressedThrottleControl = keyboardListener.getHoldLastOf([
     InputControl.Up,
     InputControl.Down,
   ]);
@@ -192,7 +203,7 @@ function getInput() {
   const isThrottleActive = lastPressedThrottleControl === InputControl.Up;
   const isReverseActive = lastPressedThrottleControl === InputControl.Down;
 
-  const lastPressedTurnControl = keyboardListener.getDownLastOf([
+  const lastPressedTurnControl = keyboardListener.getHoldLastOf([
     InputControl.Left,
     InputControl.Right,
   ]);
@@ -208,8 +219,12 @@ function getInput() {
   };
 }
 
-function updateState() {
+function updateLevelState() {
   // NOTE: don't destructure the state here because it is constantly updated
+
+  if (state.upgradeState.isDialogOpen) {
+    return;
+  }
 
   const {
     isThrottleActive,
@@ -234,6 +249,7 @@ function updateState() {
 
   state.steerState = updateSteerState({
     section,
+    upgrades: state.upgradeState.upgrades,
     isLeftTurnActive,
     isRightTurnActive,
     moveSpeed: state.speedState.moveSpeed,
@@ -300,7 +316,24 @@ function updateCollisions({
 }
 
 function loop() {
-  updateState();
+  keyboardListener.update();
+
+  // NOTE: Don't destructure until after all state updates
+
+  let zone = getActiveZone({
+    zones: resources.map.zones,
+    moveOffset: state.moveOffset,
+  });
+
+  state.upgradeState = updateUpgradeState({
+    keyboardListener,
+    state: state.upgradeState,
+    zone,
+  });
+
+  updateLevelState();
+
+  // NOTE: Can destructure after state has updated
 
   const {
     map: { sections, zones },
@@ -314,7 +347,7 @@ function loop() {
   const section = getActiveSection({ sections, moveOffset });
   const nextSection = getNextSection({ sections, moveOffset });
 
-  const zone = getActiveZone({ zones, moveOffset });
+  zone = getActiveZone({ zones, moveOffset });
   const nextZone = getNextZone({ zones, moveOffset });
 
   const { path, yOverride } = createSectionFragments({

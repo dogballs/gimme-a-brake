@@ -11,11 +11,13 @@ import {
   MOVE_SPEED_MAX,
   STEER_LIMIT,
   STEER_SPEED,
+  STEER_SPEED_IMPROVED,
   STEER_TURN_COUNTER_FORCE,
 } from './config';
 import { CollisionBox } from './collision';
 import { ImageMap } from './images';
 import { Section } from './section';
+import { Upgrade } from './upgrade';
 import { Context2D } from './types';
 
 export function drawCar(
@@ -152,12 +154,14 @@ export function updateSteerState({
   steerOffset: currentSteerOffset,
   steerSpeed: currentSteerSpeed,
   section,
+  upgrades,
   isLeftTurnActive,
   isRightTurnActive,
   moveSpeed,
   moveOffset,
 }: {
   section: Section;
+  upgrades: Upgrade[];
   isLeftTurnActive: boolean;
   isRightTurnActive: boolean;
   moveSpeed: number;
@@ -173,7 +177,11 @@ export function updateSteerState({
     if (moveSpeed < STEER_REDUCE_TILL_SPEED) {
       t = moveSpeed / STEER_REDUCE_TILL_SPEED;
     }
-    const steerSpeed = STEER_SPEED * t;
+    let baseSteerSpeed = STEER_SPEED;
+    if (upgrades.some((u) => u.kind === 'improved_steering')) {
+      baseSteerSpeed = STEER_SPEED_IMPROVED;
+    }
+    const steerSpeed = baseSteerSpeed * t;
     if (isLeftTurnActive) {
       steerOffset = Math.min(STEER_LIMIT, steerOffset + steerSpeed);
     } else if (isRightTurnActive) {
