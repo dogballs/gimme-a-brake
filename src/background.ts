@@ -1,20 +1,77 @@
 import { IW, IH, HH, BG_SPEED_PER_MOVE_OFFSET, MOVE_SPEED_MAX } from './config';
+import { ImageMap } from './images';
 import { Section } from './section';
+import { generateStripes, stripesUnscaledHeight } from './stripes';
+import { Zone, ZoneKind } from './zone';
 import { Context2D } from './types';
 
 export function drawBackground(
   ctx: Context2D,
   {
-    bgImage,
+    images,
+    zone,
+    nextZone,
     bgOffset,
+    moveOffset,
     yOverride,
   }: {
-    bgImage: HTMLImageElement;
+    images: ImageMap;
+    zone: Zone;
+    nextZone: Zone;
+    moveOffset: number;
     bgOffset: number;
     yOverride?: number;
   },
 ) {
-  const offsetX = bgOffset % bgImage.width;
+  const nextZoneIn = nextZone.start - moveOffset;
+
+  const roadHeight = IH - (yOverride ?? HH);
+  const stripes = generateStripes({ roadHeight });
+  const roadDepth = stripesUnscaledHeight(stripes);
+
+  const activeImage = imageByZoneKind(images, zone.kind);
+  let activeOpacity = 1;
+
+  if (nextZoneIn > 0 && nextZoneIn < roadDepth) {
+    const inOffset = roadDepth - nextZoneIn;
+    activeOpacity = 1 - inOffset / roadDepth;
+  }
+
+  drawBackgroundImage(ctx, {
+    image: activeImage,
+    opacity: activeOpacity,
+    bgOffset,
+    yOverride,
+  });
+
+  if (activeOpacity !== 1) {
+    const nextImage = imageByZoneKind(images, nextZone.kind);
+    const nextOpacity = 1 - activeOpacity;
+
+    const secondaryImage = drawBackgroundImage(ctx, {
+      image: nextImage,
+      opacity: nextOpacity,
+      bgOffset,
+      yOverride,
+    });
+  }
+}
+
+function drawBackgroundImage(
+  ctx,
+  {
+    image,
+    opacity,
+    bgOffset,
+    yOverride,
+  }: {
+    image: HTMLImageElement;
+    opacity: number;
+    bgOffset: number;
+    yOverride?: number;
+  },
+) {
+  const offsetX = bgOffset % image.width;
   const offsetY = 0;
 
   const horizonOffsetY = (yOverride ?? HH) - HH;
@@ -41,10 +98,10 @@ export function drawBackground(
   const destWidth = IW;
   const destHeight = yOverride ?? HH;
 
-  ctx.globalAlpha = 0.7;
+  ctx.globalAlpha = opacity;
 
   ctx.drawImage(
-    bgImage,
+    image,
     sourceX,
     sourceY,
     sourceWidth,
@@ -57,12 +114,12 @@ export function drawBackground(
 
   if (sourceX < 0) {
     const overflow = Math.abs(sourceX);
-    const newSourceX = bgImage.width - overflow;
+    const newSourceX = image.width - overflow;
     const newSourceWidth = overflow;
     const newDestWidth = overflow;
 
     ctx.drawImage(
-      bgImage,
+      image,
       newSourceX,
       sourceY,
       newSourceWidth,
@@ -74,15 +131,15 @@ export function drawBackground(
     );
   }
 
-  if (sourceX > bgImage.width - IW) {
-    const overflow = sourceX - (bgImage.width - IW);
+  if (sourceX > image.width - IW) {
+    const overflow = sourceX - (image.width - IW);
     const newSourceX = 0;
     const newSourceWidth = overflow;
     const newDestX = IW - overflow;
     const newDestWidth = overflow;
 
     ctx.drawImage(
-      bgImage,
+      image,
       newSourceX,
       sourceY,
       newSourceWidth,
@@ -95,6 +152,17 @@ export function drawBackground(
   }
 
   ctx.globalAlpha = 1;
+}
+
+function imageByZoneKind(images: ImageMap, kind: ZoneKind) {
+  switch (kind) {
+    case 'green':
+      return images.bgGreen;
+    case 'desert':
+      return images.bgDesert;
+    default:
+      throw new Error(`Unsupported bg zone kind: "${kind}"`);
+  }
 }
 
 export function updateBackgroundOffset({

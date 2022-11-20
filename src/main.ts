@@ -136,7 +136,10 @@ function draw({
   ctx.globalCompositeOperation = 'source-over';
 
   drawBackground(ctx, {
-    bgImage: resources.images.bg2,
+    images: resources.images,
+    zone,
+    nextZone,
+    moveOffset,
     bgOffset,
     yOverride,
   });

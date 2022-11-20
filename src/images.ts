@@ -5,8 +5,9 @@ export type ImageMap = {
 export async function loadImages(): Promise<ImageMap> {
   return {
     car: await loadImage('data/graphics/car.png'),
-    bg1: await loadImage('data/graphics/bg1.png'),
-    bg2: await loadImage('data/graphics/bg2.png'),
+    bgDebug: await loadImage('data/graphics/bg-debug.png'),
+    bgGreen: await loadImage('data/graphics/bg-green.png'),
+    bgDesert: await loadImage('data/graphics/bg-desert.png'),
     bush: await loadImage('data/graphics/bush.png'),
     tree: await loadImage('data/graphics/tree.png'),
     rock: await loadImage('data/graphics/rock.png'),

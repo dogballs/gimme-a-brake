@@ -16,7 +16,7 @@ const zones: Zone[] = [
     kind: 'green',
   },
   {
-    start: 5000,
+    start: 2000,
     kind: 'desert',
   },
 ];
