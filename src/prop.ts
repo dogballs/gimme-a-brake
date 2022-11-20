@@ -167,11 +167,11 @@ export function drawProps(
 function imageByKind(images: ImageMap, kind: PropKind) {
   switch (kind) {
     case 'bush':
-      return images.bush;
+      return images.decorBush;
     case 'tree':
-      return images.tree;
+      return images.decorTree;
     case 'rock':
-      return images.rock;
+      return images.decorRock;
     default:
       throw new Error(`Unsupported decor kind: "${kind}"`);
   }

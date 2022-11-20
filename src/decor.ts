@@ -13,9 +13,10 @@ import { generateStripes, stripesToY, stripesUnscaledHeight } from './stripes';
 import { Path } from './path';
 import { randomElement, randomNumber } from './random';
 import { Section } from './section';
+import { Zone, ZoneKind } from './zone';
 import { Context2D } from './types';
 
-type DecorKind = 'bush' | 'tree' | 'rock';
+type DecorKind = 'green-bush' | 'green-tree' | 'green-rock' | 'desert-cactus';
 type DecorPlacement = 'left' | 'right';
 
 export type Decor = {
@@ -123,12 +124,14 @@ export function drawDecors(
 
 function imageByKind(images: ImageMap, kind: DecorKind) {
   switch (kind) {
-    case 'bush':
-      return images.bush;
-    case 'tree':
-      return images.tree;
-    case 'rock':
-      return images.rock;
+    case 'green-bush':
+      return images.decorBush;
+    case 'green-tree':
+      return images.decorTree;
+    case 'green-rock':
+      return images.decorRock;
+    case 'desert-cactus':
+      return images.decorCactus;
     default:
       throw new Error(`Unsupported decor kind: "${kind}"`);
   }
@@ -138,12 +141,18 @@ export function generateDecors({
   startOffset,
   size,
   amount,
+  kinds = ['green-bush', 'green-rock', 'green-tree'],
 }: {
   startOffset: number;
   size: number;
   amount: number;
+  kinds?: DecorKind[];
 }) {
   const decors: Decor[] = [];
+
+  if (size === 0 || amount === 0) {
+    return decors;
+  }
 
   const areaSize = size / amount;
 
@@ -154,7 +163,7 @@ export function generateDecors({
     const inAreaOffset = randomNumber(0, areaSize);
 
     const start = startOffset + areaStart + inAreaOffset;
-    const kind = randomElement<DecorKind>(['bush', 'tree', 'rock']);
+    const kind = randomElement<DecorKind>(kinds);
     const driftOffset = randomNumber(0, 50);
     const placement = randomElement<DecorPlacement>(['left', 'right']);
 
@@ -164,6 +173,35 @@ export function generateDecors({
       placement,
       driftOffset,
     });
+  }
+
+  return decors;
+}
+
+const KINDS_BY_ZONE = new Map<ZoneKind, DecorKind[]>();
+KINDS_BY_ZONE.set('green', ['green-bush', 'green-rock', 'green-tree']);
+KINDS_BY_ZONE.set('desert', ['desert-cactus']);
+
+export function generateDecorsForZones({
+  zones,
+  amountPerZone,
+}: {
+  zones: Zone[];
+  amountPerZone: number;
+}): Decor[] {
+  const decors: Decor[] = [];
+
+  for (let i = 0; i < zones.length; i++) {
+    const zone = zones[i];
+    const nextZone = zones[i + 1];
+    const zoneDecors = generateDecors({
+      startOffset: zone.start,
+      size: nextZone ? nextZone.start - zone.start : 0,
+      amount: amountPerZone,
+      kinds: KINDS_BY_ZONE.get(zone.kind),
+    });
+
+    decors.push(...zoneDecors);
   }
 
   return decors;

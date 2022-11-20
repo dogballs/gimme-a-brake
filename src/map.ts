@@ -1,4 +1,4 @@
-import { Decor, generateDecors } from './decor';
+import { Decor, generateDecors, generateDecorsForZones } from './decor';
 import { Prop, generateProps } from './prop';
 import { Section } from './section';
 import { Zone } from './zone';
@@ -20,17 +20,12 @@ const zones: Zone[] = [
     kind: 'desert',
   },
 ];
+const decors = generateDecorsForZones({ zones, amountPerZone: 30 });
 
 export const straightMap: Map = {
   zones,
+  decors,
   sections: [],
-  decors: [
-    ...generateDecors({
-      startOffset: 100,
-      amount: 1,
-      size: 5000,
-    }),
-  ],
   props: [
     {
       kind: 'tree',
@@ -43,6 +38,7 @@ export const straightMap: Map = {
 
 export const longUphillMap: Map = {
   zones,
+  decors,
   sections: [
     {
       kind: 'uphill',
@@ -51,7 +47,6 @@ export const longUphillMap: Map = {
       steepness: 30,
     },
   ],
-  decors: [],
   props: [
     // {
     //   kind: 'rock',
@@ -68,6 +63,7 @@ export const longUphillMap: Map = {
 
 export const longLeftTurnMap: Map = {
   zones,
+  decors,
   sections: [
     {
       kind: 'turn-right',
@@ -75,7 +71,6 @@ export const longLeftTurnMap: Map = {
       size: Infinity,
     },
   ],
-  decors: [],
   props: [
     ...generateProps({
       startOffset: 300,
@@ -87,6 +82,7 @@ export const longLeftTurnMap: Map = {
 
 export const coolMap: Map = {
   zones,
+  decors,
   sections: [
     {
       kind: 'uphill',
@@ -111,18 +107,12 @@ export const coolMap: Map = {
       steepness: 50,
     },
   ],
-  decors: [
-    ...generateDecors({
-      startOffset: 300,
-      size: 15000,
-      amount: 100,
-    }),
-  ],
+
   props: [
-    ...generateProps({
-      startOffset: 300,
-      size: 15000,
-      amount: 30,
-    }),
+    // ...generateProps({
+    //   startOffset: 300,
+    //   size: 15000,
+    //   amount: 30,
+    // }),
   ],
 };

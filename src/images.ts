@@ -8,9 +8,12 @@ export async function loadImages(): Promise<ImageMap> {
     bgDebug: await loadImage('data/graphics/bg-debug.png'),
     bgGreen: await loadImage('data/graphics/bg-green.png'),
     bgDesert: await loadImage('data/graphics/bg-desert.png'),
-    bush: await loadImage('data/graphics/bush.png'),
-    tree: await loadImage('data/graphics/tree.png'),
-    rock: await loadImage('data/graphics/rock.png'),
+    // Decor - green
+    decorBush: await loadImage('data/graphics/decor-bush.png'),
+    decorTree: await loadImage('data/graphics/decor-tree.png'),
+    decorRock: await loadImage('data/graphics/decor-rock.png'),
+    // Decor - desert
+    decorCactus: await loadImage('data/graphics/decor-cactus.png'),
   };
 }
 
