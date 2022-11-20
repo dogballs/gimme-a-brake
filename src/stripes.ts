@@ -26,6 +26,8 @@ const NEAR_TEXTURE_HEIGHT = 32 * RENDER_SCALE;
 const GROUND_COLORS = new Map<ZoneKind, DrawStripesColors>();
 GROUND_COLORS.set('green', ['#889827', '#9aa545']);
 GROUND_COLORS.set('desert', ['#b7b467', '#c9c67c']);
+GROUND_COLORS.set('forest', ['#0c405e', '#1e4f6b']);
+GROUND_COLORS.set('beach', ['#579eb7', '#579eb7']);
 
 export function drawGroundStripes(ctx: Context2D, opts: DrawStripesOpts) {
   const colors = GROUND_COLORS.get(opts.zone.kind);
@@ -35,6 +37,8 @@ export function drawGroundStripes(ctx: Context2D, opts: DrawStripesOpts) {
 const ROAD_COLORS = new Map<ZoneKind, DrawStripesColors>();
 ROAD_COLORS.set('green', ['#69696a', '#444446']);
 ROAD_COLORS.set('desert', ['#9d7634', '#8b6b36']);
+ROAD_COLORS.set('forest', ['#497d7a', '#2f706c']);
+ROAD_COLORS.set('beach', ['#36291a', '#4c3821']);
 
 export function drawRoadStripes(ctx: Context2D, opts: DrawStripesOpts) {
   const colors = ROAD_COLORS.get(opts.zone.kind);
@@ -44,6 +48,8 @@ export function drawRoadStripes(ctx: Context2D, opts: DrawStripesOpts) {
 const CURB_COLORS = new Map<ZoneKind, DrawStripesColors>();
 CURB_COLORS.set('green', ['#c5bfbf', '#dc3961']);
 CURB_COLORS.set('desert', ['#c57f4c', '#a15541']);
+CURB_COLORS.set('forest', ['#867794', '#64497d']);
+CURB_COLORS.set('beach', ['#626262', '#626262']);
 
 // TODO: make them appear more often?? but keep stripes match with bigger ones
 export function drawCurbStripes(ctx: Context2D, opts: DrawStripesOpts) {

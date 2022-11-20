@@ -5,15 +5,25 @@ export type ImageMap = {
 export async function loadImages(): Promise<ImageMap> {
   return {
     car: await loadImage('data/graphics/car.png'),
+    // Backgrounds
     bgDebug: await loadImage('data/graphics/bg-debug.png'),
     bgGreen: await loadImage('data/graphics/bg-green.png'),
     bgDesert: await loadImage('data/graphics/bg-desert.png'),
+    bgForest: await loadImage('data/graphics/bg-forest.png'),
+    bgBeach: await loadImage('data/graphics/bg-beach.png'),
     // Decor - green
-    decorBush: await loadImage('data/graphics/decor-bush.png'),
-    decorTree: await loadImage('data/graphics/decor-tree.png'),
-    decorRock: await loadImage('data/graphics/decor-rock.png'),
+    decorGreenBush: await loadImage('data/graphics/decor-green-bush.png'),
+    decorGreenTree: await loadImage('data/graphics/decor-green-tree.png'),
+    decorGreenRock: await loadImage('data/graphics/decor-green-rock.png'),
     // Decor - desert
-    decorCactus: await loadImage('data/graphics/decor-cactus.png'),
+    decorDesertCactus: await loadImage('data/graphics/decor-desert-cactus.png'),
+    decorDesertSand: await loadImage('data/graphics/decor-desert-sand.png'),
+    decorDesertBush: await loadImage('data/graphics/decor-desert-bush.png'),
+    // Decor - forest
+    decorForestTree: await loadImage('data/graphics/decor-forest-tree.png'),
+    decorForestSpruce: await loadImage('data/graphics/decor-forest-spruce.png'),
+    // Decor - beach
+    decorBeachBuoy: await loadImage('data/graphics/decor-beach-buoy.png'),
   };
 }
 

@@ -16,7 +16,16 @@ import { Section } from './section';
 import { Zone, ZoneKind } from './zone';
 import { Context2D } from './types';
 
-type DecorKind = 'green-bush' | 'green-tree' | 'green-rock' | 'desert-cactus';
+type DecorKind =
+  | 'green-bush'
+  | 'green-tree'
+  | 'green-rock'
+  | 'desert-cactus'
+  | 'desert-bush'
+  | 'desert-sand'
+  | 'forest-tree'
+  | 'forest-spruce'
+  | 'beach-buoy';
 type DecorPlacement = 'left' | 'right';
 
 export type Decor = {
@@ -64,13 +73,18 @@ export function drawDecors(
   const stripes = generateStripes({ roadHeight });
   const travelDistance = stripesUnscaledHeight(stripes);
 
+  let preshowSize = 200;
+
   for (const decor of decors) {
     // Offset appearance so that decor positioned at 0 in the map is actually
     // rendered visually at 0 right from the start.
     const appearStart = decor.start - travelDistance;
     const appearEnd = decor.start;
+    const preshowAppearStart = appearStart - preshowSize;
 
-    if (moveOffset >= appearStart && moveOffset <= appearEnd) {
+    if (moveOffset >= preshowAppearStart && moveOffset <= appearEnd) {
+      const isPreshow = moveOffset < appearStart;
+
       const curbPath = getCurbPath(path, { steerOffset });
 
       const sourceCurve =
@@ -89,6 +103,10 @@ export function drawDecors(
       );
 
       let inOffset = moveOffset - decor.start + travelDistance;
+      if (isPreshow) {
+        inOffset = 1;
+      }
+
       const stripesY = stripesToY(stripes, { inOffset });
       if (stripesY === undefined) {
         continue;
@@ -103,21 +121,34 @@ export function drawDecors(
         continue;
       }
 
-      const hhDecorT = stripesY / HH;
+      let inHalfHeightT = stripesY / HH;
+      let imageScale = Math.max(
+        0,
+        1 - (1 - 0.1 * RENDER_SCALE) * inHalfHeightT,
+      );
+      let imageOpacity = 1;
+
+      if (roadHeight > HH && decorY < HH) {
+        const inOverHeightT = Math.max(
+          0,
+          1 - (HH - decorY) / (roadHeight - HH),
+        );
+        imageScale = 0.1 * inOverHeightT;
+      } else if (isPreshow) {
+        imageScale *= 1 - (appearStart - moveOffset) / preshowSize;
+        imageOpacity = 1 - (appearStart - moveOffset) / preshowSize;
+      }
 
       const image = imageByKind(images, decor.kind);
-
-      let imageScale = Math.max(0, 1 - (1 - 0.1 * RENDER_SCALE) * hhDecorT);
-      if (roadHeight > HH && decorY < HH) {
-        imageScale = 0.05;
-      }
 
       const imageWidth = image.width * imageScale;
       const imageHeight = image.height * imageScale;
       const imageX = decor.placement === 'right' ? decorX : decorX - imageWidth;
       const imageY = decorY - imageHeight;
 
+      ctx.globalAlpha = imageOpacity;
       ctx.drawImage(image, imageX, imageY, imageWidth, imageHeight);
+      ctx.globalAlpha = 1;
     }
   }
 }
@@ -125,13 +156,23 @@ export function drawDecors(
 function imageByKind(images: ImageMap, kind: DecorKind) {
   switch (kind) {
     case 'green-bush':
-      return images.decorBush;
+      return images.decorGreenBush;
     case 'green-tree':
-      return images.decorTree;
+      return images.decorGreenTree;
     case 'green-rock':
-      return images.decorRock;
+      return images.decorGreenRock;
     case 'desert-cactus':
-      return images.decorCactus;
+      return images.decorDesertCactus;
+    case 'desert-sand':
+      return images.decorDesertSand;
+    case 'desert-bush':
+      return images.decorDesertBush;
+    case 'forest-tree':
+      return images.decorForestTree;
+    case 'forest-spruce':
+      return images.decorForestSpruce;
+    case 'beach-buoy':
+      return images.decorBeachBuoy;
     default:
       throw new Error(`Unsupported decor kind: "${kind}"`);
   }
@@ -140,12 +181,14 @@ function imageByKind(images: ImageMap, kind: DecorKind) {
 export function generateDecors({
   startOffset,
   size,
-  amount,
+  amount = 0,
+  driftMax = 50,
   kinds = ['green-bush', 'green-rock', 'green-tree'],
 }: {
   startOffset: number;
   size: number;
-  amount: number;
+  amount?: number;
+  driftMax?: number;
   kinds?: DecorKind[];
 }) {
   const decors: Decor[] = [];
@@ -164,7 +207,7 @@ export function generateDecors({
 
     const start = startOffset + areaStart + inAreaOffset;
     const kind = randomElement<DecorKind>(kinds);
-    const driftOffset = randomNumber(0, 50);
+    const driftOffset = randomNumber(0, driftMax);
     const placement = randomElement<DecorPlacement>(['left', 'right']);
 
     decors.push({
@@ -180,15 +223,11 @@ export function generateDecors({
 
 const KINDS_BY_ZONE = new Map<ZoneKind, DecorKind[]>();
 KINDS_BY_ZONE.set('green', ['green-bush', 'green-rock', 'green-tree']);
-KINDS_BY_ZONE.set('desert', ['desert-cactus']);
+KINDS_BY_ZONE.set('desert', ['desert-cactus', 'desert-bush', 'desert-sand']);
+KINDS_BY_ZONE.set('forest', ['forest-tree', 'forest-spruce']);
+KINDS_BY_ZONE.set('beach', ['beach-buoy']);
 
-export function generateDecorsForZones({
-  zones,
-  amountPerZone,
-}: {
-  zones: Zone[];
-  amountPerZone: number;
-}): Decor[] {
+export function generateDecorsForZones({ zones }: { zones: Zone[] }): Decor[] {
   const decors: Decor[] = [];
 
   for (let i = 0; i < zones.length; i++) {
@@ -197,7 +236,7 @@ export function generateDecorsForZones({
     const zoneDecors = generateDecors({
       startOffset: zone.start,
       size: nextZone ? nextZone.start - zone.start : 0,
-      amount: amountPerZone,
+      amount: zone.decorAmount ?? 0,
       kinds: KINDS_BY_ZONE.get(zone.kind),
     });
 

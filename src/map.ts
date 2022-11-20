@@ -14,26 +14,37 @@ const zones: Zone[] = [
   {
     start: 0,
     kind: 'green',
+    decorAmount: 60,
   },
   {
-    start: 2000,
+    start: 4000,
     kind: 'desert',
+    decorAmount: 60,
+  },
+  {
+    start: 8000,
+    kind: 'beach',
+    decorAmount: 10,
+  },
+  {
+    start: 12000,
+    kind: 'forest',
+    decorAmount: 1000,
+  },
+  {
+    start: 16000,
+    kind: 'forest',
+    decorAmount: 0,
   },
 ];
-const decors = generateDecorsForZones({ zones, amountPerZone: 30 });
+
+const decors = generateDecorsForZones({ zones });
 
 export const straightMap: Map = {
   zones,
   decors,
   sections: [],
-  props: [
-    {
-      kind: 'tree',
-      start: 500,
-      position: 0.2,
-      moveSpeed: 1,
-    },
-  ],
+  props: [],
 };
 
 export const longUphillMap: Map = {

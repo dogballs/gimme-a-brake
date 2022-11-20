@@ -1,7 +1,15 @@
-export type ZoneKind = 'green' | 'desert' | 'final';
+export type ZoneKind = 'green' | 'desert' | 'forest' | 'beach';
+
 export type Zone = {
   start: number;
   kind: ZoneKind;
+  decorAmount?: number;
+  decorDriftMax?: number;
+};
+
+const defaultZone: Zone = {
+  start: 0,
+  kind: 'green',
 };
 
 export function getActiveZone({
@@ -17,6 +25,7 @@ export function getActiveZone({
       return zone;
     }
   }
+  return defaultZone;
 }
 
 export function getNextZone({
@@ -31,11 +40,12 @@ export function getNextZone({
     const zone = zones[i];
     if (moveOffset >= zone.start) {
       activeIndex = i;
+      break;
     }
   }
   if (activeIndex !== -1) {
     const nextIndex = activeIndex + 1;
-    return zones[nextIndex];
+    return zones[nextIndex] ?? defaultZone;
   }
-  return getActiveZone({ zones, moveOffset });
+  return defaultZone;
 }

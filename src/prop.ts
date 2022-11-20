@@ -31,6 +31,7 @@ export type Prop = {
 export type PropBox = CollisionBox & {
   prop: Prop;
   curve: Curve;
+  opacity: number;
 };
 
 export function getPropBoxes({
@@ -110,12 +111,14 @@ export function getPropBoxes({
       let inHalfHeightT = stripesY / HH;
 
       let imageScale = Math.max(0, 1 - (1 - 0.1 * RS) * inHalfHeightT);
+      let imageOpacity = 1;
 
       if (roadHeight > HH && propY < HH) {
         const inOverHeightT = Math.max(0, 1 - (HH - propY) / (roadHeight - HH));
         imageScale = 0.1 * inOverHeightT;
       } else if (isPreshow) {
         imageScale *= 1 - (appearStart - moveOffset) / preshowSize;
+        imageOpacity = 1 - (appearStart - moveOffset) / preshowSize;
       }
 
       const image = imageByKind(images, prop.kind);
@@ -134,6 +137,7 @@ export function getPropBoxes({
         width: imageWidth,
         height: imageHeight,
         depth: 20,
+        opacity: imageOpacity,
       });
     }
   }
@@ -160,7 +164,9 @@ export function drawProps(
 
     // drawCurve(ctx, propBox.curve, { moveOffset, steerOffset: 0 });
 
+    ctx.globalAlpha = propBox.opacity;
     ctx.drawImage(image, propBox.x, propBox.y, propBox.width, propBox.height);
+    ctx.globalAlpha = 1;
   }
 }
 

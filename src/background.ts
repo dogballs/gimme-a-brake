@@ -160,6 +160,10 @@ function imageByZoneKind(images: ImageMap, kind: ZoneKind) {
       return images.bgGreen;
     case 'desert':
       return images.bgDesert;
+    case 'forest':
+      return images.bgForest;
+    case 'beach':
+      return images.bgBeach;
     default:
       throw new Error(`Unsupported bg zone kind: "${kind}"`);
   }
