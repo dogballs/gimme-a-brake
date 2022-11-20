@@ -1,7 +1,10 @@
 import { IW, IH, HH, RENDER_SCALE } from './config';
+import { Zone, ZoneKind } from './zone';
 import { Context2D } from './types';
 
 type DrawStripesOpts = {
+  zone: Zone;
+  nextZone: Zone;
   moveOffset: number;
   yOverride?: number;
 };
@@ -11,58 +14,102 @@ export type Stripe = {
   height: number;
   y: number;
   y2: number;
+  stripeIndex: number;
 };
 
 type TexturedStripe = Stripe & {
   textureIndex: number;
 };
 
-// It messes with the offsets but fixes weird transitions for uphill/downhill
-// when the stripes are not moving.
-// TODO: figure out another way to move stripes
-const SPEED_EFFECT_MULTIPLIER = 1;
-
 const NEAR_TEXTURE_HEIGHT = 32 * RENDER_SCALE;
 
+const GROUND_COLORS = new Map<ZoneKind, DrawStripesColors>();
+GROUND_COLORS.set('green', ['#889827', '#9aa545']);
+GROUND_COLORS.set('desert', ['#b7b467', '#c9c67c']);
+
 export function drawGroundStripes(ctx: Context2D, opts: DrawStripesOpts) {
-  const colors: DrawStripesColors = ['#889827', '#9aa545'];
-  drawStripes(ctx, { ...opts, colors });
+  const colors = GROUND_COLORS.get(opts.zone.kind);
+  drawStripes(ctx, { ...opts, colorMap: GROUND_COLORS });
 }
 
+const ROAD_COLORS = new Map<ZoneKind, DrawStripesColors>();
+ROAD_COLORS.set('green', ['#69696a', '#444446']);
+ROAD_COLORS.set('desert', ['#9d7634', '#8b6b36']);
+
 export function drawRoadStripes(ctx: Context2D, opts: DrawStripesOpts) {
-  const colors: DrawStripesColors = ['#69696a', '#444446'];
-  drawStripes(ctx, { ...opts, colors });
+  const colors = ROAD_COLORS.get(opts.zone.kind);
+  drawStripes(ctx, { ...opts, colorMap: ROAD_COLORS });
 }
+
+const CURB_COLORS = new Map<ZoneKind, DrawStripesColors>();
+CURB_COLORS.set('green', ['#c5bfbf', '#dc3961']);
+CURB_COLORS.set('desert', ['#c57f4c', '#a15541']);
 
 // TODO: make them appear more often?? but keep stripes match with bigger ones
 export function drawCurbStripes(ctx: Context2D, opts: DrawStripesOpts) {
-  const colors: DrawStripesColors = ['#c5bfbf', '#dc3961'];
-  drawStripes(ctx, { ...opts, colors });
+  drawStripes(ctx, { ...opts, colorMap: CURB_COLORS });
 }
 
 function drawStripes(
   ctx: Context2D,
   {
-    colors,
+    colorMap,
+    zone,
+    nextZone,
     moveOffset,
     yOverride,
   }: {
-    colors: DrawStripesColors;
+    colorMap: Map<ZoneKind, DrawStripesColors>;
   } & DrawStripesOpts,
 ) {
+  const colors = colorMap.get(zone.kind);
+  const nextColors = colorMap.get(nextZone.kind);
+
   const roadHeight = IH - (yOverride ?? HH);
   // const roadHeight = HH;
 
-  const spedUpMoveOffset = moveOffset * SPEED_EFFECT_MULTIPLIER;
+  const nextZoneIn = nextZone.start - moveOffset;
 
   const stripes = generateStripes({ roadHeight });
-  const texturedStripes = textureSplitStripes(stripes, {
-    moveOffset: spedUpMoveOffset,
-  });
+  const texturedStripes = textureSplitStripes(stripes, { moveOffset });
+  const roadDepth = stripesUnscaledHeight(stripes);
 
-  for (const stripe of texturedStripes) {
-    ctx.fillStyle = colors[stripe.textureIndex];
-    ctx.fillRect(0, IH - stripe.y2, IW, stripe.height);
+  if (nextZoneIn > 0 && nextZoneIn < roadDepth) {
+    const inOffset = roadDepth - nextZoneIn;
+    const divideY = stripesToY(stripes, { inOffset });
+
+    const closestStripe = texturedStripes.find((stripe, i) => {
+      return (
+        stripe.y2 >= divideY &&
+        stripe.textureIndex === 0 &&
+        texturedStripes[i + 1]?.textureIndex !== 0
+      );
+    });
+
+    for (let i = 0; i < texturedStripes.length; i++) {
+      const stripe = texturedStripes[i];
+      const nextStripe = texturedStripes[i + 1];
+
+      let usedColors = colors;
+      if (stripe.stripeIndex >= closestStripe?.stripeIndex) {
+        usedColors = nextColors;
+      }
+      if (
+        stripe.stripeIndex + 1 === closestStripe?.stripeIndex &&
+        stripe.textureIndex === nextStripe?.textureIndex &&
+        stripe.textureIndex === 0
+      ) {
+        usedColors = nextColors;
+      }
+
+      ctx.fillStyle = usedColors[stripe.textureIndex];
+      ctx.fillRect(0, IH - stripe.y2, IW, stripe.height);
+    }
+  } else {
+    for (const stripe of texturedStripes) {
+      ctx.fillStyle = colors[stripe.textureIndex];
+      ctx.fillRect(0, IH - stripe.y2, IW, stripe.height);
+    }
   }
 }
 
@@ -88,7 +135,7 @@ export function stripesToY(
   let scaledY = 0;
 
   const unscaledHeight = stripes.length * nearTextureHeight;
-  const unscaledIn = unscaledHeight - inOffset * SPEED_EFFECT_MULTIPLIER;
+  const unscaledIn = unscaledHeight - inOffset;
   const unscaledT = unscaledIn / nearTextureHeight;
 
   const stripeIndex = Math.floor(unscaledT);
@@ -130,6 +177,8 @@ export function generateStripes({
   // into the road.
   let downscaleIndex = 1;
 
+  let stripeIndex = 0;
+
   let currentY = 0;
   let roadLeftToParse = roadHeight;
 
@@ -155,12 +204,14 @@ export function generateStripes({
         y,
         y2,
         height,
+        stripeIndex,
       });
     }
 
     roadLeftToParse -= stripeHeight;
     currentY += stripeHeight;
     downscaleIndex++;
+    stripeIndex++;
   }
   return stripes;
 }
@@ -206,6 +257,7 @@ function textureSplitStripes(
     primTextureIndex = 1 - primTextureIndex;
   }
 
+  let stripeIndex = 0;
   for (const stripe of stripes) {
     // Stripe is split into two sub-stripes based on the global offset.
     // Each stripe has it's own texture.
@@ -220,6 +272,7 @@ function textureSplitStripes(
         height: primTextureHeight,
         y2: stripe.y + primTextureHeight,
         textureIndex: primTextureIndex,
+        stripeIndex,
       });
     }
     if (restTextureHeight !== 0) {
@@ -228,11 +281,13 @@ function textureSplitStripes(
         height: restTextureHeight,
         y: stripe.y2 - restTextureHeight,
         textureIndex: 1 - primTextureIndex,
+        stripeIndex,
       });
     }
 
     // Alernate to the other texture and make it primary
     primTextureIndex = 1 - primTextureIndex;
+    stripeIndex++;
   }
 
   return splitStripes;

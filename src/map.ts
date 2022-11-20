@@ -1,14 +1,28 @@
 import { Decor, generateDecors } from './decor';
 import { Prop, generateProps } from './prop';
 import { Section } from './section';
+import { Zone } from './zone';
 
 type Map = {
   sections: Section[];
+  zones: Zone[];
   decors: Decor[];
   props: Prop[];
 };
 
+const zones: Zone[] = [
+  {
+    start: 0,
+    kind: 'green',
+  },
+  {
+    start: 5000,
+    kind: 'desert',
+  },
+];
+
 export const straightMap: Map = {
+  zones,
   sections: [],
   decors: [
     ...generateDecors({
@@ -28,6 +42,7 @@ export const straightMap: Map = {
 };
 
 export const longUphillMap: Map = {
+  zones,
   sections: [
     {
       kind: 'uphill',
@@ -52,6 +67,7 @@ export const longUphillMap: Map = {
 };
 
 export const longLeftTurnMap: Map = {
+  zones,
   sections: [
     {
       kind: 'turn-right',
@@ -70,6 +86,7 @@ export const longLeftTurnMap: Map = {
 };
 
 export const coolMap: Map = {
+  zones,
   sections: [
     {
       kind: 'uphill',

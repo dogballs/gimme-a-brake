@@ -43,6 +43,7 @@ import {
   generateStripes,
   stripesUnscaledHeight,
 } from './stripes';
+import { Zone, getActiveZone, getNextZone } from './zone';
 import { Context2D } from './types';
 
 const canvas = document.querySelector('canvas');
@@ -84,11 +85,15 @@ const state: {
 logClientCoordsOnClick(canvas);
 
 function draw({
+  zone,
+  nextZone,
   section,
   path,
   propBoxes,
   yOverride,
 }: {
+  zone: Zone;
+  nextZone: Zone;
   section: Section;
   path: Path;
   propBoxes: PropBox[];
@@ -107,7 +112,7 @@ function draw({
   // again). Do it offscreen because we have to apply another mask and it's hard
   // to do on a single canvas.
   offCtx.globalCompositeOperation = 'source-over';
-  drawRoadStripes(offCtx, { moveOffset, yOverride });
+  drawRoadStripes(offCtx, { zone, nextZone, moveOffset, yOverride });
   offCtx.globalCompositeOperation = 'destination-in';
   drawRoadMask(offCtx, path, { steerOffset });
   ctx.drawImage(offCanvas, 0, 0);
@@ -115,7 +120,7 @@ function draw({
   // Ditto for the road. Except the curbs are drawn to the main canvas behind
   // the already present road.
   offCtx.globalCompositeOperation = 'source-over';
-  drawCurbStripes(offCtx, { moveOffset, yOverride });
+  drawCurbStripes(offCtx, { zone, nextZone, moveOffset, yOverride });
   offCtx.globalCompositeOperation = 'destination-in';
   drawCurbMask(offCtx, path, { steerOffset });
   ctx.globalCompositeOperation = 'destination-over';
@@ -125,7 +130,7 @@ function draw({
   // the road+curbs that were drawn on the previous step and only fill in the
   // ground stripes on the sides.
   ctx.globalCompositeOperation = 'destination-over';
-  drawGroundStripes(ctx, { moveOffset, yOverride });
+  drawGroundStripes(ctx, { zone, nextZone, moveOffset, yOverride });
 
   // Then draw everything on top
   ctx.globalCompositeOperation = 'source-over';
@@ -294,20 +299,25 @@ function updateCollisions({
 function loop() {
   updateState();
 
-  const section = getActiveSection({
-    sections: resources.map.sections,
-    moveOffset: state.moveOffset,
-  });
+  const {
+    map: { sections, zones },
+  } = resources;
 
-  const nextSection = getNextSection({
-    sections: resources.map.sections,
-    moveOffset: state.moveOffset,
-  });
+  const {
+    moveOffset,
+    steerState: { steerOffset },
+  } = state;
+
+  const section = getActiveSection({ sections, moveOffset });
+  const nextSection = getNextSection({ sections, moveOffset });
+
+  const zone = getActiveZone({ zones, moveOffset });
+  const nextZone = getNextZone({ zones, moveOffset });
 
   const { path, yOverride } = createSectionFragments({
     section,
-    moveOffset: state.moveOffset,
-    steerOffset: state.steerState.steerOffset,
+    moveOffset,
+    steerOffset,
   });
 
   let roadHeight = IH - (yOverride ?? HH);
@@ -322,7 +332,7 @@ function loop() {
     yOverride,
   });
 
-  draw({ section, path, yOverride, propBoxes });
+  draw({ zone, nextZone, section, path, yOverride, propBoxes });
 
   // drawCollisionBoxes(ctx, collidedBoxes, uncollidedBoxes, {
   //   stripes,
