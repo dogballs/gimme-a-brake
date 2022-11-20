@@ -81,6 +81,7 @@ function drawStripes(
   const roadDepth = stripesUnscaledHeight(stripes);
 
   if (nextZoneIn > 0 && nextZoneIn < roadDepth) {
+    console.log('inside');
     const inOffset = roadDepth - nextZoneIn;
     const divideY = stripesToY(stripes, { inOffset });
 

@@ -17,22 +17,22 @@ const zones: Zone[] = [
     decorAmount: 60,
   },
   {
-    start: 4000,
+    start: 6000,
     kind: 'desert',
     decorAmount: 60,
   },
   {
-    start: 8000,
+    start: 12000,
     kind: 'beach',
     decorAmount: 10,
   },
   {
-    start: 12000,
+    start: 18000,
     kind: 'forest',
     decorAmount: 1000,
   },
   {
-    start: 16000,
+    start: 24000,
     kind: 'forest',
     decorAmount: 0,
   },
