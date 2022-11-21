@@ -1,6 +1,7 @@
 import { IW, IH, RS } from './config';
 import { KeyboardListener, InputControl } from './controls';
 import { ImageMap } from './images';
+import { randomElements } from './random';
 import { Zone } from './zone';
 
 type UpgradeKind =
@@ -35,7 +36,7 @@ export const ALL_UPGRADES: Upgrade[] = [
   },
   {
     kind: 'bumper',
-    description: 'Allows bumping into obstacles. Cooldown: 10 sec',
+    description: 'Slows by bumping into obstacles. Cooldown: 10 sec',
     active: false,
     cooldown: 10,
     // breaks and blocks a slot?
@@ -76,7 +77,7 @@ export const ALL_UPGRADES: Upgrade[] = [
   },
   {
     kind: 'turn-uphill-slow',
-    description: 'Slows down on turns or unphills',
+    description: 'Slows down on turns and uphills',
     active: false,
   },
   // timestop?
@@ -108,14 +109,30 @@ export function updateUpgradeState({
   zone: Zone;
 }): UpgradeState {
   if (!state.isDialogOpen && zone.offerUpgrade && !zone.gotUpgrade) {
-    // TODO: pick random ones
-    const dialogUpgrades = [ALL_UPGRADES[0], ALL_UPGRADES[1], ALL_UPGRADES[2]];
+    const hasActive = state.upgrades.some((u) => u.active);
+    const availableUpgrades = ALL_UPGRADES.filter((allUpgrade) => {
+      const hasIt = state.upgrades.some((u) => u.kind === allUpgrade.kind);
+      if (hasIt) {
+        return false;
+      }
+      if (allUpgrade.active && hasActive) {
+        return false;
+      }
+      return true;
+    });
+
+    const dialogUpgrades = randomElements(availableUpgrades, 3);
+
     return {
       ...state,
       isDialogOpen: true,
       dialogSelectedIndex: 0,
       dialogUpgrades,
     };
+  }
+
+  if (!state.isDialogOpen) {
+    return state;
   }
 
   const isSelected = keyboardListener.isDown(InputControl.Select);
@@ -242,7 +259,13 @@ function drawUpgradeDialogItem(
     ctx.lineWidth = 1;
     ctx.strokeStyle = '#000';
     ctx.font = `${10 * RS}px serif`;
-    ctx.strokeText(upgrade.description, 100 * RS, 130 * RS, 180 * RS);
+    ctx.strokeText(upgrade.description, 100 * RS, 128 * RS, 180 * RS);
+    ctx.strokeText(
+      upgrade.active ? 'Active' : 'Passive',
+      100 * RS,
+      140 * RS,
+      180 * RS,
+    );
   }
 }
 
@@ -280,6 +303,10 @@ function drawUpgradeImage(
     size,
     size,
   );
+
+  if (upgrade.active) {
+    ctx.drawImage(image, 0, 32, sourceWidth, sourceHeight, x, y, size, size);
+  }
 }
 
 export function drawActiveUpgrades(
