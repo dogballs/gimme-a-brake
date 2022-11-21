@@ -1,4 +1,4 @@
-import { IW, IH } from './config';
+import { IW, IH, RS } from './config';
 import { KeyboardListener, InputControl } from './controls';
 import { ImageMap } from './images';
 import { Zone } from './zone';
@@ -180,8 +180,8 @@ export function drawUpgradeDialog(
     return;
   }
 
-  const width = 200;
-  const height = 100;
+  const width = 200 * RS;
+  const height = 100 * RS;
 
   const x = (IW - width) / 2;
   const y = (IH - height) / 2;
@@ -195,13 +195,13 @@ export function drawUpgradeDialog(
   ctx.fillRect(x, y, width, height);
 
   ctx.strokeStyle = '#2b7d82';
-  ctx.lineWidth = 5;
+  ctx.lineWidth = 5 * RS;
   ctx.strokeRect(x, y, width, height);
 
   ctx.strokeStyle = '#000';
   ctx.lineWidth = 1;
-  ctx.font = '9px serif';
-  ctx.strokeText('Pick an upgrade:', x + 10, y + 15);
+  ctx.font = `${9 * RS}px serif`;
+  ctx.strokeText('Pick an upgrade:', x + 10 * RS, y + 15 * RS);
 
   state.dialogUpgrades.forEach((upgrade, index) => {
     drawUpgradeItem(ctx, {
@@ -228,11 +228,11 @@ function drawUpgradeItem(
     index: number;
   },
 ) {
-  const destWidth = 32;
-  const destHeight = 32;
+  const destWidth = 32 * RS;
+  const destHeight = 32 * RS;
 
-  const destX = 130 + 45 * index;
-  const destY = 80;
+  const destX = 130 * RS + 45 * RS * index;
+  const destY = 80 * RS;
 
   const image = images.upgrades;
   const sourceWidth = 32;
@@ -253,13 +253,13 @@ function drawUpgradeItem(
   );
 
   ctx.strokeStyle = isSelected ? '#d73131' : '#fff';
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 2 * RS;
   ctx.strokeRect(destX, destY, destWidth, destHeight);
 
   if (isSelected) {
     ctx.lineWidth = 1;
     ctx.strokeStyle = '#000';
-    ctx.font = '10px serif';
-    ctx.strokeText(upgrade.description, 100, 130, 180);
+    ctx.font = `${10 * RS}px serif`;
+    ctx.strokeText(upgrade.description, 100 * RS, 130 * RS, 180 * RS);
   }
 }
