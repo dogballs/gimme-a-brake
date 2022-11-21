@@ -178,7 +178,7 @@ export function updateSteerState({
       t = moveSpeed / STEER_REDUCE_TILL_SPEED;
     }
     let baseSteerSpeed = STEER_SPEED;
-    if (upgrades.some((u) => u.kind === 'improved_steering')) {
+    if (upgrades.some((u) => u.kind === 'improved-steering')) {
       baseSteerSpeed = STEER_SPEED_IMPROVED;
     }
     const steerSpeed = baseSteerSpeed * t;

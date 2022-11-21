@@ -182,7 +182,10 @@ function draw({
 
   // drawHorizon(ctx);
 
-  drawUpgradeDialog(ctx, state.upgradeState);
+  drawUpgradeDialog(ctx, {
+    images: resources.images,
+    state: state.upgradeState,
+  });
 }
 
 async function main() {

@@ -1,9 +1,21 @@
 import { IW, IH } from './config';
 import { KeyboardListener, InputControl } from './controls';
+import { ImageMap } from './images';
 import { Zone } from './zone';
 
+type UpgradeKind =
+  | 'improved-steering'
+  | 'lower-max-speed'
+  | 'bumper'
+  | 'lives'
+  | 'parachute'
+  | 'anti-nitro'
+  | 'rocket-launcher'
+  | 'curb-stop'
+  | 'turn-uphill-slow';
+
 export type Upgrade = {
-  kind: 'improved_steering' | 'lower_max_speed' | 'bumper' | 'lives';
+  kind: UpgradeKind;
   active: boolean;
   description: string;
   cooldown?: number;
@@ -12,12 +24,12 @@ export type Upgrade = {
 
 export const ALL_UPGRADES: Upgrade[] = [
   {
-    kind: 'improved_steering',
-    description: 'Improves handling',
+    kind: 'improved-steering',
+    description: 'Improved handling',
     active: false,
   },
   {
-    kind: 'lower_max_speed',
+    kind: 'lower-max-speed',
     description: 'Reduces max speed',
     active: false,
   },
@@ -26,13 +38,50 @@ export const ALL_UPGRADES: Upgrade[] = [
     description: 'Allows bumping into obstacles. Cooldown: 10 sec',
     active: false,
     cooldown: 10,
+    // breaks and blocks a slot?
   },
   {
     kind: 'lives',
     description: 'Protects from an obstacle hit. Lives: 3',
     active: false,
     count: 3,
+    // slow down?
+    // expires? blocks a slot?
   },
+  {
+    kind: 'parachute',
+    description: 'Decelerates to 0',
+    active: true,
+    // count?
+    // cd?
+  },
+  {
+    kind: 'anti-nitro',
+    description: 'Backwards nitro',
+    active: true,
+    // cd?
+  },
+  // {
+  //   kind: 'rocket-launcher',
+  //   description: 'Shoot rockets to kill obstacles. Cooldown: 10 sec',
+  //   active: true,
+  //   // cd?
+  //   // count
+  // },
+  {
+    kind: 'curb-stop',
+    description: 'Use curb to slow down. Heats up.',
+    active: false,
+    // heat? cd?
+  },
+  {
+    kind: 'turn-uphill-slow',
+    description: 'Slows down on turns or unphills',
+    active: false,
+  },
+  // timestop?
+  // reduce amount of obstacles
+  //
 ];
 
 export type UpgradeState = {
@@ -107,7 +156,26 @@ export function updateUpgradeState({
   };
 }
 
-export function drawUpgradeDialog(ctx, state: UpgradeState) {
+const SPRITE_MAP = new Map<
+  UpgradeKind,
+  {
+    x: number;
+    y: number;
+  }
+>();
+SPRITE_MAP.set('improved-steering', { x: 0, y: 0 });
+SPRITE_MAP.set('lives', { x: 32, y: 0 });
+SPRITE_MAP.set('bumper', { x: 64, y: 0 });
+SPRITE_MAP.set('curb-stop', { x: 96, y: 0 });
+SPRITE_MAP.set('turn-uphill-slow', { x: 128, y: 0 });
+SPRITE_MAP.set('anti-nitro', { x: 160, y: 0 });
+SPRITE_MAP.set('parachute', { x: 192, y: 0 });
+SPRITE_MAP.set('lower-max-speed', { x: 224, y: 0 });
+
+export function drawUpgradeDialog(
+  ctx,
+  { images, state }: { images: ImageMap; state: UpgradeState },
+) {
   if (!state.isDialogOpen) {
     return;
   }
@@ -123,15 +191,21 @@ export function drawUpgradeDialog(ctx, state: UpgradeState) {
   ctx.fillRect(0, 0, IW, IH);
 
   ctx.globalAlpha = 1;
-  ctx.fillStyle = 'grey';
+  ctx.fillStyle = '#409398';
   ctx.fillRect(x, y, width, height);
 
-  ctx.strokeStyle = '#aaa';
+  ctx.strokeStyle = '#2b7d82';
   ctx.lineWidth = 5;
   ctx.strokeRect(x, y, width, height);
 
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 1;
+  ctx.font = '9px serif';
+  ctx.strokeText('Pick an upgrade:', x + 10, y + 15);
+
   state.dialogUpgrades.forEach((upgrade, index) => {
     drawUpgradeItem(ctx, {
+      images,
       upgrade,
       index,
       isSelected: state.dialogSelectedIndex === index,
@@ -143,25 +217,49 @@ export function drawUpgradeDialog(ctx, state: UpgradeState) {
 function drawUpgradeItem(
   ctx,
   {
+    images,
     upgrade,
     isSelected,
     index,
-  }: { upgrade: Upgrade; isSelected: boolean; index: number },
+  }: {
+    images: ImageMap;
+    upgrade: Upgrade;
+    isSelected: boolean;
+    index: number;
+  },
 ) {
-  const width = 30;
-  const height = 30;
+  const destWidth = 32;
+  const destHeight = 32;
 
-  const x = 130 + 45 * index;
-  const y = 65;
+  const destX = 130 + 45 * index;
+  const destY = 80;
 
-  ctx.strokeStyle = isSelected ? '#a22' : '#fff';
-  ctx.lineWidth = 3;
-  ctx.strokeRect(x, y, width, height);
+  const image = images.upgrades;
+  const sourceWidth = 32;
+  const sourceHeight = 32;
+
+  const { x: sourceX, y: sourceY } = SPRITE_MAP.get(upgrade.kind);
+
+  ctx.drawImage(
+    image,
+    sourceX,
+    sourceY,
+    sourceWidth,
+    sourceHeight,
+    destX,
+    destY,
+    destWidth,
+    destHeight,
+  );
+
+  ctx.strokeStyle = isSelected ? '#d73131' : '#fff';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(destX, destY, destWidth, destHeight);
 
   if (isSelected) {
     ctx.lineWidth = 1;
     ctx.strokeStyle = '#000';
     ctx.font = '10px serif';
-    ctx.strokeText(upgrade.description, 100, 120, 180);
+    ctx.strokeText(upgrade.description, 100, 130, 180);
   }
 }
