@@ -204,7 +204,7 @@ export function drawUpgradeDialog(
   ctx.strokeText('Pick an upgrade:', x + 10 * RS, y + 15 * RS);
 
   state.dialogUpgrades.forEach((upgrade, index) => {
-    drawUpgradeItem(ctx, {
+    drawUpgradeDialogItem(ctx, {
       images,
       upgrade,
       index,
@@ -214,7 +214,7 @@ export function drawUpgradeDialog(
 }
 
 // TODO: add icons
-function drawUpgradeItem(
+function drawUpgradeDialogItem(
   ctx,
   {
     images,
@@ -228,33 +228,15 @@ function drawUpgradeItem(
     index: number;
   },
 ) {
-  const destWidth = 32 * RS;
-  const destHeight = 32 * RS;
+  const x = 130 * RS + 45 * RS * index;
+  const y = 80 * RS;
+  const size = 32 * RS;
 
-  const destX = 130 * RS + 45 * RS * index;
-  const destY = 80 * RS;
-
-  const image = images.upgrades;
-  const sourceWidth = 32;
-  const sourceHeight = 32;
-
-  const { x: sourceX, y: sourceY } = SPRITE_MAP.get(upgrade.kind);
-
-  ctx.drawImage(
-    image,
-    sourceX,
-    sourceY,
-    sourceWidth,
-    sourceHeight,
-    destX,
-    destY,
-    destWidth,
-    destHeight,
-  );
+  drawUpgradeImage(ctx, { upgrade, images, x, y, size });
 
   ctx.strokeStyle = isSelected ? '#d73131' : '#fff';
   ctx.lineWidth = 2 * RS;
-  ctx.strokeRect(destX, destY, destWidth, destHeight);
+  ctx.strokeRect(x, y, size, size);
 
   if (isSelected) {
     ctx.lineWidth = 1;
@@ -262,4 +244,74 @@ function drawUpgradeItem(
     ctx.font = `${10 * RS}px serif`;
     ctx.strokeText(upgrade.description, 100 * RS, 130 * RS, 180 * RS);
   }
+}
+
+function drawUpgradeImage(
+  ctx,
+  {
+    upgrade,
+    images,
+    x,
+    y,
+    size = 32,
+  }: {
+    upgrade: Upgrade;
+    images: ImageMap;
+    x: number;
+    y: number;
+    size?: number;
+  },
+) {
+  const image = images.upgrades;
+
+  const { x: sourceX, y: sourceY } = SPRITE_MAP.get(upgrade.kind);
+
+  const sourceWidth = 32;
+  const sourceHeight = 32;
+
+  ctx.drawImage(
+    image,
+    sourceX,
+    sourceY,
+    sourceWidth,
+    sourceHeight,
+    x,
+    y,
+    size,
+    size,
+  );
+}
+
+export function drawActiveUpgrades(
+  ctx,
+  {
+    state,
+    images,
+  }: {
+    state: UpgradeState;
+    images: ImageMap;
+  },
+) {
+  state.upgrades.forEach((upgrade, index) => {
+    drawActiveUpgradeItem(ctx, { upgrade, images, index });
+  });
+}
+
+function drawActiveUpgradeItem(
+  ctx,
+  {
+    upgrade,
+    images,
+    index,
+  }: {
+    upgrade: Upgrade;
+    images: ImageMap;
+    index: number;
+  },
+) {
+  const x = 350 * RS - 28 * RS * index;
+  const y = 5 * RS;
+  const size = 24 * RS;
+
+  drawUpgradeImage(ctx, { upgrade, images, x, y, size });
 }

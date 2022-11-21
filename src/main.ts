@@ -46,6 +46,7 @@ import {
 import { Zone, getActiveZone, getNextZone } from './zone';
 import {
   drawUpgradeDialog,
+  drawActiveUpgrades,
   defaultUpgradeState,
   UpgradeState,
   updateUpgradeState,
@@ -181,6 +182,11 @@ function draw({
   });
 
   // drawHorizon(ctx);
+
+  drawActiveUpgrades(ctx, {
+    images: resources.images,
+    state: state.upgradeState,
+  });
 
   drawUpgradeDialog(ctx, {
     images: resources.images,
