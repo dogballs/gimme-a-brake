@@ -25,6 +25,7 @@ import {
   lerpFragments,
 } from './fragment';
 import { loadImages } from './images';
+import { GameLoop } from './loop';
 import { straightMap, coolMap, longLeftTurnMap, longUphillMap } from './map';
 import { Path } from './path';
 import { getPropBoxes, drawProps, PropBox } from './prop';
@@ -90,6 +91,10 @@ const state: {
   moveOffsetChange: 0,
   bgOffset: 0,
 };
+
+const loop = new GameLoop({
+  onTick: tick,
+});
 
 logClientCoordsOnClick(canvas);
 
@@ -197,7 +202,7 @@ function draw({
 async function main() {
   resources.images = await loadImages();
 
-  loop();
+  loop.start();
 }
 
 function getInput() {
@@ -324,7 +329,7 @@ function updateCollisions({
   };
 }
 
-function loop() {
+function tick({ deltaTime }: { deltaTime: number }) {
   keyboardListener.update();
 
   // NOTE: Don't destructure until after all state updates
@@ -392,8 +397,6 @@ function loop() {
   }
 
   moveAudio.update({ isMuted, ...state.speedState });
-
-  requestAnimationFrame(loop);
 }
 
 main();

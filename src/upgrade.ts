@@ -307,6 +307,13 @@ function drawUpgradeImage(
   if (upgrade.active) {
     ctx.drawImage(image, 0, 32, sourceWidth, sourceHeight, x, y, size, size);
   }
+
+  if (upgrade.kind === 'lives') {
+    ctx.lineWidth = 1;
+    ctx.font = `${12 * RS}px serif`;
+    ctx.strokeStyle = '#fff';
+    ctx.strokeText(upgrade.count, x + 13 * RS, y + 21 * RS);
+  }
 }
 
 export function drawActiveUpgrades(
