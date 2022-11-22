@@ -110,23 +110,23 @@ export const coolMap: Map = {
   sections: [
     {
       kind: 'uphill',
-      start: 100,
+      start: 1500,
       size: 700,
       steepness: 30,
     },
     {
       kind: 'turn-left',
-      start: 1000,
+      start: 3000,
       size: 600,
     },
     {
       kind: 'turn-right',
-      start: 1500,
+      start: 3500,
       size: 1000,
     },
     {
       kind: 'downhill',
-      start: 2600,
+      start: 4600,
       size: 1000,
       steepness: 50,
     },

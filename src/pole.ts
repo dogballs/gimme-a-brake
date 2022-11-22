@@ -146,11 +146,11 @@ function drawPole(
     imageOpacity: number;
   },
 ) {
-  const image = images.pole;
+  const image = pole.granted ? images.poleGreen : images.poleRed;
 
   const sourceWidth = 64;
   const sourceHeight = 256;
-  const sourceX = pole.granted ? 64 : 0;
+  const sourceX = 0;
   const sourceY = 0;
 
   const imageWidth = sourceWidth * imageScale;

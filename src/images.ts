@@ -26,7 +26,9 @@ export async function loadImages(): Promise<ImageMap> {
     decorBeachBuoy: await loadImage('data/graphics/decor-beach-buoy.png'),
     // Upgrades
     upgrades: await loadImage('data/graphics/upgrades.png'),
-    pole: await loadImage('data/graphics/pole.png'),
+    // Poles
+    poleRed: await loadImage('data/graphics/pole-red.png'),
+    poleGreen: await loadImage('data/graphics/pole-green.png'),
     poleEnergy: await loadImage('data/graphics/pole-energy.png'),
   };
 }
