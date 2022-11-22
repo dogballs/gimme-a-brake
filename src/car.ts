@@ -15,9 +15,12 @@ import {
   STEER_TURN_COUNTER_FORCE,
 } from './config';
 import { CollisionBox } from './collision';
+import { curveXByY, steerCurve } from './curve';
 import { ImageMap } from './images';
+import { Path } from './path';
 import { Pole } from './pole';
 import { Section } from './section';
+import { Stripe, stripesToY } from './stripes';
 import { Upgrade } from './upgrade';
 import { Context2D } from './types';
 
@@ -26,9 +29,11 @@ export function drawCar(
   {
     images,
     steerOffset,
+    state,
   }: {
     images: ImageMap;
     steerOffset: number;
+    state: CarState;
   },
 ) {
   const image = images.car;
@@ -37,21 +42,31 @@ export function drawCar(
   const centerX = (IW - image.width * scale) / 2;
   const carSteerOffset = -1 * steerOffset * 0.02;
 
-  const x = centerX + carSteerOffset;
-  const y = IH - 70 * RS;
+  let x = centerX + carSteerOffset;
+  let y = IH - 70 * RS;
 
+  if (state.curbTimePassed > 0) {
+    if (state.curbFrameIndex % 5 === 0) {
+      y += 3;
+      x += 2;
+    } else if (state.curbFrameIndex % 10 === 0) {
+      y += 5;
+      x -= 2;
+    }
+  }
+
+  if (state.curbTimePassed > 0) {
+    ctx.globalAlpha = 0.9;
+  }
   ctx.drawImage(image, x, y, image.width * scale, image.height * scale);
+  ctx.globalAlpha = 1;
 }
 
 export function getCarBox({
   images,
-  roadDepth,
-  moveOffset,
   steerOffset,
 }: {
   images: ImageMap;
-  roadDepth: number;
-  moveOffset: number;
   steerOffset: number;
 }): CollisionBox {
   const image = images.car;
@@ -74,6 +89,67 @@ export function getCarBox({
     width,
     height,
     depth,
+  };
+}
+
+const CURB_ALLOWED_OVERFLOW = 20;
+const CURB_ALLOWED_TIME = 2;
+
+export type CarState = {
+  curbTimePassed: number;
+  curbFrameIndex: number;
+};
+
+export const defaultCarState: CarState = {
+  curbTimePassed: 0,
+  curbFrameIndex: 0,
+};
+
+export function updateCarState({
+  path,
+  state,
+  stripes,
+  carBox,
+  deltaTime,
+  steerOffset,
+}: {
+  path: Path;
+  state: CarState;
+  stripes: Stripe[];
+  carBox: CollisionBox;
+  deltaTime: number;
+  steerOffset: number;
+}): CarState {
+  let curbTimePassed = state.curbTimePassed;
+  let curbFrameIndex = state.curbFrameIndex;
+
+  const leftCurbX = curveXByY(
+    steerCurve(path.left, { steerOffset }),
+    carBox.y + carBox.height,
+  );
+  const rightCurbX = curveXByY(
+    steerCurve(path.right, { steerOffset }),
+    carBox.y + carBox.height,
+  );
+
+  const isTouchingLeftCurb = leftCurbX - CURB_ALLOWED_OVERFLOW > carBox.x;
+  const isTouchingRightCurb =
+    rightCurbX + CURB_ALLOWED_OVERFLOW < carBox.x + carBox.width;
+
+  if (isTouchingLeftCurb || isTouchingRightCurb) {
+    curbTimePassed += deltaTime;
+    curbFrameIndex = curbFrameIndex + 1;
+    if (curbTimePassed > CURB_ALLOWED_TIME) {
+      // TODO: crash
+    }
+  } else {
+    curbTimePassed = 0;
+    curbFrameIndex = 0;
+  }
+
+  return {
+    curbTimePassed,
+    curbFrameIndex,
   };
 }
 
@@ -102,7 +178,7 @@ export function updateMoveSpeedState({
   moveSpeedChange: currentMoveSpeedChange,
   moveSpeed: currentMoveSpeed,
 }: {
-  nextPole: Pole;
+  nextPole: Pole | undefined;
   moveOffset: number;
   isThrottleActive: boolean;
   isReverseActive: boolean;
@@ -113,29 +189,31 @@ export function updateMoveSpeedState({
 
   const gearDesc = MOVE_GEARS[gear];
 
-  const toPole = nextPole.start - moveOffset;
-  if (toPole < POLE_START) {
-    speedChange = (speedChange - MOVE_DECELERATION_FREE) / gearDesc.delim;
-    speed = Math.max(3, speed + speedChange);
+  if (nextPole) {
+    const toPole = nextPole.start - moveOffset;
+    if (toPole < POLE_START) {
+      speedChange = (speedChange - MOVE_DECELERATION_FREE) / gearDesc.delim;
+      speed = Math.max(3, speed + speedChange);
 
-    if (toPole < POLE_DRIVE) {
-      speedChange = 0;
-      speed = 1.5;
+      if (toPole < POLE_DRIVE) {
+        speedChange = 0;
+        speed = 1.5;
+      }
+
+      if (toPole < POLE_FULL_STOP) {
+        speedChange = -100;
+        speed = Math.max(0, speed + speedChange);
+        setTimeout(() => {
+          nextPole.arrived = true;
+        }, 100);
+      }
+
+      return {
+        moveGear: gear,
+        moveSpeedChange: speedChange,
+        moveSpeed: speed,
+      };
     }
-
-    if (toPole < POLE_FULL_STOP) {
-      speedChange = -100;
-      speed = Math.max(0, speed + speedChange);
-      setTimeout(() => {
-        nextPole.arrived = true;
-      }, 100);
-    }
-
-    return {
-      moveGear: gear,
-      moveSpeedChange: speedChange,
-      moveSpeed: speed,
-    };
   }
 
   if (isThrottleActive) {
@@ -197,7 +275,7 @@ export function updateSteerState({
 }: {
   section: Section;
   upgrades: Upgrade[];
-  nextPole: Pole;
+  nextPole: Pole | undefined;
   isLeftTurnActive: boolean;
   isRightTurnActive: boolean;
   moveSpeed: number;
@@ -206,29 +284,31 @@ export function updateSteerState({
   let steerOffset = currentSteerOffset;
   let steerSpeed = currentSteerSpeed;
 
-  const toPole = nextPole.start - moveOffset;
-  if (toPole < POLE_START) {
-    let speed = 2;
-    if (toPole < POLE_DRIVE) {
-      speed = 5;
-    }
-    if (toPole < POLE_FULL_STOP) {
-      speed = 100;
-    }
+  if (nextPole) {
+    const toPole = nextPole.start - moveOffset;
+    if (toPole < POLE_START) {
+      let speed = 2;
+      if (toPole < POLE_DRIVE) {
+        speed = 5;
+      }
+      if (toPole < POLE_FULL_STOP) {
+        speed = 100;
+      }
 
-    if (steerOffset > 0) {
-      steerSpeed = -speed;
-      steerOffset = Math.max(0, steerOffset + steerSpeed);
-    }
-    if (steerOffset < 0) {
-      steerSpeed = speed;
-      steerOffset = Math.min(0, steerOffset + speed);
-    }
+      if (steerOffset > 0) {
+        steerSpeed = -speed;
+        steerOffset = Math.max(0, steerOffset + steerSpeed);
+      }
+      if (steerOffset < 0) {
+        steerSpeed = speed;
+        steerOffset = Math.min(0, steerOffset + speed);
+      }
 
-    return {
-      steerSpeed,
-      steerOffset,
-    };
+      return {
+        steerSpeed,
+        steerOffset,
+      };
+    }
   }
 
   if (moveSpeed >= 0) {

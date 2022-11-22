@@ -4,11 +4,14 @@ import {
   getCarBox,
   defaultSteerState,
   defaultMoveSpeedState,
+  defaultCarState,
   updateMoveSpeedState,
   updateSteerState,
   MoveSpeedState,
   SteerState,
   MoveAudio,
+  CarState,
+  updateCarState,
 } from './car';
 import { findCollisions, drawCollisionBoxes } from './collision';
 import { InputControl, listenKeyboard } from './controls';
@@ -81,6 +84,7 @@ const state: {
   speedState: MoveSpeedState;
   steerState: SteerState;
   upgradeState: UpgradeState;
+  carState: CarState;
   moveOffset: number;
   moveOffsetChange: number;
   bgOffset: number;
@@ -88,6 +92,7 @@ const state: {
   speedState: defaultMoveSpeedState,
   steerState: defaultSteerState,
   upgradeState: defaultUpgradeState,
+  carState: defaultCarState,
   moveOffset: 0,
   moveOffsetChange: 0,
   bgOffset: 0,
@@ -190,7 +195,11 @@ function draw({
     yOverride,
   });
 
-  drawCar(ctx, { images: resources.images, steerOffset });
+  drawCar(ctx, {
+    images: resources.images,
+    steerOffset,
+    state: state.carState,
+  });
 
   drawDebug(ctx, {
     section,
@@ -212,6 +221,11 @@ function draw({
     images: resources.images,
     state: state.upgradeState,
   });
+
+  // drawCurve(ctx, path.left, {
+  //   moveOffset: state.moveOffset,
+  //   steerOffset: state.steerState.steerOffset,
+  // });
 }
 
 async function main() {
@@ -318,8 +332,6 @@ function updateCollisions({
 }) {
   const carBox = getCarBox({
     images: resources.images,
-    roadDepth,
-    moveOffset: state.moveOffset,
     steerOffset: state.steerState.steerOffset,
   });
 
@@ -348,6 +360,7 @@ function updateCollisions({
   return {
     collidedBoxes,
     uncollidedBoxes,
+    carBox,
     propBoxes,
   };
 }
@@ -372,39 +385,50 @@ function tick({ deltaTime }: { deltaTime: number }) {
 
   updateLevelState();
 
-  // NOTE: Can destructure after state has updated
+  const section = getActiveSection({
+    sections: resources.map.sections,
+    moveOffset: state.moveOffset,
+  });
+  const nextSection = getNextSection({
+    sections: resources.map.sections,
+    moveOffset: state.moveOffset,
+  });
 
-  const {
-    map: { sections, zones },
-  } = resources;
-
-  const {
-    moveOffset,
-    steerState: { steerOffset },
-  } = state;
-
-  const section = getActiveSection({ sections, moveOffset });
-  const nextSection = getNextSection({ sections, moveOffset });
-
-  const zone = getActiveZone({ zones, moveOffset });
-  const nextZone = getNextZone({ zones, moveOffset });
+  const zone = getActiveZone({
+    zones: resources.map.zones,
+    moveOffset: state.moveOffset,
+  });
+  const nextZone = getNextZone({
+    zones: resources.map.zones,
+    moveOffset: state.moveOffset,
+  });
 
   const { path, yOverride } = createSectionFragments({
     section,
-    moveOffset,
-    steerOffset,
+    moveOffset: state.moveOffset,
+    steerOffset: state.steerState.steerOffset,
   });
 
   let roadHeight = IH - (yOverride ?? HH);
   const stripes = generateStripes({ roadHeight });
   const roadDepth = stripesUnscaledHeight(stripes);
 
-  const { collidedBoxes, uncollidedBoxes, propBoxes } = updateCollisions({
-    section,
-    nextSection,
+  const { collidedBoxes, uncollidedBoxes, carBox, propBoxes } =
+    updateCollisions({
+      section,
+      nextSection,
+      path,
+      roadDepth,
+      yOverride,
+    });
+
+  state.carState = updateCarState({
     path,
-    roadDepth,
-    yOverride,
+    state: state.carState,
+    stripes,
+    carBox,
+    deltaTime,
+    steerOffset: state.steerState.steerOffset,
   });
 
   draw({ deltaTime, zone, nextZone, section, path, yOverride, propBoxes });

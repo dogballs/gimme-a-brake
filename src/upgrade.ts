@@ -113,11 +113,11 @@ export function updateUpgradeState({
   keyboardListener: KeyboardListener;
   deltaTime: number;
   state: UpgradeState;
-  nextPole: Pole;
+  nextPole: Pole | undefined;
   moveOffset: number;
 }): UpgradeState {
   const shouldOpenUpgrade =
-    nextPole.arrived && !nextPole.granted && !state.isDialogOpen;
+    nextPole && nextPole.arrived && !nextPole.granted && !state.isDialogOpen;
 
   if (shouldOpenUpgrade) {
     const hasActive = state.upgrades.some((u) => u.active);
