@@ -1,4 +1,5 @@
 import { Decor, generateDecors, generateDecorsForZones } from './decor';
+import { Pole, generatePolesForZones } from './pole';
 import { Prop, generateProps } from './prop';
 import { Section } from './section';
 import { Zone } from './zone';
@@ -8,6 +9,7 @@ type Map = {
   zones: Zone[];
   decors: Decor[];
   props: Prop[];
+  poles: Pole[];
 };
 
 const zones: Zone[] = [
@@ -19,25 +21,25 @@ const zones: Zone[] = [
   {
     start: 200,
     kind: 'green',
-    offerUpgrade: true,
+    // offerUpgrade: true,
     decorAmount: 60,
   },
   {
     start: 6000,
     kind: 'desert',
-    offerUpgrade: true,
+    // offerUpgrade: true,
     decorAmount: 60,
   },
   {
     start: 12000,
     kind: 'beach',
-    offerUpgrade: true,
+    // offerUpgrade: true,
     decorAmount: 10,
   },
   {
     start: 18000,
     kind: 'forest',
-    offerUpgrade: true,
+    // offerUpgrade: true,
     decorAmount: 1000,
   },
   {
@@ -49,9 +51,17 @@ const zones: Zone[] = [
 
 const decors = generateDecorsForZones({ zones });
 
+const poles = [
+  {
+    start: 500,
+    granted: false,
+  },
+];
+
 export const straightMap: Map = {
   zones,
   decors,
+  poles,
   sections: [],
   props: [],
 };
@@ -59,6 +69,7 @@ export const straightMap: Map = {
 export const longUphillMap: Map = {
   zones,
   decors,
+  poles,
   sections: [
     {
       kind: 'uphill',
@@ -84,6 +95,7 @@ export const longUphillMap: Map = {
 export const longLeftTurnMap: Map = {
   zones,
   decors,
+  poles,
   sections: [
     {
       kind: 'turn-right',
@@ -103,6 +115,7 @@ export const longLeftTurnMap: Map = {
 export const coolMap: Map = {
   zones,
   decors,
+  poles,
   sections: [
     {
       kind: 'uphill',

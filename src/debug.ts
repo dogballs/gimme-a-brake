@@ -37,11 +37,11 @@ export function drawDebug(
   ctx.strokeText(`move speed: ${moveSpeed.toFixed(5)}`, 5, 50);
   ctx.strokeText(`move speed change: ${moveSpeedChange.toFixed(5)}`, 5, 60);
   ctx.strokeText(`move gear: ${moveGear}`, 5, 70);
-  ctx.strokeText(
-    'upgrades: [' + upgrades.map((u) => u.kind).join() + ']',
-    5,
-    80,
-  );
+  // ctx.strokeText(
+  //   'upgrades: [' + upgrades.map((u) => u.kind).join() + ']',
+  //   5,
+  //   80,
+  // );
 }
 
 export function drawHorizon(

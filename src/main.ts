@@ -28,6 +28,7 @@ import { loadImages } from './images';
 import { GameLoop } from './loop';
 import { straightMap, coolMap, longLeftTurnMap, longUphillMap } from './map';
 import { Path } from './path';
+import { drawPoles } from './pole';
 import { getPropBoxes, drawProps, PropBox } from './prop';
 import { drawCurbMask, drawRoadMask, drawRoadLines } from './road';
 import {
@@ -99,6 +100,7 @@ const loop = new GameLoop({
 logClientCoordsOnClick(canvas);
 
 function draw({
+  deltaTime,
   zone,
   nextZone,
   section,
@@ -106,6 +108,7 @@ function draw({
   propBoxes,
   yOverride,
 }: {
+  deltaTime: number;
   zone: Zone;
   nextZone: Zone;
   section: Section;
@@ -175,16 +178,28 @@ function draw({
     steerOffset,
   });
 
+  drawPoles(ctx, {
+    images: resources.images,
+    poles: resources.map.poles,
+    deltaTime,
+    path,
+    zone,
+    nextZone,
+    moveOffset,
+    steerOffset,
+    yOverride,
+  });
+
   drawCar(ctx, { images: resources.images, steerOffset });
 
-  drawDebug(ctx, {
-    section,
-    bgOffset,
-    moveOffset,
-    upgrades: state.upgradeState.upgrades,
-    ...state.speedState,
-    ...state.steerState,
-  });
+  // drawDebug(ctx, {
+  //   section,
+  //   bgOffset,
+  //   moveOffset,
+  //   upgrades: state.upgradeState.upgrades,
+  //   ...state.speedState,
+  //   ...state.steerState,
+  // });
 
   // drawHorizon(ctx);
 
@@ -341,6 +356,7 @@ function tick({ deltaTime }: { deltaTime: number }) {
 
   state.upgradeState = updateUpgradeState({
     keyboardListener,
+    deltaTime,
     state: state.upgradeState,
     zone,
   });
@@ -382,7 +398,7 @@ function tick({ deltaTime }: { deltaTime: number }) {
     yOverride,
   });
 
-  draw({ zone, nextZone, section, path, yOverride, propBoxes });
+  draw({ deltaTime, zone, nextZone, section, path, yOverride, propBoxes });
 
   // drawCollisionBoxes(ctx, collidedBoxes, uncollidedBoxes, {
   //   stripes,

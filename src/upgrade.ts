@@ -20,6 +20,7 @@ export type Upgrade = {
   active: boolean;
   description: string;
   cooldown?: number;
+  cooldownPassed?: number;
   count?: number;
 };
 
@@ -53,6 +54,7 @@ export const ALL_UPGRADES: Upgrade[] = [
     kind: 'parachute',
     description: 'Decelerates to 0',
     active: true,
+    cooldown: 10,
     // count?
     // cd?
   },
@@ -60,6 +62,7 @@ export const ALL_UPGRADES: Upgrade[] = [
     kind: 'anti-nitro',
     description: 'Backwards nitro',
     active: true,
+    cooldown: 10,
     // cd?
   },
   // {
@@ -73,6 +76,7 @@ export const ALL_UPGRADES: Upgrade[] = [
     kind: 'curb-stop',
     description: 'Use curb to slow down. Heats up.',
     active: false,
+    cooldown: 10,
     // heat? cd?
   },
   {
@@ -99,16 +103,25 @@ export const defaultUpgradeState: UpgradeState = {
   upgrades: [],
 };
 
+// export function startUpgradeCooldown(upgrade: Upgrade) {
+
+// }
+
 export function updateUpgradeState({
   keyboardListener,
+  deltaTime,
   state,
   zone,
 }: {
   keyboardListener: KeyboardListener;
+  deltaTime: number;
   state: UpgradeState;
   zone: Zone;
 }): UpgradeState {
-  if (!state.isDialogOpen && zone.offerUpgrade && !zone.gotUpgrade) {
+  const shouldOpenUpgrade =
+    zone.offerUpgrade && !zone.gotUpgrade && !state.isDialogOpen;
+
+  if (shouldOpenUpgrade) {
     const hasActive = state.upgrades.some((u) => u.active);
     const availableUpgrades = ALL_UPGRADES.filter((allUpgrade) => {
       const hasIt = state.upgrades.some((u) => u.kind === allUpgrade.kind);
@@ -132,6 +145,29 @@ export function updateUpgradeState({
   }
 
   if (!state.isDialogOpen) {
+    const isActivated = keyboardListener.isDown(InputControl.Select);
+    if (isActivated) {
+      const activeIndex = state.upgrades.findIndex((upgrade) => {
+        return upgrade.active === true;
+      });
+
+      if (activeIndex !== -1) {
+        const activeUpgrade = state.upgrades[activeIndex];
+        if (activeUpgrade.cooldownPassed == null) {
+          activeUpgrade.cooldownPassed = 0;
+        }
+      }
+    }
+
+    // Mutates upgrades - updates cooldowns
+    state.upgrades.forEach((upgrade) => {
+      if (upgrade.cooldown != null && upgrade.cooldownPassed != null) {
+        upgrade.cooldownPassed += deltaTime;
+        if (upgrade.cooldownPassed > upgrade.cooldown) {
+          upgrade.cooldownPassed = null;
+        }
+      }
+    });
     return state;
   }
 
@@ -313,6 +349,20 @@ function drawUpgradeImage(
     ctx.font = `${12 * RS}px serif`;
     ctx.strokeStyle = '#fff';
     ctx.strokeText(upgrade.count, x + 13 * RS, y + 21 * RS);
+  }
+
+  if (upgrade.cooldown != null && upgrade.cooldownPassed != null) {
+    const niceTime = Math.floor(upgrade.cooldown - upgrade.cooldownPassed);
+
+    ctx.globalAlpha = 0.5;
+    ctx.fillStyle = 'grey';
+    ctx.fillRect(x + 1, y + 1, size - 2, size - 2);
+    ctx.globalAlpha = 1;
+
+    ctx.lineWidth = 1;
+    ctx.font = `${12 * RS}px serif`;
+    ctx.strokeStyle = '#fff';
+    ctx.strokeText(niceTime, x + 10 * RS, y + 16 * RS);
   }
 }
 
