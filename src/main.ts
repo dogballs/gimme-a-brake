@@ -28,7 +28,7 @@ import { loadImages } from './images';
 import { GameLoop } from './loop';
 import { straightMap, coolMap, longLeftTurnMap, longUphillMap } from './map';
 import { Path } from './path';
-import { drawPoles } from './pole';
+import { drawPoles, getNextPole } from './pole';
 import { getPropBoxes, drawProps, PropBox } from './prop';
 import { drawCurbMask, drawRoadMask, drawRoadLines } from './road';
 import {
@@ -192,14 +192,14 @@ function draw({
 
   drawCar(ctx, { images: resources.images, steerOffset });
 
-  // drawDebug(ctx, {
-  //   section,
-  //   bgOffset,
-  //   moveOffset,
-  //   upgrades: state.upgradeState.upgrades,
-  //   ...state.speedState,
-  //   ...state.steerState,
-  // });
+  drawDebug(ctx, {
+    section,
+    bgOffset,
+    moveOffset,
+    upgrades: state.upgradeState.upgrades,
+    ...state.speedState,
+    ...state.steerState,
+  });
 
   // drawHorizon(ctx);
 
@@ -267,7 +267,14 @@ function updateLevelState() {
     moveOffset: state.moveOffset,
   });
 
+  const nextPole = getNextPole({
+    poles: resources.map.poles,
+    moveOffset: state.moveOffset,
+  });
+
   state.speedState = updateMoveSpeedState({
+    nextPole,
+    moveOffset: state.moveOffset,
     isThrottleActive,
     isReverseActive,
     ...state.speedState,
@@ -279,6 +286,7 @@ function updateLevelState() {
   state.steerState = updateSteerState({
     section,
     upgrades: state.upgradeState.upgrades,
+    nextPole,
     isLeftTurnActive,
     isRightTurnActive,
     moveSpeed: state.speedState.moveSpeed,
@@ -349,8 +357,8 @@ function tick({ deltaTime }: { deltaTime: number }) {
 
   // NOTE: Don't destructure until after all state updates
 
-  let zone = getActiveZone({
-    zones: resources.map.zones,
+  const nextPole = getNextPole({
+    poles: resources.map.poles,
     moveOffset: state.moveOffset,
   });
 
@@ -358,7 +366,8 @@ function tick({ deltaTime }: { deltaTime: number }) {
     keyboardListener,
     deltaTime,
     state: state.upgradeState,
-    zone,
+    nextPole,
+    moveOffset: state.moveOffset,
   });
 
   updateLevelState();
@@ -377,7 +386,7 @@ function tick({ deltaTime }: { deltaTime: number }) {
   const section = getActiveSection({ sections, moveOffset });
   const nextSection = getNextSection({ sections, moveOffset });
 
-  zone = getActiveZone({ zones, moveOffset });
+  const zone = getActiveZone({ zones, moveOffset });
   const nextZone = getNextZone({ zones, moveOffset });
 
   const { path, yOverride } = createSectionFragments({

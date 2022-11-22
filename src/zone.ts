@@ -3,8 +3,7 @@ export type ZoneKind = 'green' | 'desert' | 'forest' | 'beach';
 export type Zone = {
   start: number;
   kind: ZoneKind;
-  offerUpgrade?: boolean;
-  gotUpgrade?: boolean;
+  skipPole?: boolean;
   decorAmount?: number;
   decorDriftMax?: number;
 };

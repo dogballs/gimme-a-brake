@@ -16,6 +16,7 @@ import {
 } from './config';
 import { CollisionBox } from './collision';
 import { ImageMap } from './images';
+import { Pole } from './pole';
 import { Section } from './section';
 import { Upgrade } from './upgrade';
 import { Context2D } from './types';
@@ -88,13 +89,21 @@ export const defaultMoveSpeedState: MoveSpeedState = {
   moveSpeed: 0,
 };
 
+const POLE_START = 1000;
+const POLE_DRIVE = 500;
+const POLE_FULL_STOP = 100;
+
 export function updateMoveSpeedState({
+  nextPole,
+  moveOffset,
   isThrottleActive,
   isReverseActive,
   moveGear: currentMoveGear,
   moveSpeedChange: currentMoveSpeedChange,
   moveSpeed: currentMoveSpeed,
 }: {
+  nextPole: Pole;
+  moveOffset: number;
   isThrottleActive: boolean;
   isReverseActive: boolean;
 } & MoveSpeedState): MoveSpeedState {
@@ -103,6 +112,31 @@ export function updateMoveSpeedState({
   let speed = currentMoveSpeed;
 
   const gearDesc = MOVE_GEARS[gear];
+
+  const toPole = nextPole.start - moveOffset;
+  if (toPole < POLE_START) {
+    speedChange = (speedChange - MOVE_DECELERATION_FREE) / gearDesc.delim;
+    speed = Math.max(3, speed + speedChange);
+
+    if (toPole < POLE_DRIVE) {
+      speedChange = 0;
+      speed = 1.5;
+    }
+
+    if (toPole < POLE_FULL_STOP) {
+      speedChange = -100;
+      speed = Math.max(0, speed + speedChange);
+      setTimeout(() => {
+        nextPole.arrived = true;
+      }, 100);
+    }
+
+    return {
+      moveGear: gear,
+      moveSpeedChange: speedChange,
+      moveSpeed: speed,
+    };
+  }
 
   if (isThrottleActive) {
     if (speedChange < 0) {
@@ -155,6 +189,7 @@ export function updateSteerState({
   steerSpeed: currentSteerSpeed,
   section,
   upgrades,
+  nextPole,
   isLeftTurnActive,
   isRightTurnActive,
   moveSpeed,
@@ -162,6 +197,7 @@ export function updateSteerState({
 }: {
   section: Section;
   upgrades: Upgrade[];
+  nextPole: Pole;
   isLeftTurnActive: boolean;
   isRightTurnActive: boolean;
   moveSpeed: number;
@@ -170,7 +206,30 @@ export function updateSteerState({
   let steerOffset = currentSteerOffset;
   let steerSpeed = currentSteerSpeed;
 
-  const inSectionOffset = moveOffset - section.start;
+  const toPole = nextPole.start - moveOffset;
+  if (toPole < POLE_START) {
+    let speed = 2;
+    if (toPole < POLE_DRIVE) {
+      speed = 5;
+    }
+    if (toPole < POLE_FULL_STOP) {
+      speed = 100;
+    }
+
+    if (steerOffset > 0) {
+      steerSpeed = -speed;
+      steerOffset = Math.max(0, steerOffset + steerSpeed);
+    }
+    if (steerOffset < 0) {
+      steerSpeed = speed;
+      steerOffset = Math.min(0, steerOffset + speed);
+    }
+
+    return {
+      steerSpeed,
+      steerOffset,
+    };
+  }
 
   if (moveSpeed >= 0) {
     let t = 1;

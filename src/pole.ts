@@ -8,10 +8,23 @@ import { Zone } from './zone';
 
 export type Pole = {
   start: number;
-  granted: boolean;
+  granted?: boolean;
+  arrived?: boolean;
   energyFrameTime?: number;
   energyFrameIndex?: number;
 };
+
+export function getNextPole({
+  poles,
+  moveOffset,
+}: {
+  poles: Pole[];
+  moveOffset: number;
+}) {
+  return poles.find((pole) => {
+    return pole.start > moveOffset && !pole.granted;
+  });
+}
 
 export function drawPoles(
   ctx,
@@ -43,11 +56,15 @@ export function drawPoles(
 
   let preshowSize = 200;
 
-  const pole = poles.find((pole) => {
-    const appearStart = pole.start - travelDistance;
+  let pole;
+  for (let i = poles.length - 1; i >= 0; i--) {
+    const appearStart = poles[i].start - travelDistance;
     const preshowAppearStart = appearStart - preshowSize;
-    return moveOffset >= preshowAppearStart;
-  });
+    if (moveOffset >= preshowAppearStart) {
+      pole = poles[i];
+      break;
+    }
+  }
 
   if (!pole) {
     return;
@@ -186,4 +203,16 @@ function drawPole(
   }
 }
 
-export function generatePolesForZones() {}
+export function generatePolesForZones({ zones }: { zones: Zone[] }) {
+  const poles: Pole[] = [];
+
+  zones.forEach((zone) => {
+    if (!zone.skipPole) {
+      poles.push({
+        start: zone.start,
+      });
+    }
+  });
+
+  return poles;
+}

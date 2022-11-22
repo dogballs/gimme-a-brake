@@ -2,7 +2,7 @@ import { IW, IH, RS } from './config';
 import { KeyboardListener, InputControl } from './controls';
 import { ImageMap } from './images';
 import { randomElements } from './random';
-import { Zone } from './zone';
+import { Pole } from './pole';
 
 type UpgradeKind =
   | 'improved-steering'
@@ -103,23 +103,21 @@ export const defaultUpgradeState: UpgradeState = {
   upgrades: [],
 };
 
-// export function startUpgradeCooldown(upgrade: Upgrade) {
-
-// }
-
 export function updateUpgradeState({
   keyboardListener,
   deltaTime,
   state,
-  zone,
+  nextPole,
+  moveOffset,
 }: {
   keyboardListener: KeyboardListener;
   deltaTime: number;
   state: UpgradeState;
-  zone: Zone;
+  nextPole: Pole;
+  moveOffset: number;
 }): UpgradeState {
   const shouldOpenUpgrade =
-    zone.offerUpgrade && !zone.gotUpgrade && !state.isDialogOpen;
+    nextPole.arrived && !nextPole.granted && !state.isDialogOpen;
 
   if (shouldOpenUpgrade) {
     const hasActive = state.upgrades.some((u) => u.active);
@@ -176,7 +174,7 @@ export function updateUpgradeState({
     const newUpgrade = state.dialogUpgrades[state.dialogSelectedIndex];
     const upgrades = [...state.upgrades, newUpgrade];
 
-    zone.gotUpgrade = true;
+    nextPole.granted = true;
 
     return {
       ...state,
@@ -346,9 +344,14 @@ function drawUpgradeImage(
 
   if (upgrade.kind === 'lives') {
     ctx.lineWidth = 1;
-    ctx.font = `${12 * RS}px serif`;
     ctx.strokeStyle = '#fff';
-    ctx.strokeText(upgrade.count, x + 13 * RS, y + 21 * RS);
+    if (size === 24) {
+      ctx.font = `${10 * RS}px serif`;
+      ctx.strokeText(upgrade.count, x + 10 * RS, y + 16 * RS);
+    } else {
+      ctx.font = `${12 * RS}px serif`;
+      ctx.strokeText(upgrade.count, x + 13 * RS, y + 21 * RS);
+    }
   }
 
   if (upgrade.cooldown != null && upgrade.cooldownPassed != null) {

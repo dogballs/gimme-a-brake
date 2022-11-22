@@ -17,29 +17,26 @@ const zones: Zone[] = [
     start: 0,
     kind: 'green',
     decorAmount: 0,
+    skipPole: true,
   },
   {
-    start: 200,
+    start: 1000,
     kind: 'green',
-    // offerUpgrade: true,
     decorAmount: 60,
   },
   {
     start: 6000,
     kind: 'desert',
-    // offerUpgrade: true,
     decorAmount: 60,
   },
   {
     start: 12000,
     kind: 'beach',
-    // offerUpgrade: true,
     decorAmount: 10,
   },
   {
     start: 18000,
     kind: 'forest',
-    // offerUpgrade: true,
     decorAmount: 1000,
   },
   {
@@ -50,13 +47,7 @@ const zones: Zone[] = [
 ];
 
 const decors = generateDecorsForZones({ zones });
-
-const poles = [
-  {
-    start: 500,
-    granted: false,
-  },
-];
+const poles = generatePolesForZones({ zones });
 
 export const straightMap: Map = {
   zones,
