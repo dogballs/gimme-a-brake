@@ -19,31 +19,31 @@ const zones: Zone[] = [
     decorAmount: 0,
     skipPole: true,
   },
-  // {
-  //   start: 1000,
-  //   kind: 'green',
-  //   decorAmount: 60,
-  // },
-  // {
-  //   start: 6000,
-  //   kind: 'desert',
-  //   decorAmount: 60,
-  // },
-  // {
-  //   start: 12000,
-  //   kind: 'beach',
-  //   decorAmount: 10,
-  // },
-  // {
-  //   start: 18000,
-  //   kind: 'forest',
-  //   decorAmount: 1000,
-  // },
-  // {
-  //   start: 24000,
-  //   kind: 'forest',
-  //   decorAmount: 0,
-  // },
+  {
+    start: 1000,
+    kind: 'green',
+    decorAmount: 60,
+  },
+  {
+    start: 6000,
+    kind: 'desert',
+    decorAmount: 60,
+  },
+  {
+    start: 12000,
+    kind: 'beach',
+    decorAmount: 10,
+  },
+  {
+    start: 18000,
+    kind: 'forest',
+    decorAmount: 1000,
+  },
+  {
+    start: 24000,
+    kind: 'forest',
+    decorAmount: 0,
+  },
 ];
 
 const decors = generateDecorsForZones({ zones });
