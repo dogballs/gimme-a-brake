@@ -1,6 +1,8 @@
 import {
   IW,
   IH,
+  HW,
+  HH,
   RS,
   MOVE_GEARS,
   MOVE_GEAR_MIN,
@@ -39,13 +41,16 @@ export function drawCar(
   const image = images.car;
   const scale = 0.7 * RS;
 
-  const centerX = (IW - image.width * scale) / 2;
+  const carWidth = image.width * scale;
+  const carHeight = image.height * scale;
+
+  const centerX = (IW - carWidth) / 2;
   const carSteerOffset = -1 * steerOffset * 0.02;
 
   let x = centerX + carSteerOffset;
   let y = IH - 78 * RS;
 
-  if (state.curbTimePassed > 0) {
+  if (state.curbTimePassed > 0 && state.flipTimePassed === 0) {
     if (state.curbFrameIndex % 5 === 0) {
       y += 3;
       x += 2;
@@ -55,11 +60,62 @@ export function drawCar(
     }
   }
 
-  if (state.curbTimePassed > 0) {
-    // ctx.globalAlpha = 0.9;
+  if (state.flipTimePassed > 0) {
+    let angle = 0;
+    if (state.flipTimePassed > 0.3) {
+      angle = -90;
+    }
+    if (state.flipTimePassed > 0.9) {
+      angle = -180;
+    }
+
+    let yOffset = 0;
+    if (state.flipTimePassed > 0) {
+      yOffset = -10;
+    }
+    if (state.flipTimePassed > 0.3) {
+      yOffset = 0;
+    }
+    if (state.flipTimePassed > 0.6) {
+      yOffset = -10;
+    }
+    if (state.flipTimePassed > 0.9) {
+      yOffset = 0;
+    }
+    if (state.flipTimePassed > 1.2) {
+      yOffset = -5;
+    }
+    if (state.flipTimePassed > 1.5) {
+      yOffset = 0;
+    }
+    if (state.flipTimePassed > 1.6) {
+      yOffset = -5;
+    }
+    if (state.flipTimePassed > 1.7) {
+      yOffset = 0;
+    }
+    if (state.flipTimePassed > 1.8) {
+      yOffset = -5;
+    }
+    if (state.flipTimePassed > 1.9) {
+      yOffset = 0;
+    }
+
+    y += yOffset;
+
+    const angleInRadians = (Math.PI / 180) * angle;
+
+    ctx.translate(x + carWidth / 2, y + carHeight / 2);
+    ctx.rotate(angleInRadians);
+
+    ctx.drawImage(image, -carWidth / 2, -carHeight / 2, carWidth, carHeight);
+
+    ctx.rotate(-angleInRadians);
+    ctx.translate(-x - carWidth / 2, -y - carHeight / 2);
+  } else {
+    ctx.drawImage(image, x, y, carWidth, carHeight);
+    ctx.globalAlpha = 1;
   }
-  ctx.drawImage(image, x, y, image.width * scale, image.height * scale);
-  ctx.globalAlpha = 1;
 }
 
 export function getCarBox({
@@ -98,11 +154,13 @@ const CURB_ALLOWED_TIME = 2;
 export type CarState = {
   curbTimePassed: number;
   curbFrameIndex: number;
+  flipTimePassed: number;
 };
 
 export const defaultCarState: CarState = {
   curbTimePassed: 0,
   curbFrameIndex: 0,
+  flipTimePassed: 0,
 };
 
 export function updateCarState({
@@ -122,6 +180,17 @@ export function updateCarState({
 }): CarState {
   let curbTimePassed = state.curbTimePassed;
   let curbFrameIndex = state.curbFrameIndex;
+  let flipTimePassed = state.flipTimePassed;
+
+  if (flipTimePassed > 0) {
+    flipTimePassed += deltaTime;
+    curbFrameIndex = curbFrameIndex + 1;
+    return {
+      curbTimePassed,
+      curbFrameIndex,
+      flipTimePassed,
+    };
+  }
 
   const leftCurbX = curveXByY(
     steerCurve(path.left, { steerOffset }),
@@ -140,7 +209,7 @@ export function updateCarState({
     curbTimePassed += deltaTime;
     curbFrameIndex = curbFrameIndex + 1;
     if (curbTimePassed > CURB_ALLOWED_TIME) {
-      // TODO: crash
+      flipTimePassed += deltaTime;
     }
   } else {
     curbTimePassed = 0;
@@ -150,6 +219,7 @@ export function updateCarState({
   return {
     curbTimePassed,
     curbFrameIndex,
+    flipTimePassed,
   };
 }
 
@@ -171,6 +241,7 @@ const POLE_FULL_STOP = 100;
 
 export function updateMoveSpeedState({
   nextPole,
+  carState,
   moveOffset,
   isThrottleActive,
   isReverseActive,
@@ -179,6 +250,7 @@ export function updateMoveSpeedState({
   moveSpeed: currentMoveSpeed,
 }: {
   nextPole: Pole | undefined;
+  carState: CarState;
   moveOffset: number;
   isThrottleActive: boolean;
   isReverseActive: boolean;
@@ -188,6 +260,16 @@ export function updateMoveSpeedState({
   let speed = currentMoveSpeed;
 
   const gearDesc = MOVE_GEARS[gear];
+
+  if (carState.flipTimePassed > 0) {
+    speedChange = (speedChange - MOVE_DECELERATION_REVERSE) / gearDesc.delim;
+    speed = Math.max(0, speed + speedChange);
+    return {
+      moveGear: gear,
+      moveSpeedChange: speedChange,
+      moveSpeed: speed,
+    };
+  }
 
   if (nextPole) {
     const toPole = nextPole.start - moveOffset;
@@ -268,6 +350,7 @@ export function updateSteerState({
   section,
   upgrades,
   nextPole,
+  carState,
   isLeftTurnActive,
   isRightTurnActive,
   moveSpeed,
@@ -276,6 +359,7 @@ export function updateSteerState({
   section: Section;
   upgrades: Upgrade[];
   nextPole: Pole | undefined;
+  carState: CarState;
   isLeftTurnActive: boolean;
   isRightTurnActive: boolean;
   moveSpeed: number;
@@ -283,6 +367,13 @@ export function updateSteerState({
 } & SteerState): SteerState {
   let steerOffset = currentSteerOffset;
   let steerSpeed = currentSteerSpeed;
+
+  if (carState.flipTimePassed > 0) {
+    return {
+      steerSpeed,
+      steerOffset,
+    };
+  }
 
   if (nextPole) {
     const toPole = nextPole.start - moveOffset;

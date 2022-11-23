@@ -288,6 +288,7 @@ function updateLevelState() {
 
   state.speedState = updateMoveSpeedState({
     nextPole,
+    carState: state.carState,
     moveOffset: state.moveOffset,
     isThrottleActive,
     isReverseActive,
@@ -301,6 +302,7 @@ function updateLevelState() {
     section,
     upgrades: state.upgradeState.upgrades,
     nextPole,
+    carState: state.carState,
     isLeftTurnActive,
     isRightTurnActive,
     moveSpeed: state.speedState.moveSpeed,
