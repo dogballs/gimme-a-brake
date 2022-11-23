@@ -37,13 +37,13 @@ export function drawCar(
   },
 ) {
   const image = images.car;
-  const scale = 0.6 * RS;
+  const scale = 0.7 * RS;
 
   const centerX = (IW - image.width * scale) / 2;
   const carSteerOffset = -1 * steerOffset * 0.02;
 
   let x = centerX + carSteerOffset;
-  let y = IH - 70 * RS;
+  let y = IH - 78 * RS;
 
   if (state.curbTimePassed > 0) {
     if (state.curbFrameIndex % 5 === 0) {
@@ -56,7 +56,7 @@ export function drawCar(
   }
 
   if (state.curbTimePassed > 0) {
-    ctx.globalAlpha = 0.9;
+    // ctx.globalAlpha = 0.9;
   }
   ctx.drawImage(image, x, y, image.width * scale, image.height * scale);
   ctx.globalAlpha = 1;
@@ -70,7 +70,7 @@ export function getCarBox({
   steerOffset: number;
 }): CollisionBox {
   const image = images.car;
-  const scale = 0.6 * RS;
+  const scale = 0.7 * RS;
 
   const centerX = (IW - image.width * scale) / 2;
   const carSteerOffset = -1 * steerOffset * 0.02;
@@ -79,7 +79,7 @@ export function getCarBox({
   const height = image.height * scale;
   const depth = 32;
   const x = centerX + carSteerOffset;
-  const y = IH - 70 * RS;
+  const y = IH - 78 * RS;
   const z = 16;
 
   return {
