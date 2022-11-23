@@ -290,8 +290,8 @@ function updateLevelState() {
     nextPole,
     carState: state.carState,
     moveOffset: state.moveOffset,
-    isThrottleActive,
-    isReverseActive,
+    // isThrottleActive,
+    // isReverseActive,
     ...state.speedState,
   });
 

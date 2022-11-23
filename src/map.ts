@@ -20,27 +20,27 @@ const zones: Zone[] = [
     skipPole: true,
   },
   {
-    start: 1000,
+    start: 5000,
     kind: 'green',
     decorAmount: 60,
   },
   {
-    start: 6000,
+    start: 15000,
     kind: 'desert',
     decorAmount: 60,
   },
   {
-    start: 12000,
+    start: 25000,
     kind: 'beach',
     decorAmount: 10,
   },
   {
-    start: 18000,
+    start: 35000,
     kind: 'forest',
     decorAmount: 1000,
   },
   {
-    start: 24000,
+    start: 45000,
     kind: 'forest',
     decorAmount: 0,
   },

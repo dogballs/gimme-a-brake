@@ -243,8 +243,8 @@ export function updateMoveSpeedState({
   nextPole,
   carState,
   moveOffset,
-  isThrottleActive,
-  isReverseActive,
+  // isThrottleActive,
+  // isReverseActive,
   moveGear: currentMoveGear,
   moveSpeedChange: currentMoveSpeedChange,
   moveSpeed: currentMoveSpeed,
@@ -252,9 +252,12 @@ export function updateMoveSpeedState({
   nextPole: Pole | undefined;
   carState: CarState;
   moveOffset: number;
-  isThrottleActive: boolean;
-  isReverseActive: boolean;
+  // isThrottleActive: boolean;
+  // isReverseActive: boolean;
 } & MoveSpeedState): MoveSpeedState {
+  const isThrottleActive = true;
+  const isReverseActive = false;
+
   let gear = currentMoveGear;
   let speedChange = currentMoveSpeedChange;
   let speed = currentMoveSpeed;
