@@ -197,6 +197,7 @@ function draw({
 
   drawCar(ctx, {
     images: resources.images,
+    upgrades: state.upgradeState.upgrades,
     steerOffset,
     state: state.carState,
   });
@@ -287,7 +288,9 @@ function updateLevelState() {
   });
 
   state.speedState = updateMoveSpeedState({
+    section,
     nextPole,
+    upgrades: state.upgradeState.upgrades,
     carState: state.carState,
     moveOffset: state.moveOffset,
     // isThrottleActive,
@@ -428,6 +431,7 @@ function tick({ deltaTime }: { deltaTime: number }) {
     path,
     state: state.carState,
     stripes,
+    upgrades: state.upgradeState.upgrades,
     carBox,
     deltaTime,
     steerOffset: state.steerState.steerOffset,
@@ -447,7 +451,11 @@ function tick({ deltaTime }: { deltaTime: number }) {
     audioCtx.resume();
   }
 
-  moveAudio.update({ isMuted, ...state.speedState });
+  moveAudio.update({
+    isMuted,
+    upgrades: state.upgradeState.upgrades,
+    ...state.speedState,
+  });
 }
 
 main();

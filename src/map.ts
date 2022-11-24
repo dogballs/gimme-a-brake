@@ -23,16 +23,19 @@ const zones: Zone[] = [
     start: 5000,
     kind: 'green',
     decorAmount: 60,
+    skipPole: true,
   },
   {
     start: 15000,
     kind: 'desert',
     decorAmount: 60,
+    skipPole: true,
   },
   {
     start: 25000,
     kind: 'beach',
     decorAmount: 10,
+    skipPole: true,
   },
   {
     start: 35000,
@@ -64,23 +67,12 @@ export const longUphillMap: Map = {
   sections: [
     {
       kind: 'uphill',
-      start: 100,
+      start: 2000,
       size: 15000,
       steepness: 30,
     },
   ],
-  props: [
-    // {
-    //   kind: 'rock',
-    //   start: 500,
-    //   position: 0.1,
-    // },
-    ...generateProps({
-      startOffset: 300,
-      size: 15000,
-      amount: 30,
-    }),
-  ],
+  props: [],
 };
 
 export const longLeftTurnMap: Map = {

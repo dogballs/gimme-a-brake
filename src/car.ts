@@ -4,13 +4,12 @@ import {
   HW,
   HH,
   RS,
-  MOVE_GEARS,
-  MOVE_GEAR_MIN,
-  MOVE_GEAR_MAX,
   MOVE_ACCELERATION,
   MOVE_DECELERATION_FREE,
   MOVE_DECELERATION_REVERSE,
+  MOVE_DECELERATION_UPGRADE,
   MOVE_SPEED_MAX,
+  MOVE_SPEED_MAX_UPGRADE,
   STEER_LIMIT,
   STEER_SPEED,
   STEER_SPEED_IMPROVED,
@@ -30,10 +29,12 @@ export function drawCar(
   ctx,
   {
     images,
+    upgrades,
     steerOffset,
     state,
   }: {
     images: ImageMap;
+    upgrades: Upgrade[];
     steerOffset: number;
     state: CarState;
   },
@@ -115,6 +116,20 @@ export function drawCar(
   } else {
     ctx.drawImage(image, x, y, carWidth, carHeight);
     ctx.globalAlpha = 1;
+
+    if (state.curbTimePassed > 0) {
+      const hasCurbStopUpgrade = upgrades.some((u) => u.kind === 'curb-stop');
+      const allowedTime = hasCurbStopUpgrade
+        ? CURB_ALLOWED_TIME_UPGRADE
+        : CURB_ALLOWED_TIME;
+
+      const displayTime = (allowedTime - state.curbTimePassed).toFixed(1);
+
+      ctx.strokeStyle = '#d78a35';
+      ctx.lineWidth = 1;
+      ctx.font = '8px serif';
+      ctx.strokeText(displayTime, x + carWidth / 2 - 4, y + carHeight / 2 + 10);
+    }
   }
 }
 
@@ -148,8 +163,30 @@ export function getCarBox({
   };
 }
 
+function getMoveGears({ upgrades }: { upgrades: Upgrade[] }) {
+  const hasUpgrade = upgrades.some((u) => u.kind === 'lower-max-speed');
+  const speedMax = hasUpgrade ? MOVE_SPEED_MAX_UPGRADE : MOVE_SPEED_MAX;
+
+  return {
+    1: { delim: 4, startAt: 0, endAt: 1.1 },
+    2: { delim: 5, startAt: 1, endAt: 2.6 },
+    3: { delim: 6, startAt: 2.5, endAt: 4.1 },
+    4: { delim: 7, startAt: 4, endAt: 6.1 },
+    5: { delim: 8, startAt: 6, endAt: speedMax },
+  };
+}
+
+function getGearMin() {
+  return 1;
+}
+
+function getGearMax() {
+  return 5;
+}
+
 const CURB_ALLOWED_OVERFLOW = 20;
 const CURB_ALLOWED_TIME = 2;
+const CURB_ALLOWED_TIME_UPGRADE = 4;
 
 export type CarState = {
   curbTimePassed: number;
@@ -167,6 +204,7 @@ export function updateCarState({
   path,
   state,
   stripes,
+  upgrades,
   carBox,
   deltaTime,
   steerOffset,
@@ -174,6 +212,7 @@ export function updateCarState({
   path: Path;
   state: CarState;
   stripes: Stripe[];
+  upgrades: Upgrade[];
   carBox: CollisionBox;
   deltaTime: number;
   steerOffset: number;
@@ -205,10 +244,19 @@ export function updateCarState({
   const isTouchingRightCurb =
     rightCurbX + CURB_ALLOWED_OVERFLOW < carBox.x + carBox.width;
 
+  const hasCurbStopUpgrade = upgrades.some(
+    (u) => u.kind === 'curb-stop' && u.cooldownPassed == null,
+  );
+
   if (isTouchingLeftCurb || isTouchingRightCurb) {
     curbTimePassed += deltaTime;
     curbFrameIndex = curbFrameIndex + 1;
-    if (curbTimePassed > CURB_ALLOWED_TIME) {
+
+    const allowedTime = hasCurbStopUpgrade
+      ? CURB_ALLOWED_TIME_UPGRADE
+      : CURB_ALLOWED_TIME;
+
+    if (curbTimePassed > allowedTime) {
       flipTimePassed += deltaTime;
     }
   } else {
@@ -230,7 +278,7 @@ export type MoveSpeedState = {
 };
 
 export const defaultMoveSpeedState: MoveSpeedState = {
-  moveGear: MOVE_GEAR_MIN,
+  moveGear: getGearMin(),
   moveSpeedChange: 0,
   moveSpeed: 0,
 };
@@ -240,8 +288,10 @@ const POLE_DRIVE = 500;
 const POLE_FULL_STOP = 100;
 
 export function updateMoveSpeedState({
+  section,
   nextPole,
   carState,
+  upgrades,
   moveOffset,
   // isThrottleActive,
   // isReverseActive,
@@ -249,12 +299,15 @@ export function updateMoveSpeedState({
   moveSpeedChange: currentMoveSpeedChange,
   moveSpeed: currentMoveSpeed,
 }: {
+  section: Section;
   nextPole: Pole | undefined;
   carState: CarState;
+  upgrades: Upgrade[];
   moveOffset: number;
   // isThrottleActive: boolean;
   // isReverseActive: boolean;
 } & MoveSpeedState): MoveSpeedState {
+  // Story mode - forced acceleration, no brakes
   const isThrottleActive = true;
   const isReverseActive = false;
 
@@ -262,7 +315,7 @@ export function updateMoveSpeedState({
   let speedChange = currentMoveSpeedChange;
   let speed = currentMoveSpeed;
 
-  const gearDesc = MOVE_GEARS[gear];
+  const gearDesc = getMoveGears({ upgrades })[gear];
 
   if (carState.flipTimePassed > 0) {
     speedChange = (speedChange - MOVE_DECELERATION_REVERSE) / gearDesc.delim;
@@ -301,12 +354,33 @@ export function updateMoveSpeedState({
     }
   }
 
-  if (isThrottleActive) {
+  const curbStopUpgrade = upgrades.find(
+    (u) => u.kind === 'curb-stop' && u.cooldownPassed == null,
+  );
+  if (curbStopUpgrade && carState.curbTimePassed > 0) {
+    // curbStopUpgrade.cooldownPassed = 0;
+    // tODO: doesnot work
+    speedChange = (speedChange - MOVE_DECELERATION_REVERSE) / gearDesc.delim;
+    speed = Math.max(2, speed + speedChange);
+  } else if (isThrottleActive) {
     if (speedChange < 0) {
       speedChange = 0;
     }
-    speedChange = (speedChange + MOVE_ACCELERATION) / gearDesc.delim;
-    speed += speedChange;
+    const hasUphillSlowUpgrade = upgrades.some(
+      (u) => u.kind === 'turn-uphill-slow',
+    );
+    const hasSection = ['turn-left', 'turn-right', 'uphill'].includes(
+      section.kind,
+    );
+    if (hasUphillSlowUpgrade && hasSection) {
+      // Slows down and drops to certain speed with an upgrade
+      speedChange = (speedChange - MOVE_DECELERATION_UPGRADE) / gearDesc.delim;
+      speed = Math.max(3, speed + speedChange);
+    } else {
+      // Default acceleration
+      speedChange = (speedChange + MOVE_ACCELERATION) / gearDesc.delim;
+      speed = Math.max(0, speed + speedChange);
+    }
   } else {
     if (speed > 0) {
       if (isReverseActive) {
@@ -321,9 +395,9 @@ export function updateMoveSpeedState({
   }
 
   if (speed > gearDesc.endAt) {
-    gear = Math.min(gear + 1, MOVE_GEAR_MAX);
+    gear = Math.min(gear + 1, getGearMax());
   } else if (speed < gearDesc.startAt) {
-    gear = Math.max(gear - 1, MOVE_GEAR_MIN);
+    gear = Math.max(gear - 1, getGearMin());
   }
 
   speed = Math.min(speed, gearDesc.endAt);
@@ -456,12 +530,13 @@ export class MoveAudio {
   }
 
   update({
+    upgrades,
     isMuted,
     moveSpeed,
     moveSpeedChange,
     moveGear,
-  }: { isMuted: boolean } & MoveSpeedState) {
-    const gear = MOVE_GEARS[moveGear];
+  }: { upgrades: Upgrade[]; isMuted: boolean } & MoveSpeedState) {
+    const gear = getMoveGears({ upgrades })[moveGear];
     const gearT = (moveSpeed - gear.startAt) / (gear.endAt - gear.startAt);
 
     let soundStart = 30 + moveGear * 10;

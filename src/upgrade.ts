@@ -74,9 +74,9 @@ export const ALL_UPGRADES: Upgrade[] = [
   // },
   {
     kind: 'curb-stop',
-    description: 'Use curb to slow down. Heats up.',
+    description: 'Use curb to slow down. Cooldown: 10',
     active: false,
-    cooldown: 10,
+    cooldown: 20,
     // heat? cd?
   },
   {
