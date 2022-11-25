@@ -63,6 +63,10 @@ import { Context2D } from './types';
 const canvas = document.querySelector('canvas');
 const ctx = canvas.getContext('2d');
 
+const menuSoundId = document.querySelector<HTMLInputElement>(
+  '[data-control="menu-sound"]',
+);
+
 canvas.width = IW;
 canvas.height = IH;
 
@@ -74,7 +78,7 @@ keyboardListener.listen();
 const soundController = new SoundController();
 
 const audioCtx = new AudioContext();
-// const moveAudio = new MoveAudio(audioCtx);
+const moveAudio = new MoveAudio(audioCtx);
 
 const resources = {
   map: coolMap,
@@ -476,18 +480,20 @@ function tick({
   //   roadDepth,
   // });
 
-  // const isMuted = !muteControl.checked;
-  // if (isMuted && audioCtx.state === 'running') {
-  //   audioCtx.suspend();
-  // } else if (!isMuted && audioCtx.state !== 'running') {
-  //   audioCtx.resume();
-  // }
+  if (!state.menuState.isOpen) {
+    const isMuted = !menuSoundId.checked;
+    if (isMuted && audioCtx.state === 'running') {
+      audioCtx.suspend();
+    } else if (!isMuted && audioCtx.state !== 'running') {
+      audioCtx.resume();
+    }
 
-  // moveAudio.update({
-  //   isMuted,
-  //   upgrades: state.upgradeState.upgrades,
-  //   ...state.speedState,
-  // });
+    moveAudio.update({
+      isMuted,
+      upgrades: state.upgradeState.upgrades,
+      ...state.speedState,
+    });
+  }
 }
 
 async function main() {

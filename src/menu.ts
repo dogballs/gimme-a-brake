@@ -3,11 +3,6 @@ import { KeyboardListener, InputControl } from './controls';
 import { ImageMap } from './images';
 import { SoundController } from './sound';
 
-const menuSoundId = document.querySelector<HTMLInputElement>(
-  '[data-control="menu-sound"]',
-);
-menuSoundId.onkeydown = (e) => e.stopPropagation();
-
 export type MenuState = {
   isOpen: boolean;
   isAnyKey: boolean;
@@ -177,8 +172,7 @@ export function updateMenuState({
   }
 
   if (!state.isAnyKey) {
-    const soundId = menuSoundId.value.trim();
-    soundController.playLoopIfNotPlaying(soundId);
+    soundController.playLoopIfNotPlaying('menu1');
   }
 
   let selectedIndex = state.selectedIndex;

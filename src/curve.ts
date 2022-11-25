@@ -1,10 +1,10 @@
-import { IW, IH, RENDER_SCALE } from './config';
+import { IW, IH, RS } from './config';
 import { Context2D } from './types';
 
 // Line equation:
 // left: 5x + 18y = 2700
 // right: 18 y - 5 x = 800
-export const DEFAULT_BOTTOM_DELTA = 180 * RENDER_SCALE;
+export const DEFAULT_BOTTOM_DELTA = 180 * RS;
 export const DEFAULT_BOTTOM_LEFT_X = -DEFAULT_BOTTOM_DELTA;
 export const DEFAULT_BOTTOM_RIGHT_X = IW + DEFAULT_BOTTOM_DELTA;
 
@@ -117,7 +117,7 @@ export function curveXByY(curve: Curve, y: number) {
   // TODO: optimize: binary search? lut?
   for (let t = 0; t <= 1; t += 0.01) {
     const p = pointOnCurve(curve, t);
-    if (Math.abs(p.y - y) <= 1) {
+    if (Math.abs(p.y - y) <= 1 * RS) {
       return p.x;
     }
   }

@@ -134,8 +134,8 @@ export function drawCar(
 
       ctx.strokeStyle = '#d78a35';
       ctx.lineWidth = 1;
-      ctx.font = '8px serif';
-      ctx.strokeText(displayTime, x + carWidth / 2 - 4, y + carHeight / 2 + 10);
+      ctx.font = '10px retro_gaming';
+      ctx.strokeText(displayTime, x + carWidth / 2 - 4, y + carHeight / 2 + 14);
     }
   }
 }
@@ -151,14 +151,14 @@ export function getCarBox({
   const scale = 0.7 * RS;
 
   const centerX = (IW - image.width * scale) / 2;
-  const carSteerOffset = -1 * steerOffset * 0.02;
+  const carSteerOffset = -1 * steerOffset * 0.02 * RS;
 
   const width = image.width * scale;
   const height = image.height * scale;
-  const depth = 32;
+  const depth = 32 * RS;
   const x = centerX + carSteerOffset;
   const y = IH - 78 * RS;
-  const z = 16;
+  const z = 16 * RS;
 
   return {
     x,
@@ -191,7 +191,7 @@ function getGearMax() {
   return 5;
 }
 
-const CURB_ALLOWED_OVERFLOW = 20;
+const CURB_ALLOWED_OVERFLOW = 20 * RS;
 const CURB_ALLOWED_TIME = 2;
 const CURB_ALLOWED_TIME_UPGRADE = 4;
 
@@ -237,7 +237,6 @@ export function updateCarState({
       flipTimePassed,
     };
   }
-
   const leftCurbX = curveXByY(
     steerCurve(path.left, { steerOffset }),
     carBox.y + carBox.height,
@@ -364,12 +363,13 @@ export function updateMoveSpeedState({
   const curbStopUpgrade = upgrades.find(
     (u) => u.kind === 'curb-stop' && u.cooldownPassed == null,
   );
-  if (curbStopUpgrade && carState.curbTimePassed > 0) {
-    // curbStopUpgrade.cooldownPassed = 0;
-    // tODO: doesnot work
-    speedChange = (speedChange - MOVE_DECELERATION_REVERSE) / gearDesc.delim;
-    speed = Math.max(2, speed + speedChange);
-  } else if (isThrottleActive) {
+  // if (curbStopUpgrade && carState.curbTimePassed > 0) {
+  //   // curbStopUpgrade.cooldownPassed = 0;
+  //   // tODO: doesnot work
+  //   speedChange = (speedChange - MOVE_DECELERATION_REVERSE) / gearDesc.delim;
+  //   speed = Math.max(2, speed + speedChange);
+  // } else
+  if (isThrottleActive) {
     if (speedChange < 0) {
       speedChange = 0;
     }
