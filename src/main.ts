@@ -28,6 +28,7 @@ import {
   lerpFragments,
 } from './fragment';
 import { loadImages } from './images';
+import { drawMenu, defaultMenuState, MenuState, updateMenuState } from './menu';
 import { GameLoop } from './loop';
 import { straightMap, coolMap, longLeftTurnMap, longUphillMap } from './map';
 import { Path } from './path';
@@ -40,6 +41,7 @@ import {
   getActiveSection,
   getNextSection,
 } from './section';
+import { loadSounds, SoundController } from './sound';
 import {
   Stripe,
   drawCurbStripes,
@@ -68,6 +70,7 @@ const offCanvas = new OffscreenCanvas(IW, IH);
 const offCtx = offCanvas.getContext('2d');
 
 const keyboardListener = listenKeyboard();
+const soundController = new SoundController();
 
 const muteControl = document.querySelector<HTMLInputElement>(
   '[data-control="mute"]',
@@ -78,6 +81,7 @@ const moveAudio = new MoveAudio(audioCtx);
 const resources = {
   map: coolMap,
   images: undefined,
+  sounds: undefined,
 };
 
 const state: {
@@ -85,6 +89,7 @@ const state: {
   steerState: SteerState;
   upgradeState: UpgradeState;
   carState: CarState;
+  menuState: MenuState;
   moveOffset: number;
   moveOffsetChange: number;
   bgOffset: number;
@@ -93,6 +98,7 @@ const state: {
   steerState: defaultSteerState,
   upgradeState: defaultUpgradeState,
   carState: defaultCarState,
+  menuState: defaultMenuState,
   moveOffset: 0,
   moveOffsetChange: 0,
   bgOffset: 0,
@@ -200,16 +206,17 @@ function draw({
     upgrades: state.upgradeState.upgrades,
     steerOffset,
     state: state.carState,
+    menuState: state.menuState,
   });
 
-  drawDebug(ctx, {
-    section,
-    bgOffset,
-    moveOffset,
-    upgrades: state.upgradeState.upgrades,
-    ...state.speedState,
-    ...state.steerState,
-  });
+  // drawDebug(ctx, {
+  //   section,
+  //   bgOffset,
+  //   moveOffset,
+  //   upgrades: state.upgradeState.upgrades,
+  //   ...state.speedState,
+  //   ...state.steerState,
+  // });
 
   // drawHorizon(ctx);
 
@@ -223,16 +230,12 @@ function draw({
     state: state.upgradeState,
   });
 
+  drawMenu(ctx, { state: state.menuState, images: resources.images });
+
   // drawCurve(ctx, path.left, {
   //   moveOffset: state.moveOffset,
   //   steerOffset: state.steerState.steerOffset,
   // });
-}
-
-async function main() {
-  resources.images = await loadImages();
-
-  loop.start();
 }
 
 function getInput() {
@@ -266,6 +269,9 @@ function getInput() {
 function updateLevelState() {
   // NOTE: don't destructure the state here because it is constantly updated
 
+  if (state.menuState.isOpen) {
+    return;
+  }
   if (state.upgradeState.isDialogOpen) {
     return;
   }
@@ -373,6 +379,11 @@ function updateCollisions({
 function tick({ deltaTime }: { deltaTime: number }) {
   keyboardListener.update();
 
+  state.menuState = updateMenuState({
+    keyboardListener,
+    state: state.menuState,
+  });
+
   // NOTE: Don't destructure until after all state updates
 
   const nextPole = getNextPole({
@@ -456,6 +467,15 @@ function tick({ deltaTime }: { deltaTime: number }) {
     upgrades: state.upgradeState.upgrades,
     ...state.speedState,
   });
+}
+
+async function main() {
+  resources.images = await loadImages();
+  resources.sounds = await loadSounds();
+
+  soundController.sounds = resources.sounds;
+
+  loop.start();
 }
 
 main();

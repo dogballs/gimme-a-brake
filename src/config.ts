@@ -1,4 +1,4 @@
-export const RENDER_SCALE = 1;
+export const RENDER_SCALE = 1.5;
 export const RS = RENDER_SCALE;
 
 export const BW = 380 * RENDER_SCALE;

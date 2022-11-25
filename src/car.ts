@@ -18,6 +18,7 @@ import {
 import { CollisionBox } from './collision';
 import { curveXByY, steerCurve } from './curve';
 import { ImageMap } from './images';
+import { MenuState } from './menu';
 import { Path } from './path';
 import { Pole } from './pole';
 import { Section } from './section';
@@ -32,13 +33,19 @@ export function drawCar(
     upgrades,
     steerOffset,
     state,
+    menuState,
   }: {
     images: ImageMap;
     upgrades: Upgrade[];
     steerOffset: number;
     state: CarState;
+    menuState: MenuState;
   },
 ) {
+  if (menuState.isOpen) {
+    return;
+  }
+
   const image = images.car;
   const scale = 0.7 * RS;
 

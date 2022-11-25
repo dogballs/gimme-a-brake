@@ -4,5 +4,10 @@ html {
 }
 
 canvas {
-  width: 760px;
+  width: 1024px;
+}
+
+@font-face {
+  font-family: 'retro_gaming';
+  src: url('data/fonts/retro_gaming.ttf');
 }

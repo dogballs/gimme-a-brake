@@ -30,6 +30,8 @@ export async function loadImages(): Promise<ImageMap> {
     poleRed: await loadImage('data/graphics/pole-red.png'),
     poleGreen: await loadImage('data/graphics/pole-green.png'),
     poleEnergy: await loadImage('data/graphics/pole-energy.png'),
+    // Menu
+    menuBullet: await loadImage('data/graphics/menu-bullet.png'),
   };
 }
 
