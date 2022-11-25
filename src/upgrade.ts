@@ -1,7 +1,8 @@
-import { IW, IH, RS } from './config';
+import { IW, IH, RS, FONT_PRIMARY } from './config';
 import { KeyboardListener, InputControl } from './controls';
 import { ImageMap } from './images';
 import { randomElements } from './random';
+import { SoundController } from './sound';
 import { Pole } from './pole';
 
 type UpgradeKind =
@@ -19,6 +20,7 @@ export type Upgrade = {
   kind: UpgradeKind;
   active: boolean;
   description: string;
+  description2?: string;
   cooldown?: number;
   cooldownPassed?: number;
   count?: number;
@@ -37,14 +39,16 @@ export const ALL_UPGRADES: Upgrade[] = [
   },
   {
     kind: 'bumper',
-    description: 'Slows by bumping into obstacles. Cooldown: 10 sec',
+    description: 'Slows by bumping into obstacles',
+    description2: 'Cooldown: 10 sec',
     active: false,
     cooldown: 10,
     // breaks and blocks a slot?
   },
   {
     kind: 'lives',
-    description: 'Protects from an obstacle hit. Lives: 3',
+    description: 'Protects from an obstacle hit ',
+    description2: 'Lives: 3',
     active: false,
     count: 3,
     // slow down?
@@ -74,7 +78,8 @@ export const ALL_UPGRADES: Upgrade[] = [
   // },
   {
     kind: 'curb-stop',
-    description: 'Use curb to slow down. Cooldown: 10',
+    description: 'Use curb to slow down',
+    description2: 'Cooldown: 10',
     active: false,
     cooldown: 20,
     // heat? cd?
@@ -105,12 +110,14 @@ export const defaultUpgradeState: UpgradeState = {
 
 export function updateUpgradeState({
   keyboardListener,
+  soundController,
   deltaTime,
   state,
   nextPole,
   moveOffset,
 }: {
   keyboardListener: KeyboardListener;
+  soundController: SoundController;
   deltaTime: number;
   state: UpgradeState;
   nextPole: Pole | undefined;
@@ -175,6 +182,7 @@ export function updateUpgradeState({
     const upgrades = [...state.upgrades, newUpgrade];
 
     nextPole.granted = true;
+    soundController.play('upgradePicked1');
 
     return {
       ...state,
@@ -199,6 +207,9 @@ export function updateUpgradeState({
     if (dialogSelectedIndex > state.dialogUpgrades.length - 1) {
       dialogSelectedIndex = 0;
     }
+  }
+  if (isLeft || isRight) {
+    soundController.play('menuFocus2');
   }
 
   return {
@@ -232,7 +243,7 @@ export function drawUpgradeDialog(
   }
 
   const width = 200 * RS;
-  const height = 100 * RS;
+  const height = 130 * RS;
 
   const x = (IW - width) / 2;
   const y = (IH - height) / 2;
@@ -249,10 +260,9 @@ export function drawUpgradeDialog(
   ctx.lineWidth = 5 * RS;
   ctx.strokeRect(x, y, width, height);
 
-  ctx.strokeStyle = '#000';
-  ctx.lineWidth = 1;
-  ctx.font = `${9 * RS}px serif`;
-  ctx.strokeText('Pick an upgrade:', x + 10 * RS, y + 15 * RS);
+  ctx.fillStyle = '#222';
+  ctx.font = `${12 * RS}px ${FONT_PRIMARY}`;
+  ctx.fillText('Pick an upgrade:', x + 10 * RS, y + 20 * RS);
 
   state.dialogUpgrades.forEach((upgrade, index) => {
     drawUpgradeDialogItem(ctx, {
@@ -280,26 +290,36 @@ function drawUpgradeDialogItem(
   },
 ) {
   const x = 130 * RS + 45 * RS * index;
-  const y = 80 * RS;
+  const y = 70 * RS;
   const size = 32 * RS;
 
   drawUpgradeImage(ctx, { upgrade, images, x, y, size });
 
-  ctx.strokeStyle = isSelected ? '#d73131' : '#fff';
-  ctx.lineWidth = 2 * RS;
-  ctx.strokeRect(x, y, size, size);
-
   if (isSelected) {
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = '#000';
-    ctx.font = `${10 * RS}px serif`;
-    ctx.strokeText(upgrade.description, 100 * RS, 128 * RS, 180 * RS);
-    ctx.strokeText(
+    ctx.strokeStyle = '#e42424';
+    ctx.lineWidth = 2 * RS;
+    ctx.strokeRect(x, y, size, size);
+
+    const startY = 124;
+    const gapY = 12;
+
+    ctx.fillSttyle = '#222';
+    ctx.font = `${8 * RS}px ${FONT_PRIMARY}`;
+    ctx.fillText(
       upgrade.active ? 'Active' : 'Passive',
       100 * RS,
-      140 * RS,
+      startY * RS,
       180 * RS,
     );
+    ctx.fillText(upgrade.description, 100 * RS, (startY + gapY) * RS, 180 * RS);
+    if (upgrade.description2) {
+      ctx.fillText(
+        upgrade.description2,
+        100 * RS,
+        (startY + gapY * 2) * RS,
+        140 * RS,
+      );
+    }
   }
 }
 
@@ -343,14 +363,13 @@ function drawUpgradeImage(
   }
 
   if (upgrade.kind === 'lives') {
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = '#fff';
-    if (size === 24) {
-      ctx.font = `${10 * RS}px serif`;
-      ctx.strokeText(upgrade.count, x + 10 * RS, y + 16 * RS);
+    ctx.fillStyle = '#fff';
+    if (size === 24 * RS) {
+      ctx.font = `${10 * RS}px ${FONT_PRIMARY}`;
+      ctx.fillText(upgrade.count, x + 8 * RS, y + 16 * RS);
     } else {
-      ctx.font = `${12 * RS}px serif`;
-      ctx.strokeText(upgrade.count, x + 13 * RS, y + 21 * RS);
+      ctx.font = `${12 * RS}px ${FONT_PRIMARY}`;
+      ctx.fillText(upgrade.count, x + 11 * RS, y + 21 * RS);
     }
   }
 
@@ -363,9 +382,9 @@ function drawUpgradeImage(
     ctx.globalAlpha = 1;
 
     ctx.lineWidth = 1;
-    ctx.font = `${12 * RS}px serif`;
+    ctx.font = `${12 * RS}px ${FONT_PRIMARY}`;
     ctx.strokeStyle = '#fff';
-    ctx.strokeText(niceTime, x + 10 * RS, y + 16 * RS);
+    ctx.fillText(niceTime, x + 10 * RS, y + 16 * RS);
   }
 }
 
@@ -396,7 +415,7 @@ function drawActiveUpgradeItem(
     index: number;
   },
 ) {
-  const x = 350 * RS - 28 * RS * index;
+  const x = 5 * RS - 28 * RS * index;
   const y = 5 * RS;
   const size = 24 * RS;
 

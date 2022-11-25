@@ -26,3 +26,9 @@ export const MOVE_DECELERATION_REVERSE = 0.1;
 
 export const MOVE_SPEED_MAX = 8;
 export const MOVE_SPEED_MAX_UPGRADE = 7;
+
+export const POLE_START = 1000;
+export const POLE_DRIVE = 500;
+export const POLE_FULL_STOP = 100;
+
+export const FONT_PRIMARY = 'retro_gaming';

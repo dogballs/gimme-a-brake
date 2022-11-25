@@ -14,33 +14,33 @@ type Map = {
 
 const zones: Zone[] = [
   {
-    start: 0,
+    start: 10,
     kind: 'green',
-    decorAmount: 0,
+    decorAmount: 50,
     skipPole: true,
   },
   {
-    start: 8000,
+    start: 5000,
     kind: 'green',
-    decorAmount: 60,
+    decorAmount: 100,
     skipPole: true,
   },
   {
     start: 20000,
     kind: 'desert',
-    decorAmount: 60,
+    decorAmount: 100,
     skipPole: true,
   },
   {
     start: 35000,
     kind: 'beach',
-    decorAmount: 10,
+    decorAmount: 20,
     skipPole: true,
   },
   {
     start: 50000,
     kind: 'forest',
-    decorAmount: 1000,
+    decorAmount: 2000,
   },
   {
     start: 70000,

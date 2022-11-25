@@ -6,10 +6,11 @@ export async function loadSounds() {
   return {
     menu1: await loadSound('data/audio/menu1.mp3'),
     menu2: await loadSound('data/audio/menu2.mp3'),
-    menuSelect1: await loadSound('data/audio/menu-select1.mp3', 0.5),
-    menuFocus1: await loadSound('data/audio/menu-focus1.mp3', 0.5),
-    menuFocus2: await loadSound('data/audio/menu-focus2.mp3'),
+    menuSelect1: await loadSound('data/audio/menu-select1.mp3', 0.4),
+    menuFocus1: await loadSound('data/audio/menu-focus1.mp3', 0.4),
+    menuFocus2: await loadSound('data/audio/menu-focus2.mp3', 0.4),
     theme1: await loadSound('data/audio/theme1.mp3'),
+    upgradePicked1: await loadSound('data/audio/upgrade-picked1.mp3'),
   };
 }
 

@@ -3,13 +3,9 @@ import {
   drawCar,
   getCarBox,
   defaultSteerState,
-  defaultMoveSpeedState,
   defaultCarState,
-  updateMoveSpeedState,
   updateSteerState,
-  MoveSpeedState,
   SteerState,
-  MoveAudio,
   CarState,
   updateCarState,
 } from './car';
@@ -42,6 +38,13 @@ import {
   getNextSection,
 } from './section';
 import { loadSounds, SoundController } from './sound';
+import {
+  SpeedAudio,
+  MoveSpeedState,
+  updateMoveSpeedState,
+  defaultMoveSpeedState,
+  drawSpeedometer,
+} from './speed';
 import {
   Stripe,
   drawCurbStripes,
@@ -78,7 +81,7 @@ keyboardListener.listen();
 const soundController = new SoundController();
 
 const audioCtx = new AudioContext();
-const moveAudio = new MoveAudio(audioCtx);
+const speedAudio = new SpeedAudio(audioCtx);
 
 const resources = {
   map: coolMap,
@@ -227,6 +230,12 @@ function draw({
   drawActiveUpgrades(ctx, {
     images: resources.images,
     state: state.upgradeState,
+  });
+
+  drawSpeedometer(ctx, {
+    state: state.speedState,
+    menuState: state.menuState,
+    upgrades: state.upgradeState.upgrades,
   });
 
   drawUpgradeDialog(ctx, {
@@ -409,6 +418,7 @@ function tick({
 
   state.upgradeState = updateUpgradeState({
     keyboardListener,
+    soundController,
     deltaTime,
     state: state.upgradeState,
     nextPole,
@@ -488,7 +498,7 @@ function tick({
       audioCtx.resume();
     }
 
-    moveAudio.update({
+    speedAudio.update({
       isMuted,
       upgrades: state.upgradeState.upgrades,
       ...state.speedState,

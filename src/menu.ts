@@ -1,4 +1,4 @@
-import { IW, IH, HW, HH, RS } from './config';
+import { IW, IH, HW, HH, RS, FONT_PRIMARY } from './config';
 import { KeyboardListener, InputControl } from './controls';
 import { ImageMap } from './images';
 import { SoundController } from './sound';
@@ -10,9 +10,11 @@ export type MenuState = {
   selectedIndex: number;
 };
 
+const SKIP_FOR_DEV = false;
+
 export const defaultMenuState: MenuState = {
-  isOpen: true,
-  isAnyKey: true,
+  isOpen: SKIP_FOR_DEV ? false : true,
+  isAnyKey: SKIP_FOR_DEV ? false : true,
   isSoundOn: true,
   selectedIndex: 0,
 };
@@ -62,7 +64,7 @@ export function drawMenu(
     const textY = 110 * RS;
 
     ctx.lineWidth = 1;
-    ctx.font = `${20 * RS}px retro_gaming`;
+    ctx.font = `${20 * RS}px ${FONT_PRIMARY}`;
     ctx.fillStyle = '#fff';
     ctx.strokeStyle = '#000';
     ctx.fillText('PRESS ANY KEY', textX, textY);
@@ -75,7 +77,7 @@ export function drawMenu(
   const textY = 60 * RS;
 
   ctx.lineWidth = 1;
-  ctx.font = `${30 * RS}px retro_gaming`;
+  ctx.font = `${30 * RS}px ${FONT_PRIMARY}`;
   ctx.fillStyle = '#fff';
   ctx.strokeStyle = '#000';
   ctx.fillText('GIMME A BRAKE', textX, textY);
@@ -115,7 +117,7 @@ function drawItem(
   const textX = (IW - 90 * RS) / 2;
   const textY = 100 * RS + 22 * RS * index;
 
-  ctx.font = `${17 * RS}px retro_gaming`;
+  ctx.font = `${17 * RS}px ${FONT_PRIMARY}`;
   ctx.fillStyle = isSelected ? '#e42424' : '#fff';
 
   let text = item.label;

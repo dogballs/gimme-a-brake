@@ -14,6 +14,10 @@ import {
   STEER_SPEED,
   STEER_SPEED_IMPROVED,
   STEER_TURN_COUNTER_FORCE,
+  POLE_START,
+  POLE_DRIVE,
+  POLE_FULL_STOP,
+  FONT_PRIMARY,
 } from './config';
 import { CollisionBox } from './collision';
 import { curveXByY, steerCurve } from './curve';
@@ -134,7 +138,7 @@ export function drawCar(
 
       ctx.strokeStyle = '#d78a35';
       ctx.lineWidth = 1;
-      ctx.font = '10px retro_gaming';
+      ctx.font = `10px ${FONT_PRIMARY}`;
       ctx.strokeText(displayTime, x + carWidth / 2 - 4, y + carHeight / 2 + 14);
     }
   }
@@ -168,27 +172,6 @@ export function getCarBox({
     height,
     depth,
   };
-}
-
-function getMoveGears({ upgrades }: { upgrades: Upgrade[] }) {
-  const hasUpgrade = upgrades.some((u) => u.kind === 'lower-max-speed');
-  const speedMax = hasUpgrade ? MOVE_SPEED_MAX_UPGRADE : MOVE_SPEED_MAX;
-
-  return {
-    1: { delim: 4, startAt: 0, endAt: 1.1 },
-    2: { delim: 5, startAt: 1, endAt: 2.6 },
-    3: { delim: 6, startAt: 2.5, endAt: 4.1 },
-    4: { delim: 7, startAt: 4, endAt: 6.1 },
-    5: { delim: 8, startAt: 6, endAt: speedMax },
-  };
-}
-
-function getGearMin() {
-  return 1;
-}
-
-function getGearMax() {
-  return 5;
 }
 
 const CURB_ALLOWED_OVERFLOW = 20 * RS;
@@ -274,145 +257,6 @@ export function updateCarState({
     curbTimePassed,
     curbFrameIndex,
     flipTimePassed,
-  };
-}
-
-export type MoveSpeedState = {
-  moveGear: number;
-  moveSpeedChange: number;
-  moveSpeed: number;
-};
-
-export const defaultMoveSpeedState: MoveSpeedState = {
-  moveGear: getGearMin(),
-  moveSpeedChange: 0,
-  moveSpeed: 0,
-};
-
-const POLE_START = 1000;
-const POLE_DRIVE = 500;
-const POLE_FULL_STOP = 100;
-
-export function updateMoveSpeedState({
-  section,
-  nextPole,
-  carState,
-  upgrades,
-  moveOffset,
-  // isThrottleActive,
-  // isReverseActive,
-  moveGear: currentMoveGear,
-  moveSpeedChange: currentMoveSpeedChange,
-  moveSpeed: currentMoveSpeed,
-}: {
-  section: Section;
-  nextPole: Pole | undefined;
-  carState: CarState;
-  upgrades: Upgrade[];
-  moveOffset: number;
-  // isThrottleActive: boolean;
-  // isReverseActive: boolean;
-} & MoveSpeedState): MoveSpeedState {
-  // Story mode - forced acceleration, no brakes
-  const isThrottleActive = true;
-  const isReverseActive = false;
-
-  let gear = currentMoveGear;
-  let speedChange = currentMoveSpeedChange;
-  let speed = currentMoveSpeed;
-
-  const gearDesc = getMoveGears({ upgrades })[gear];
-
-  if (carState.flipTimePassed > 0) {
-    speedChange = (speedChange - MOVE_DECELERATION_REVERSE) / gearDesc.delim;
-    speed = Math.max(0, speed + speedChange);
-    return {
-      moveGear: gear,
-      moveSpeedChange: speedChange,
-      moveSpeed: speed,
-    };
-  }
-
-  if (nextPole) {
-    const toPole = nextPole.start - moveOffset;
-    if (toPole < POLE_START) {
-      speedChange = (speedChange - MOVE_DECELERATION_FREE) / gearDesc.delim;
-      speed = Math.max(3, speed + speedChange);
-
-      if (toPole < POLE_DRIVE) {
-        speedChange = 0;
-        speed = 1.5;
-      }
-
-      if (toPole < POLE_FULL_STOP) {
-        speedChange = -100;
-        speed = Math.max(0, speed + speedChange);
-        setTimeout(() => {
-          nextPole.arrived = true;
-        }, 100);
-      }
-
-      return {
-        moveGear: gear,
-        moveSpeedChange: speedChange,
-        moveSpeed: speed,
-      };
-    }
-  }
-
-  const curbStopUpgrade = upgrades.find(
-    (u) => u.kind === 'curb-stop' && u.cooldownPassed == null,
-  );
-  // if (curbStopUpgrade && carState.curbTimePassed > 0) {
-  //   // curbStopUpgrade.cooldownPassed = 0;
-  //   // tODO: doesnot work
-  //   speedChange = (speedChange - MOVE_DECELERATION_REVERSE) / gearDesc.delim;
-  //   speed = Math.max(2, speed + speedChange);
-  // } else
-  if (isThrottleActive) {
-    if (speedChange < 0) {
-      speedChange = 0;
-    }
-    const hasUphillSlowUpgrade = upgrades.some(
-      (u) => u.kind === 'turn-uphill-slow',
-    );
-    const hasSection = ['turn-left', 'turn-right', 'uphill'].includes(
-      section.kind,
-    );
-    if (hasUphillSlowUpgrade && hasSection) {
-      // Slows down and drops to certain speed with an upgrade
-      speedChange = (speedChange - MOVE_DECELERATION_UPGRADE) / gearDesc.delim;
-      speed = Math.max(3, speed + speedChange);
-    } else {
-      // Default acceleration
-      speedChange = (speedChange + MOVE_ACCELERATION) / gearDesc.delim;
-      speed = Math.max(0, speed + speedChange);
-    }
-  } else {
-    if (speed > 0) {
-      if (isReverseActive) {
-        speedChange =
-          (speedChange - MOVE_DECELERATION_REVERSE) / gearDesc.delim;
-        speed = Math.max(0, speed + speedChange);
-      } else {
-        speedChange = (speedChange - MOVE_DECELERATION_FREE) / gearDesc.delim;
-        speed = Math.max(0, speed + speedChange);
-      }
-    }
-  }
-
-  if (speed > gearDesc.endAt) {
-    gear = Math.min(gear + 1, getGearMax());
-  } else if (speed < gearDesc.startAt) {
-    gear = Math.max(gear - 1, getGearMin());
-  }
-
-  speed = Math.min(speed, gearDesc.endAt);
-
-  return {
-    moveGear: gear,
-    moveSpeedChange: speedChange,
-    moveSpeed: speed,
   };
 }
 
@@ -518,46 +362,4 @@ export function updateSteerState({
     steerSpeed,
     steerOffset,
   };
-}
-
-export class MoveAudio {
-  private readonly osc: OscillatorNode;
-  private isMuted: boolean = true;
-
-  constructor(audioCtx: AudioContext) {
-    this.osc = audioCtx.createOscillator();
-    this.osc.type = 'triangle';
-
-    // const biquadFilter = audioCtx.createBiquadFilter();
-    const gainNode = audioCtx.createGain();
-    gainNode.gain.value = 0.3;
-
-    this.osc.start();
-    this.osc
-      // .connect(biquadFilter)
-      .connect(gainNode)
-      .connect(audioCtx.destination);
-  }
-
-  update({
-    upgrades,
-    isMuted,
-    moveSpeed,
-    moveSpeedChange,
-    moveGear,
-  }: { upgrades: Upgrade[]; isMuted: boolean } & MoveSpeedState) {
-    const gear = getMoveGears({ upgrades })[moveGear];
-    const gearT = (moveSpeed - gear.startAt) / (gear.endAt - gear.startAt);
-
-    let soundStart = 30 + moveGear * 10;
-    let soundEnd = soundStart + moveGear * 15;
-    if (moveSpeedChange < 0) {
-      soundEnd = soundStart + moveGear * 8;
-    }
-
-    const soundValue = soundStart + (soundEnd - soundStart) * gearT;
-
-    // this.osc.detune.value = 50;
-    this.osc.frequency.value = soundValue;
-  }
 }
