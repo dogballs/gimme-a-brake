@@ -76,7 +76,7 @@ function drawItem(
   const textY = 80 * RS + 22 * RS * index;
 
   ctx.font = `${17 * RS}px retro_gaming`;
-  ctx.fillStyle = isSelected ? '#e44848' : '#fff';
+  ctx.fillStyle = isSelected ? '#e42424' : '#fff';
   ctx.fillText(text, textX, textY);
   ctx.strokeStyle = '#000';
   ctx.lineWidth = 1;
