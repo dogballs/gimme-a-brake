@@ -185,7 +185,9 @@ export function updateMenuState({
     if (selectedIndex === 0) {
       soundController.stopAll();
       soundController.play('menuSelect1');
-      soundController.playLoopIfNotPlaying('theme1');
+      setTimeout(() => {
+        soundController.playLoopIfNotPlaying('theme1');
+      }, 1500);
       return { ...state, isOpen: false };
     }
     if (selectedIndex === 1) {
