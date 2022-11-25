@@ -526,14 +526,17 @@ export class MoveAudio {
 
   constructor(audioCtx: AudioContext) {
     this.osc = audioCtx.createOscillator();
-    this.osc.type = 'sawtooth';
+    this.osc.type = 'triangle';
 
-    const biquadFilter = audioCtx.createBiquadFilter();
+    // const biquadFilter = audioCtx.createBiquadFilter();
+    const gainNode = audioCtx.createGain();
+    gainNode.gain.value = 0.3;
 
-    this.osc.connect(biquadFilter);
     this.osc.start();
-
-    biquadFilter.connect(audioCtx.destination);
+    this.osc
+      // .connect(biquadFilter)
+      .connect(gainNode)
+      .connect(audioCtx.destination);
   }
 
   update({
@@ -554,6 +557,7 @@ export class MoveAudio {
 
     const soundValue = soundStart + (soundEnd - soundStart) * gearT;
 
+    // this.osc.detune.value = 50;
     this.osc.frequency.value = soundValue;
   }
 }
