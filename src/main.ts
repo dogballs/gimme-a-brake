@@ -14,7 +14,7 @@ import {
   updateCarState,
 } from './car';
 import { findCollisions, drawCollisionBoxes } from './collision';
-import { InputControl, listenKeyboard } from './controls';
+import { InputControl, KeyboardListener } from './controls';
 import { drawCurve } from './curve';
 import { drawBackground, updateBackgroundOffset } from './background';
 import { drawDebug, drawHorizon, logClientCoordsOnClick } from './debug';
@@ -69,14 +69,12 @@ canvas.height = IH;
 const offCanvas = new OffscreenCanvas(IW, IH);
 const offCtx = offCanvas.getContext('2d');
 
-const keyboardListener = listenKeyboard();
+const keyboardListener = new KeyboardListener(canvas);
+keyboardListener.listen();
 const soundController = new SoundController();
 
-const muteControl = document.querySelector<HTMLInputElement>(
-  '[data-control="mute"]',
-);
 const audioCtx = new AudioContext();
-const moveAudio = new MoveAudio(audioCtx);
+// const moveAudio = new MoveAudio(audioCtx);
 
 const resources = {
   map: coolMap,
@@ -112,6 +110,7 @@ logClientCoordsOnClick(canvas);
 
 function draw({
   deltaTime,
+  lastTime,
   zone,
   nextZone,
   section,
@@ -120,6 +119,7 @@ function draw({
   yOverride,
 }: {
   deltaTime: number;
+  lastTime: number;
   zone: Zone;
   nextZone: Zone;
   section: Section;
@@ -230,7 +230,11 @@ function draw({
     state: state.upgradeState,
   });
 
-  drawMenu(ctx, { state: state.menuState, images: resources.images });
+  drawMenu(ctx, {
+    lastTime,
+    state: state.menuState,
+    images: resources.images,
+  });
 
   // drawCurve(ctx, path.left, {
   //   moveOffset: state.moveOffset,
@@ -376,12 +380,20 @@ function updateCollisions({
   };
 }
 
-function tick({ deltaTime }: { deltaTime: number }) {
+function tick({
+  deltaTime,
+  lastTime,
+}: {
+  deltaTime: number;
+  lastTime: number;
+}) {
   keyboardListener.update();
 
   state.menuState = updateMenuState({
     keyboardListener,
+    soundController,
     state: state.menuState,
+    deltaTime,
   });
 
   // NOTE: Don't destructure until after all state updates
@@ -448,25 +460,34 @@ function tick({ deltaTime }: { deltaTime: number }) {
     steerOffset: state.steerState.steerOffset,
   });
 
-  draw({ deltaTime, zone, nextZone, section, path, yOverride, propBoxes });
+  draw({
+    deltaTime,
+    lastTime,
+    zone,
+    nextZone,
+    section,
+    path,
+    yOverride,
+    propBoxes,
+  });
 
   // drawCollisionBoxes(ctx, collidedBoxes, uncollidedBoxes, {
   //   stripes,
   //   roadDepth,
   // });
 
-  const isMuted = !muteControl.checked;
-  if (isMuted && audioCtx.state === 'running') {
-    audioCtx.suspend();
-  } else if (!isMuted && audioCtx.state !== 'running') {
-    audioCtx.resume();
-  }
+  // const isMuted = !muteControl.checked;
+  // if (isMuted && audioCtx.state === 'running') {
+  //   audioCtx.suspend();
+  // } else if (!isMuted && audioCtx.state !== 'running') {
+  //   audioCtx.resume();
+  // }
 
-  moveAudio.update({
-    isMuted,
-    upgrades: state.upgradeState.upgrades,
-    ...state.speedState,
-  });
+  // moveAudio.update({
+  //   isMuted,
+  //   upgrades: state.upgradeState.upgrades,
+  //   ...state.speedState,
+  // });
 }
 
 async function main() {

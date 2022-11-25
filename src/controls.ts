@@ -33,6 +33,8 @@ export class KeyboardListener {
   private holdCodes: number[] = [];
   private upCodes: number[] = [];
 
+  constructor(private readonly target: HTMLElement = undefined) {}
+
   listen() {
     document.addEventListener('keydown', this.handleWindowKeyDown);
     document.addEventListener('keyup', this.handleWindowKeyUp);
@@ -87,6 +89,10 @@ export class KeyboardListener {
     this.upCodes = upCodes;
   }
 
+  isDownAny() {
+    return this.downCodes.length > 0;
+  }
+
   isDown(control: InputControl) {
     const codes = binding[control];
     return codes.some((code) => this.downCodes.includes(code));
@@ -136,10 +142,4 @@ export class KeyboardListener {
   private handleWindowBlur = (): void => {
     this.listenedDownCodes = [];
   };
-}
-
-export function listenKeyboard(): KeyboardListener {
-  const listener = new KeyboardListener();
-  listener.listen();
-  return listener;
 }

@@ -3,7 +3,7 @@ interface GameLoopOptions {
   // or breakpoint is activated during debugging.
   deltaTimeLimit?: number;
   fps?: number;
-  onTick?: ({ deltaTime }: { deltaTime: number }) => void;
+  onTick?: ({ deltaTime }: { deltaTime: number; lastTime: number }) => void;
 }
 
 const DEFAULT_OPTIONS = {
@@ -47,13 +47,6 @@ export class GameLoop {
     this.state = State.StopRequested;
   }
 
-  // For manual stepping over frames when loop is paused
-  public next(ticks = 1): void {
-    for (let i = 0; i < ticks; i += 1) {
-      this.options.onTick?.({ deltaTime: this.getIdealDeltaTime() });
-    }
-  }
-
   private loop = (timestamp = null): void => {
     if (this.state === State.Idle) {
       return;
@@ -83,7 +76,9 @@ export class GameLoop {
 
     this.lastTimestamp = timestamp;
 
-    this.options.onTick?.({ deltaTime });
+    const lastTime = timestamp / 1000;
+
+    this.options.onTick?.({ deltaTime, lastTime });
 
     window.requestAnimationFrame(this.loop);
   };
