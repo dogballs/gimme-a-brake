@@ -184,12 +184,14 @@ export function updateMenuState({
   if (isSelect) {
     if (selectedIndex === 0) {
       soundController.stopAll();
+      soundController.play('menuSelect1');
       soundController.playLoopIfNotPlaying('theme1');
       return { ...state, isOpen: false };
     }
     if (selectedIndex === 1) {
       const isSoundOn = !state.isSoundOn;
       soundController.setGlobalMuted(!isSoundOn);
+      soundController.play('menuSelect1');
 
       return {
         ...state,
@@ -206,6 +208,9 @@ export function updateMenuState({
     selectedIndex = Math.max(0, selectedIndex - 1);
   } else if (isDown) {
     selectedIndex = Math.min(ITEMS.length - 1, selectedIndex + 1);
+  }
+  if (isUp || isDown) {
+    soundController.play('menuFocus1');
   }
 
   return {

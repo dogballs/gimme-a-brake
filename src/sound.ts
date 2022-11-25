@@ -6,15 +6,18 @@ export async function loadSounds() {
   return {
     menu1: await loadSound('data/audio/menu1.mp3'),
     menu2: await loadSound('data/audio/menu2.mp3'),
+    menuSelect1: await loadSound('data/audio/menu-select1.mp3', 0.5),
+    menuFocus1: await loadSound('data/audio/menu-focus1.mp3', 0.5),
+    menuFocus2: await loadSound('data/audio/menu-focus2.mp3'),
     theme1: await loadSound('data/audio/theme1.mp3'),
   };
 }
 
-async function loadSound(audioPath: string) {
+async function loadSound(audioPath: string, baseVolume = 1) {
   return new Promise<Sound>((resolve) => {
     const audioElement = new Audio();
 
-    const sound = new Sound(audioElement);
+    const sound = new Sound(audioElement, baseVolume);
 
     audioElement.src = audioPath;
     audioElement.addEventListener('loadeddata', () => {
@@ -55,12 +58,14 @@ export class SoundController {
 }
 
 export class Sound {
-  public readonly audioElement: HTMLAudioElement;
   private localMuted = false;
   private globalMuted = false;
 
-  constructor(audioElement: HTMLAudioElement) {
-    this.audioElement = audioElement;
+  constructor(
+    readonly audioElement: HTMLAudioElement,
+    private readonly baseVolume = 1,
+  ) {
+    this.audioElement.volume = baseVolume;
   }
 
   public isLoaded(): boolean {
