@@ -1,5 +1,6 @@
 enum KeyboardButtonCode {
   Enter = 13,
+  Esc = 13,
   Space = 32,
   Left = 37,
   Up = 38,
@@ -17,6 +18,7 @@ export enum InputControl {
   Left,
   Right,
   Select,
+  Back,
 }
 
 const binding = {
@@ -25,6 +27,7 @@ const binding = {
   [InputControl.Left]: [KeyboardButtonCode.Left, KeyboardButtonCode.A],
   [InputControl.Right]: [KeyboardButtonCode.Right, KeyboardButtonCode.D],
   [InputControl.Select]: [KeyboardButtonCode.Enter, KeyboardButtonCode.Space],
+  [InputControl.Back]: [KeyboardButtonCode.Esc],
 };
 
 export class KeyboardListener {

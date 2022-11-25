@@ -491,15 +491,12 @@ function tick({
   // });
 
   if (!state.menuState.isOpen) {
-    const isMuted = !menuSoundId.checked;
-    if (isMuted && audioCtx.state === 'running') {
-      audioCtx.suspend();
-    } else if (!isMuted && audioCtx.state !== 'running') {
+    if (state.menuState.isSoundOn) {
       audioCtx.resume();
+    } else {
+      audioCtx.suspend();
     }
-
     speedAudio.update({
-      isMuted,
       upgrades: state.upgradeState.upgrades,
       ...state.speedState,
     });

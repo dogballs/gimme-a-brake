@@ -264,11 +264,10 @@ export class SpeedAudio {
 
   update({
     upgrades,
-    isMuted,
     moveSpeed,
     moveSpeedChange,
     moveGear,
-  }: { upgrades: Upgrade[]; isMuted: boolean } & MoveSpeedState) {
+  }: { upgrades: Upgrade[] } & MoveSpeedState) {
     const gear = getMoveGears({ upgrades })[moveGear];
     const gearT = (moveSpeed - gear.startAt) / (gear.endAt - gear.startAt);
 

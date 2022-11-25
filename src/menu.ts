@@ -60,16 +60,16 @@ export function drawMenu(
       return;
     }
 
-    const textX = (IW - 180 * RS) / 2;
+    const textX = (IW - 210 * RS) / 2;
     const textY = 110 * RS;
 
     ctx.lineWidth = 1;
     ctx.font = `${20 * RS}px ${FONT_PRIMARY}`;
     ctx.fillStyle = '#fff';
     ctx.strokeStyle = '#000';
-    ctx.fillText('PRESS ANY KEY', textX, textY);
+    ctx.fillText('PRESS SPACEBAR', textX, textY);
     ctx.lineWidth = 2;
-    ctx.strokeText('PRESS ANY KEY', textX, textY);
+    ctx.strokeText('PRESS SPACEBAR', textX, textY);
     return;
   }
 
@@ -164,8 +164,8 @@ export function updateMenuState({
   }
 
   if (state.isAnyKey) {
-    const isDownAny = keyboardListener.isDownAny();
-    const isAnyKey = !isDownAny;
+    const isDown = keyboardListener.isDown(InputControl.Select);
+    const isAnyKey = !isDown;
 
     return {
       ...state,
