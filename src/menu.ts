@@ -11,22 +11,26 @@ menuSoundId.onkeydown = (e) => e.stopPropagation();
 export type MenuState = {
   isOpen: boolean;
   isAnyKey: boolean;
-
+  isSoundOn: boolean; // TODO: local storage?
   selectedIndex: number;
 };
 
 export const defaultMenuState: MenuState = {
   isOpen: true,
   isAnyKey: true,
+  isSoundOn: true,
   selectedIndex: 0,
 };
 
-const ITEMS = [
-  {
-    label: 'PLAY',
-  },
-  { label: 'SOUND: ON' },
-  { label: 'CREDITS' },
+type MenuItem = {
+  id: string;
+  label: string;
+};
+
+const ITEMS: MenuItem[] = [
+  { id: 'play', label: 'PLAY' },
+  { id: 'sound', label: 'SOUND: ' },
+  { id: 'credits', label: 'CREDITS' },
 ];
 
 export function drawMenu(
@@ -87,7 +91,8 @@ export function drawMenu(
     drawItem(ctx, {
       lastTime,
       images,
-      text: item.label,
+      state,
+      item,
       index,
       isSelected: index === state.selectedIndex,
     });
@@ -99,13 +104,15 @@ function drawItem(
   {
     lastTime,
     images,
-    text,
+    state,
+    item,
     index,
     isSelected,
   }: {
     lastTime: number;
     images: ImageMap;
-    text: string;
+    state: MenuState;
+    item: MenuItem;
     index: number;
     isSelected: boolean;
   },
@@ -115,7 +122,13 @@ function drawItem(
 
   ctx.font = `${17 * RS}px retro_gaming`;
   ctx.fillStyle = isSelected ? '#e42424' : '#fff';
+
+  let text = item.label;
+  if (item.id === 'sound') {
+    text += '' + (state.isSoundOn ? 'ON' : 'OFF');
+  }
   ctx.fillText(text, textX, textY);
+
   ctx.strokeStyle = '#000';
   ctx.lineWidth = 1;
 
@@ -180,6 +193,16 @@ export function updateMenuState({
       soundController.playLoopIfNotPlaying('theme1');
       return { ...state, isOpen: false };
     }
+    if (selectedIndex === 1) {
+      const isSoundOn = !state.isSoundOn;
+      soundController.setGlobalMuted(!isSoundOn);
+
+      return {
+        ...state,
+        isSoundOn,
+      };
+    }
+
     return {
       ...state,
     };

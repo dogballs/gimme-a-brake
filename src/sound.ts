@@ -25,6 +25,7 @@ async function loadSound(audioPath: string) {
 
 export class SoundController {
   sounds: SoundMap = {};
+  private globalMuted = false;
 
   play(name: string) {
     this.sounds[name].play();
@@ -41,6 +42,14 @@ export class SoundController {
   stopAll() {
     Object.keys(this.sounds).forEach((name) => {
       this.sounds[name].stop();
+    });
+  }
+
+  setGlobalMuted(isGlobalMuted: boolean): void {
+    this.globalMuted = isGlobalMuted;
+
+    Object.keys(this.sounds).forEach((name) => {
+      this.sounds[name].setGlobalMuted(isGlobalMuted);
     });
   }
 }
