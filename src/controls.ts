@@ -1,6 +1,6 @@
 enum KeyboardButtonCode {
   Enter = 13,
-  Esc = 13,
+  Esc = 27,
   Space = 32,
   Left = 37,
   Up = 38,

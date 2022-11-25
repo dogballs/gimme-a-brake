@@ -7,6 +7,7 @@ export type MenuState = {
   isOpen: boolean;
   isAnyKey: boolean;
   isSoundOn: boolean; // TODO: local storage?
+  isPlaying: boolean;
   selectedIndex: number;
 };
 
@@ -16,6 +17,7 @@ export const defaultMenuState: MenuState = {
   isOpen: SKIP_FOR_DEV ? false : true,
   isAnyKey: SKIP_FOR_DEV ? false : true,
   isSoundOn: true,
+  isPlaying: false,
   selectedIndex: 0,
 };
 
@@ -124,6 +126,9 @@ function drawItem(
   if (item.id === 'sound') {
     text += '' + (state.isSoundOn ? 'ON' : 'OFF');
   }
+  if (item.id === 'play' && state.isPlaying) {
+    text = 'CONTINUE';
+  }
   ctx.fillText(text, textX, textY);
 
   ctx.strokeStyle = '#000';
@@ -148,6 +153,11 @@ function drawItem(
   }
 }
 
+const SOUND_SELECT_ID = 'menuSelect1';
+const SOUND_FOCUS_ID = 'menuFocus1';
+const SOUND_THEME_ID = 'theme1';
+const SOUND_MENU_ID = 'menu1';
+
 export function updateMenuState({
   state,
   deltaTime,
@@ -159,7 +169,18 @@ export function updateMenuState({
   keyboardListener: KeyboardListener;
   soundController: SoundController;
 }) {
+  const isBack = keyboardListener.isDown(InputControl.Back);
+
   if (!state.isOpen) {
+    if (isBack) {
+      soundController.pauseAll();
+      soundController.play(SOUND_SELECT_ID);
+
+      return {
+        ...state,
+        isOpen: true,
+      };
+    }
     return state;
   }
 
@@ -174,7 +195,7 @@ export function updateMenuState({
   }
 
   if (!state.isAnyKey) {
-    soundController.playLoopIfNotPlaying('menu1');
+    soundController.playLoopIfNotPlaying(SOUND_MENU_ID);
   }
 
   let selectedIndex = state.selectedIndex;
@@ -183,19 +204,39 @@ export function updateMenuState({
   const isDown = keyboardListener.isDown(InputControl.Down);
   const isSelect = keyboardListener.isDown(InputControl.Select);
 
+  const returnToPlaying = () => {
+    soundController.stop(SOUND_MENU_ID);
+    soundController.play(SOUND_SELECT_ID);
+    soundController.resumeAll();
+    if (!soundController.canResume(SOUND_THEME_ID)) {
+      soundController.playLoopIfNotPlaying(SOUND_THEME_ID);
+    }
+    return { ...state, isOpen: false, isPlaying: true };
+  };
+
+  if (state.isPlaying && isBack) {
+    return returnToPlaying();
+  }
+
   if (isSelect) {
     if (selectedIndex === 0) {
-      soundController.stopAll();
-      soundController.play('menuSelect1');
-      setTimeout(() => {
-        soundController.playLoopIfNotPlaying('theme1');
-      }, 1500);
-      return { ...state, isOpen: false };
+      if (state.isPlaying) {
+        return returnToPlaying();
+      } else {
+        soundController.stopAll();
+        soundController.play(SOUND_SELECT_ID);
+        setTimeout(() => {
+          if (!soundController.isPlaying(SOUND_MENU_ID)) {
+            soundController.playLoop(SOUND_THEME_ID);
+          }
+        }, 1500);
+      }
+      return { ...state, isOpen: false, isPlaying: true };
     }
     if (selectedIndex === 1) {
       const isSoundOn = !state.isSoundOn;
       soundController.setGlobalMuted(!isSoundOn);
-      soundController.play('menuSelect1');
+      soundController.play(SOUND_SELECT_ID);
 
       return {
         ...state,
@@ -214,7 +255,7 @@ export function updateMenuState({
     selectedIndex = Math.min(ITEMS.length - 1, selectedIndex + 1);
   }
   if (isUp || isDown) {
-    soundController.play('menuFocus1');
+    soundController.play(SOUND_FOCUS_ID);
   }
 
   return {

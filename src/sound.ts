@@ -31,8 +31,14 @@ export class SoundController {
   sounds: SoundMap = {};
   private globalMuted = false;
 
+  constructor(private readonly audioCtx) {}
+
   play(name: string) {
     this.sounds[name].play();
+  }
+
+  playLoop(name: string) {
+    this.sounds[name].playLoop();
   }
 
   playIfNotPlaying(name: string) {
@@ -43,10 +49,40 @@ export class SoundController {
     this.sounds[name].playLoopIfNotPlaying();
   }
 
+  isPlaying(name: string): boolean {
+    return this.sounds[name].isPlaying();
+  }
+
+  canResume(name: string) {
+    return this.sounds[name].canResume();
+  }
+
+  resumeAll() {
+    Object.keys(this.sounds).forEach((name) => {
+      const sound = this.sounds[name];
+      if (sound.canResume()) {
+        sound.resume();
+      }
+    });
+    this.audioCtx.resume();
+  }
+
+  pauseAll() {
+    Object.keys(this.sounds).forEach((name) => {
+      this.sounds[name].pause();
+    });
+    this.audioCtx.suspend();
+  }
+
+  stop(name: string) {
+    this.sounds[name].stop();
+  }
+
   stopAll() {
     Object.keys(this.sounds).forEach((name) => {
       this.sounds[name].stop();
     });
+    this.audioCtx.suspend();
   }
 
   setGlobalMuted(isGlobalMuted: boolean): void {

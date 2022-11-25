@@ -78,10 +78,10 @@ const offCtx = offCanvas.getContext('2d');
 
 const keyboardListener = new KeyboardListener(canvas);
 keyboardListener.listen();
-const soundController = new SoundController();
 
 const audioCtx = new AudioContext();
 const speedAudio = new SpeedAudio(audioCtx);
+const soundController = new SoundController(audioCtx);
 
 const resources = {
   map: coolMap,
