@@ -47,12 +47,11 @@ import {
 } from './upgrade';
 import { Context2D } from './types';
 
-const canvas = document.querySelector('canvas');
-const ctx = canvas.getContext('2d');
+const loadingElement = document.querySelector<HTMLElement>('[data-loading]');
+const crashElement = document.querySelector<HTMLElement>('[data-crash]');
 
-const menuSoundId = document.querySelector<HTMLInputElement>(
-  '[data-control="menu-sound"]',
-);
+const canvas = document.createElement('canvas');
+const ctx = canvas.getContext('2d');
 
 canvas.width = IW;
 canvas.height = IH;
@@ -61,7 +60,6 @@ const offCanvas = new OffscreenCanvas(IW, IH);
 const offCtx = offCanvas.getContext('2d');
 
 const keyboardListener = new KeyboardListener(canvas);
-keyboardListener.listen();
 
 const audioCtx = new AudioContext();
 const speedAudio = new SpeedAudio(audioCtx);
@@ -486,12 +484,35 @@ function tick({
 }
 
 async function main() {
-  resources.images = await loadImages();
-  resources.sounds = await loadSounds();
+  try {
+    // TODO: parallelize
+    loadingElement.textContent = 'Loading images...';
+    resources.images = await loadImages();
 
-  soundController.sounds = resources.sounds;
+    loadingElement.textContent = 'Loading sounds...';
+    resources.sounds = await loadSounds();
 
-  loop.start();
+    document.body.appendChild(canvas);
+
+    keyboardListener.listen();
+    soundController.sounds = resources.sounds;
+
+    loop.start();
+  } catch (err) {
+    crash();
+
+    console.error(err);
+  } finally {
+    loadingElement.style.display = 'none';
+  }
+}
+
+function crash() {
+  loop.stop();
+  try {
+    document.body.removeChild(canvas);
+  } catch (err) {}
+  crashElement.style.display = 'flex';
 }
 
 main();

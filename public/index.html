@@ -1,12 +1,28 @@
 <link rel="stylesheet" href="index.css" />
 
-<canvas style="border: 1px solid red"></canvas>
-
-<p>Press ← ↑ → to go and steer (or WASD)</p>
-
-<p>
-  Car shound:
-  <input type="checkbox" checked data-control="menu-sound" />
-</p>
+<div data-loading class="loading">LOADING...</div>
+<div data-crash class="crash" style="display: none">
+  <div class="crash-title">GAME CRASHED :(</div>
+  <div class="crash-issue">
+    If you are feeling like it, you can send me a bug report.
+    <br />
+    A screenshot of the browser developer console or steps to reproduce would be
+    nice.
+    <br />
+    <a
+      href="https://github.com/dogballs/gimme-a-brake/issues"
+      class="crash-issue-link"
+      target="_blank"
+    >
+      Report an issue on GitHub
+    </a>
+  </div>
+  <div class="crash-issue">
+    You can try and continue to play the game with the bug (if it's even
+    possible).
+    <br />
+    <a href="." class="crash-issue-link"> Go to main menu </a>
+  </div>
+</div>
 
 <script src="main.js"></script>

@@ -133,7 +133,7 @@ function drawOverlay(ctx) {
   const overlayWidth = 200 * RS;
   const overlayHeight = 150 * RS;
 
-  ctx.fillStyle = '#000';
+  ctx.fillStyle = '#444';
   ctx.globalAlpha = 0.7;
   ctx.fillRect(0, 0, IW, IH);
   ctx.globalAlpha = 1;

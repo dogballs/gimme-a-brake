@@ -1,13 +1,59 @@
+@font-face {
+  font-family: 'retro_gaming';
+  src: url('data/fonts/retro_gaming.ttf');
+}
+
+canvas {
+  width: 1024px;
+  margin-top: -100px;
+}
+
 html {
   display: flex;
   height: 100%;
 }
 
-canvas {
-  width: 1024px;
+body {
+  align-items: center;
+  background: #333;
+  color: #fff;
+  display: flex;
+  flex: 1;
+  font-family: retro_gaming;
+  justify-content: center;
+  margin: 0;
 }
 
-@font-face {
-  font-family: 'retro_gaming';
-  src: url('data/fonts/retro_gaming.ttf');
+.loading {
+  align-items: center;
+  display: flex;
+  font-size: 32px;
+}
+
+.crash {
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.crash-title {
+  font-size: 32px;
+}
+
+.crash-issue {
+  margin-top: 30px;
+  text-align: center;
+  width: 800px;
+}
+
+.crash-issue-link {
+  color: #fff;
+  display: inline-block;
+  margin-top: 15px;
+  font-size: 20px;
+}
+
+.crash-issue-link:visited {
+  color: #fff;
 }
