@@ -18,6 +18,8 @@ import {
   POLE_DRIVE,
   POLE_FULL_STOP,
   FONT_PRIMARY,
+  SOUND_CURB_ID,
+  SOUND_DEATH_ID,
 } from './config';
 import { CollisionBox } from './collision';
 import { curveXByY, steerCurve } from './curve';
@@ -27,6 +29,7 @@ import { Path } from './path';
 import { Pole } from './pole';
 import { Section } from './section';
 import { Stripe, stripesToY } from './stripes';
+import { SoundController } from './sound';
 import { Upgrade } from './upgrade';
 import { Context2D } from './types';
 
@@ -37,19 +40,13 @@ export function drawCar(
     upgrades,
     steerOffset,
     state,
-    menuState,
   }: {
     images: ImageMap;
     upgrades: Upgrade[];
     steerOffset: number;
     state: CarState;
-    menuState: MenuState;
   },
 ) {
-  if (menuState.isOpen) {
-    return;
-  }
-
   const image = images.car;
   const scale = 0.7 * RS;
 
@@ -139,7 +136,7 @@ export function drawCar(
       ctx.strokeStyle = '#d78a35';
       ctx.lineWidth = 1;
       ctx.font = `10px ${FONT_PRIMARY}`;
-      ctx.strokeText(displayTime, x + carWidth / 2 - 4, y + carHeight / 2 + 14);
+      ctx.strokeText(displayTime, x + carWidth / 2 - 6, y + carHeight / 2 + 15);
     }
   }
 }
@@ -182,15 +179,18 @@ export type CarState = {
   curbTimePassed: number;
   curbFrameIndex: number;
   flipTimePassed: number;
+  isDead: boolean;
 };
 
 export const defaultCarState: CarState = {
   curbTimePassed: 0,
   curbFrameIndex: 0,
   flipTimePassed: 0,
+  isDead: false,
 };
 
 export function updateCarState({
+  soundController,
   path,
   state,
   stripes,
@@ -199,6 +199,7 @@ export function updateCarState({
   deltaTime,
   steerOffset,
 }: {
+  soundController: SoundController;
   path: Path;
   state: CarState;
   stripes: Stripe[];
@@ -215,11 +216,12 @@ export function updateCarState({
     flipTimePassed += deltaTime;
     curbFrameIndex = curbFrameIndex + 1;
     return {
-      curbTimePassed,
+      ...state,
       curbFrameIndex,
       flipTimePassed,
     };
   }
+
   const leftCurbX = curveXByY(
     steerCurve(path.left, { steerOffset }),
     carBox.y + carBox.height,
@@ -247,13 +249,19 @@ export function updateCarState({
 
     if (curbTimePassed > allowedTime) {
       flipTimePassed += deltaTime;
+      soundController.stopAll();
+      soundController.play(SOUND_DEATH_ID);
+    } else {
+      soundController.playLoopIfNotPlaying(SOUND_CURB_ID);
     }
   } else {
     curbTimePassed = 0;
     curbFrameIndex = 0;
+    soundController.stop(SOUND_CURB_ID);
   }
 
   return {
+    ...state,
     curbTimePassed,
     curbFrameIndex,
     flipTimePassed,

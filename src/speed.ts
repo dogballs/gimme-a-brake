@@ -28,13 +28,13 @@ import { Stripe, stripesToY } from './stripes';
 import { Upgrade } from './upgrade';
 import { Context2D } from './types';
 
-export type MoveSpeedState = {
+export type SpeedState = {
   moveGear: number;
   moveSpeedChange: number;
   moveSpeed: number;
 };
 
-export const defaultMoveSpeedState: MoveSpeedState = {
+export const defaultMoveSpeedState: SpeedState = {
   moveGear: getGearMin(),
   moveSpeedChange: 0,
   moveSpeed: 0,
@@ -80,7 +80,7 @@ export function updateMoveSpeedState({
   moveOffset: number;
   // isThrottleActive: boolean;
   // isReverseActive: boolean;
-} & MoveSpeedState): MoveSpeedState {
+} & SpeedState): SpeedState {
   // Story mode - forced acceleration, no brakes
   const isThrottleActive = true;
   const isReverseActive = false;
@@ -188,14 +188,9 @@ export function drawSpeedometer(
   ctx,
   {
     state: { moveSpeed, moveGear },
-    menuState,
     upgrades,
-  }: { state: MoveSpeedState; menuState: MenuState; upgrades: Upgrade[] },
+  }: { state: SpeedState; upgrades: Upgrade[] },
 ) {
-  if (menuState.isOpen) {
-    return;
-  }
-
   const overlayWidth = 100 * RS;
   const overlayHeight = 20 * RS;
 
@@ -267,7 +262,7 @@ export class SpeedAudio {
     moveSpeed,
     moveSpeedChange,
     moveGear,
-  }: { upgrades: Upgrade[] } & MoveSpeedState) {
+  }: { upgrades: Upgrade[] } & SpeedState) {
     const gear = getMoveGears({ upgrades })[moveGear];
     const gearT = (moveSpeed - gear.startAt) / (gear.endAt - gear.startAt);
 

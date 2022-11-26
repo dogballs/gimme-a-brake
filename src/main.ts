@@ -1,14 +1,5 @@
 import { IW, IH, HH } from './config';
-import {
-  drawCar,
-  getCarBox,
-  defaultSteerState,
-  defaultCarState,
-  updateSteerState,
-  SteerState,
-  CarState,
-  updateCarState,
-} from './car';
+import { drawCar, getCarBox, updateSteerState, updateCarState } from './car';
 import { findCollisions, drawCollisionBoxes } from './collision';
 import { InputControl, KeyboardListener } from './controls';
 import { drawCurve } from './curve';
@@ -24,7 +15,7 @@ import {
   lerpFragments,
 } from './fragment';
 import { loadImages } from './images';
-import { drawMenu, defaultMenuState, MenuState, updateMenuState } from './menu';
+import { drawMenu, updateMenuState } from './menu';
 import { GameLoop } from './loop';
 import { straightMap, coolMap, longLeftTurnMap, longUphillMap } from './map';
 import { Path } from './path';
@@ -38,13 +29,8 @@ import {
   getNextSection,
 } from './section';
 import { loadSounds, SoundController } from './sound';
-import {
-  SpeedAudio,
-  MoveSpeedState,
-  updateMoveSpeedState,
-  defaultMoveSpeedState,
-  drawSpeedometer,
-} from './speed';
+import { SpeedAudio, updateMoveSpeedState, drawSpeedometer } from './speed';
+import { createGlobalState, createResetGlobalState } from './state';
 import {
   Stripe,
   drawCurbStripes,
@@ -57,8 +43,6 @@ import { Zone, getActiveZone, getNextZone } from './zone';
 import {
   drawUpgradeDialog,
   drawActiveUpgrades,
-  defaultUpgradeState,
-  UpgradeState,
   updateUpgradeState,
 } from './upgrade';
 import { Context2D } from './types';
@@ -89,25 +73,9 @@ const resources = {
   sounds: undefined,
 };
 
-const state: {
-  speedState: MoveSpeedState;
-  steerState: SteerState;
-  upgradeState: UpgradeState;
-  carState: CarState;
-  menuState: MenuState;
-  moveOffset: number;
-  moveOffsetChange: number;
-  bgOffset: number;
-} = {
-  speedState: defaultMoveSpeedState,
-  steerState: defaultSteerState,
-  upgradeState: defaultUpgradeState,
-  carState: defaultCarState,
-  menuState: defaultMenuState,
-  moveOffset: 0,
-  moveOffsetChange: 0,
-  bgOffset: 0,
-};
+const state = createGlobalState();
+
+const resetGlobalState = createResetGlobalState(state);
 
 const loop = new GameLoop({
   onTick: tick,
@@ -208,13 +176,14 @@ function draw({
     yOverride,
   });
 
-  drawCar(ctx, {
-    images: resources.images,
-    upgrades: state.upgradeState.upgrades,
-    steerOffset,
-    state: state.carState,
-    menuState: state.menuState,
-  });
+  if (!state.menuState.isOpen) {
+    drawCar(ctx, {
+      images: resources.images,
+      upgrades: state.upgradeState.upgrades,
+      steerOffset,
+      state: state.carState,
+    });
+  }
 
   // drawDebug(ctx, {
   //   section,
@@ -232,11 +201,12 @@ function draw({
     state: state.upgradeState,
   });
 
-  drawSpeedometer(ctx, {
-    state: state.speedState,
-    menuState: state.menuState,
-    upgrades: state.upgradeState.upgrades,
-  });
+  if (!state.menuState.isOpen) {
+    drawSpeedometer(ctx, {
+      state: state.speedState,
+      upgrades: state.upgradeState.upgrades,
+    });
+  }
 
   drawUpgradeDialog(ctx, {
     images: resources.images,
@@ -405,9 +375,18 @@ function tick({
   state.menuState = updateMenuState({
     keyboardListener,
     soundController,
+    resetGlobalState,
     state: state.menuState,
+    carState: state.carState,
+    speedState: state.speedState,
     deltaTime,
   });
+
+  // Don't continue state updates if it was reset in the menu
+  if (state.gotReset) {
+    state.gotReset = false;
+    return;
+  }
 
   // NOTE: Don't destructure until after all state updates
 
@@ -465,6 +444,7 @@ function tick({
     });
 
   state.carState = updateCarState({
+    soundController,
     path,
     state: state.carState,
     stripes,

@@ -11,7 +11,16 @@ export async function loadSounds() {
     menuFocus1: await loadSound('data/audio/menu-focus1.mp3', 0.4),
     menuFocus2: await loadSound('data/audio/menu-focus2.mp3', 0.4),
     theme1: await loadSound('data/audio/theme1.mp3'),
+    lost1: await loadSound('data/audio/lost1.mp3'),
     upgradePicked1: await loadSound('data/audio/upgrade-picked1.mp3'),
+    curb1: await loadSound('data/audio/curb1.mp3'),
+    curb2: await loadSound('data/audio/curb2.mp3', 0.5),
+    curb3: await loadSound('data/audio/curb3.mp3'),
+    curb4: await loadSound('data/audio/curb4.mp3'),
+    hit1: await loadSound('data/audio/hit1.mp3'),
+    hit2: await loadSound('data/audio/hit2.mp3'),
+    death1: await loadSound('data/audio/death1.mp3'),
+    death2: await loadSound('data/audio/death2.mp3'),
   };
 }
 
