@@ -39,3 +39,4 @@ export const SOUND_MENU_THEME_ID = 'menu3';
 export const SOUND_GAME_THEME_ID = 'theme1';
 export const SOUND_CURB_ID = 'curb2';
 export const SOUND_DEATH_ID = 'death1';
+export const SOUND_HIT_ID = 'hit1';

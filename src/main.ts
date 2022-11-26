@@ -4,7 +4,7 @@ import { findCollisions, drawCollisionBoxes } from './collision';
 import { InputControl, KeyboardListener } from './controls';
 import { drawCurve } from './curve';
 import { drawBackground, updateBackgroundOffset } from './background';
-import { drawDebug, drawHorizon, logClientCoordsOnClick } from './debug';
+import { drawDebug, drawHorizon } from './debug';
 import { drawDecors } from './decor';
 import {
   Fragment,
@@ -68,7 +68,7 @@ const speedAudio = new SpeedAudio(audioCtx);
 const soundController = new SoundController(audioCtx);
 
 const resources = {
-  map: coolMap,
+  map: straightMap,
   images: undefined,
   sounds: undefined,
 };
@@ -80,8 +80,6 @@ const resetGlobalState = createResetGlobalState(state);
 const loop = new GameLoop({
   onTick: tick,
 });
-
-logClientCoordsOnClick(canvas);
 
 function draw({
   deltaTime,
@@ -349,7 +347,7 @@ function updateCollisions({
 
   const targetIndexes = findCollisions(carBox, propBoxes);
   if (targetIndexes.length > 0) {
-    collidedBoxes.push(carBox);
+    // collidedBoxes.push(carBox);
     collidedBoxes.push(...targetIndexes.map((index) => propBoxes[index]));
   } else {
     uncollidedBoxes.push(carBox, ...propBoxes);
@@ -450,6 +448,7 @@ function tick({
     stripes,
     upgrades: state.upgradeState.upgrades,
     carBox,
+    collidedBoxes,
     deltaTime,
     steerOffset: state.steerState.steerOffset,
   });

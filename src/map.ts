@@ -1,6 +1,6 @@
 import { Decor, generateDecors, generateDecorsForZones } from './decor';
 import { Pole, generatePolesForZones } from './pole';
-import { Prop, generateProps } from './prop';
+import { Prop, generatePropsForZones } from './prop';
 import { Section } from './section';
 import { Zone } from './zone';
 
@@ -16,89 +16,62 @@ const zones: Zone[] = [
   {
     start: 10,
     kind: 'green',
-    decorAmount: 50,
+    propCount: 0,
+    decorCount: 50,
     skipPole: true,
   },
   {
     start: 5000,
     kind: 'green',
-    decorAmount: 100,
+    propCount: 30,
+    decorCount: 100,
     skipPole: true,
   },
   {
     start: 20000,
     kind: 'desert',
-    decorAmount: 100,
+    propCount: 40,
+    decorCount: 100,
     skipPole: true,
   },
   {
     start: 35000,
     kind: 'beach',
-    decorAmount: 20,
+    propCount: 40,
+    decorCount: 20,
     skipPole: true,
   },
   {
     start: 50000,
     kind: 'forest',
-    decorAmount: 2000,
+    propCount: 40,
+    decorCount: 2000,
   },
   {
     start: 70000,
     kind: 'forest',
-    decorAmount: 0,
+    propCount: 0,
+    decorCount: 0,
   },
 ];
 
 const decors = generateDecorsForZones({ zones });
 const poles = generatePolesForZones({ zones });
+const props = generatePropsForZones({ zones });
 
 export const straightMap: Map = {
   zones,
   decors,
   poles,
+  props,
   sections: [],
-  props: [],
-};
-
-export const longUphillMap: Map = {
-  zones,
-  decors,
-  poles,
-  sections: [
-    {
-      kind: 'uphill',
-      start: 2000,
-      size: 15000,
-      steepness: 30,
-    },
-  ],
-  props: [],
-};
-
-export const longLeftTurnMap: Map = {
-  zones,
-  decors,
-  poles,
-  sections: [
-    {
-      kind: 'turn-right',
-      start: 0,
-      size: Infinity,
-    },
-  ],
-  props: [
-    ...generateProps({
-      startOffset: 300,
-      size: 15000,
-      amount: 30,
-    }),
-  ],
 };
 
 export const coolMap: Map = {
   zones,
   decors,
   poles,
+  props,
   sections: [
     {
       kind: 'uphill',
@@ -123,12 +96,33 @@ export const coolMap: Map = {
       steepness: 50,
     },
   ],
+};
 
-  props: [
-    // ...generateProps({
-    //   startOffset: 300,
-    //   size: 15000,
-    //   amount: 30,
-    // }),
+export const longUphillMap: Map = {
+  zones,
+  decors,
+  poles,
+  sections: [
+    {
+      kind: 'uphill',
+      start: 2000,
+      size: 15000,
+      steepness: 30,
+    },
+  ],
+  props: [],
+};
+
+export const longLeftTurnMap: Map = {
+  zones,
+  decors,
+  poles,
+  props,
+  sections: [
+    {
+      kind: 'turn-right',
+      start: 0,
+      size: Infinity,
+    },
   ],
 };

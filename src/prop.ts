@@ -16,6 +16,7 @@ import { Section } from './section';
 import { generateStripes, stripesToY, stripesUnscaledHeight } from './stripes';
 import { randomElement, randomNumber } from './random';
 import { Path, getCenterCurve } from './path';
+import { Zone } from './zone';
 import { Context2D } from './types';
 
 type PropKind = 'bush' | 'tree' | 'rock';
@@ -173,11 +174,11 @@ export function drawProps(
 function imageByKind(images: ImageMap, kind: PropKind) {
   switch (kind) {
     case 'bush':
-      return images.decorBush;
+      return images.decorGreenBush;
     case 'tree':
-      return images.decorTree;
+      return images.decorGreenTree;
     case 'rock':
-      return images.decorRock;
+      return images.decorGreenRock;
     default:
       throw new Error(`Unsupported decor kind: "${kind}"`);
   }
@@ -186,19 +187,19 @@ function imageByKind(images: ImageMap, kind: PropKind) {
 export function generateProps({
   startOffset,
   size,
-  amount,
+  count,
 }: {
   startOffset: number;
   size: number;
-  amount: number;
+  count: number;
 }) {
   const props: Prop[] = [];
 
-  const areaSize = size / amount;
+  const areaSize = size / count;
 
   // Go reverse to have the farthest props in the array first, which means the
   // closest will be rendered last, which is better for zindex.
-  for (let i = amount - 1; i >= 0; i--) {
+  for (let i = count - 1; i >= 0; i--) {
     const areaStart = i * areaSize;
     const inAreaOffset = randomNumber(0, areaSize);
 
@@ -211,6 +212,25 @@ export function generateProps({
       kind,
       position,
     });
+  }
+
+  return props;
+}
+
+export function generatePropsForZones({ zones }: { zones: Zone[] }): Prop[] {
+  const props: Prop[] = [];
+
+  for (let i = 0; i < zones.length; i++) {
+    const zone = zones[i];
+    const nextZone = zones[i + 1];
+    const zoneProps = generateProps({
+      startOffset: zone.start,
+      size: nextZone ? nextZone.start - zone.start : 0,
+      count: zone.propCount,
+      // kinds: KINDS_BY_ZONE.get(zone.kind),
+    });
+
+    props.push(...zoneProps);
   }
 
   return props;

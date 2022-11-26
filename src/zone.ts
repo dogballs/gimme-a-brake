@@ -3,13 +3,15 @@ export type ZoneKind = 'green' | 'desert' | 'forest' | 'beach';
 export type Zone = {
   start: number;
   kind: ZoneKind;
+  propCount: number;
   skipPole?: boolean;
-  decorAmount?: number;
+  decorCount?: number;
   decorDriftMax?: number;
 };
 
 const defaultZone: Zone = {
   start: 0,
+  propCount: 0,
   kind: 'green',
 };
 

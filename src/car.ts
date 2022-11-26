@@ -20,6 +20,7 @@ import {
   FONT_PRIMARY,
   SOUND_CURB_ID,
   SOUND_DEATH_ID,
+  SOUND_HIT_ID,
 } from './config';
 import { CollisionBox } from './collision';
 import { curveXByY, steerCurve } from './curve';
@@ -54,7 +55,7 @@ export function drawCar(
   const carHeight = image.height * scale;
 
   const centerX = (IW - carWidth) / 2;
-  const carSteerOffset = -1 * steerOffset * 0.02;
+  const carSteerOffset = -1 * steerOffset * 0.02 * RS;
 
   let x = centerX + carSteerOffset;
   let y = IH - 78 * RS;
@@ -151,11 +152,12 @@ export function getCarBox({
   const image = images.car;
   const scale = 0.7 * RS;
 
-  const centerX = (IW - image.width * scale) / 2;
+  const width = image.width * scale - 20 * RS;
+  const height = image.height * scale;
+
+  const centerX = (IW - width) / 2;
   const carSteerOffset = -1 * steerOffset * 0.02 * RS;
 
-  const width = image.width * scale;
-  const height = image.height * scale;
   const depth = 32 * RS;
   const x = centerX + carSteerOffset;
   const y = IH - 78 * RS;
@@ -196,6 +198,7 @@ export function updateCarState({
   stripes,
   upgrades,
   carBox,
+  collidedBoxes,
   deltaTime,
   steerOffset,
 }: {
@@ -205,6 +208,7 @@ export function updateCarState({
   stripes: Stripe[];
   upgrades: Upgrade[];
   carBox: CollisionBox;
+  collidedBoxes: CollisionBox[];
   deltaTime: number;
   steerOffset: number;
 }): CarState {
@@ -218,6 +222,18 @@ export function updateCarState({
     return {
       ...state,
       curbFrameIndex,
+      flipTimePassed,
+    };
+  }
+
+  const hasHitSomething = collidedBoxes.length > 0;
+  if (hasHitSomething) {
+    flipTimePassed += deltaTime;
+    soundController.stopAll();
+    soundController.play(SOUND_HIT_ID);
+    soundController.play(SOUND_DEATH_ID);
+    return {
+      ...state,
       flipTimePassed,
     };
   }

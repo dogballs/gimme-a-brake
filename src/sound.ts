@@ -20,7 +20,6 @@ export async function loadSounds() {
     hit1: await loadSound('data/audio/hit1.mp3'),
     hit2: await loadSound('data/audio/hit2.mp3'),
     death1: await loadSound('data/audio/death1.mp3'),
-    death2: await loadSound('data/audio/death2.mp3'),
   };
 }
 

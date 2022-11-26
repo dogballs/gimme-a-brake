@@ -14,6 +14,7 @@ type UpgradeKind =
   | 'anti-nitro'
   | 'rocket-launcher'
   | 'curb-stop'
+  | 'curb-duration'
   | 'turn-uphill-slow';
 
 export type Upgrade = {
@@ -76,6 +77,13 @@ export const ALL_UPGRADES: Upgrade[] = [
   //   // cd?
   //   // count
   // },
+  {
+    kind: 'curb-duration',
+    description: 'Increases time you can stay on the curb',
+    description2: 'Cooldown: 16',
+    active: false,
+    cooldown: 20,
+  },
   {
     kind: 'curb-stop',
     description: 'Use curb to slow down',

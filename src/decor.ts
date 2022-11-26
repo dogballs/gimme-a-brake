@@ -236,7 +236,7 @@ export function generateDecorsForZones({ zones }: { zones: Zone[] }): Decor[] {
     const zoneDecors = generateDecors({
       startOffset: zone.start,
       size: nextZone ? nextZone.start - zone.start : 0,
-      amount: zone.decorAmount ?? 0,
+      amount: zone.decorCount ?? 0,
       kinds: KINDS_BY_ZONE.get(zone.kind),
     });
 
