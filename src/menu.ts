@@ -62,16 +62,16 @@ export function drawMenu(
       return;
     }
 
-    const textX = (IW - 210 * RS) / 2;
+    const textX = (IW - 260 * RS) / 2;
     const textY = 110 * RS;
 
     ctx.lineWidth = 1;
     ctx.font = `${20 * RS}px ${FONT_PRIMARY}`;
     ctx.fillStyle = '#fff';
     ctx.strokeStyle = '#000';
-    ctx.fillText('PRESS SPACEBAR', textX, textY);
+    ctx.fillText('PRESS ANY SPACEBAR', textX, textY);
     ctx.lineWidth = 2;
-    ctx.strokeText('PRESS SPACEBAR', textX, textY);
+    ctx.strokeText('PRESS ANY SPACEBAR', textX, textY);
     return;
   }
 
@@ -156,7 +156,7 @@ function drawItem(
 const SOUND_SELECT_ID = 'menuSelect1';
 const SOUND_FOCUS_ID = 'menuFocus1';
 const SOUND_THEME_ID = 'theme1';
-const SOUND_MENU_ID = 'menu1';
+const SOUND_MENU_ID = 'menu3';
 
 export function updateMenuState({
   state,
