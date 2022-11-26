@@ -156,6 +156,7 @@ function draw({
   });
 
   drawProps(ctx, {
+    lastTime,
     propBoxes,
     images: resources.images,
     moveOffset,
@@ -379,6 +380,8 @@ function tick({
     speedState: state.speedState,
     deltaTime,
   });
+
+  soundController.setGlobalMuted(!state.menuState.isSoundOn);
 
   // Don't continue state updates if it was reset in the menu
   if (state.gotReset) {

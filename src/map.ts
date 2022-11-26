@@ -16,7 +16,7 @@ const zones: Zone[] = [
   {
     start: 10,
     kind: 'green',
-    propCount: 0,
+    propCount: 10,
     decorCount: 50,
     skipPole: true,
   },

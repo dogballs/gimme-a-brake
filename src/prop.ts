@@ -19,7 +19,7 @@ import { Path, getCenterCurve } from './path';
 import { Zone } from './zone';
 import { Context2D } from './types';
 
-type PropKind = 'bush' | 'tree' | 'rock';
+type PropKind = 'green-bike' | 'bush' | 'tree' | 'rock';
 
 export type Prop = {
   kind: PropKind;
@@ -149,11 +149,13 @@ export function getPropBoxes({
 export function drawProps(
   ctx: Context2D,
   {
+    lastTime,
     propBoxes,
     images,
     moveOffset,
     steerOffset,
   }: {
+    lastTime: number;
     propBoxes: PropBox[];
     images: ImageMap;
     moveOffset: number;
@@ -165,9 +167,30 @@ export function drawProps(
 
     // drawCurve(ctx, propBox.curve, { moveOffset, steerOffset: 0 });
 
+    let flipped = false;
+    if (propBox.prop.kind === 'green-bike') {
+      const shouldFlip = Math.round(lastTime / 0.2) % 2 === 1;
+      if (shouldFlip) {
+        ctx.translate(propBox.x + propBox.width / 2, 0);
+        ctx.scale(-1, 1);
+        flipped = true;
+      }
+    }
+
     ctx.globalAlpha = propBox.opacity;
-    ctx.drawImage(image, propBox.x, propBox.y, propBox.width, propBox.height);
+    ctx.drawImage(
+      image,
+      flipped ? 0 : propBox.x,
+      propBox.y,
+      propBox.width,
+      propBox.height,
+    );
     ctx.globalAlpha = 1;
+
+    if (flipped) {
+      ctx.scale(-1, 1);
+      ctx.translate(-(propBox.x + propBox.width / 2), 0);
+    }
   }
 }
 
@@ -179,6 +202,8 @@ function imageByKind(images: ImageMap, kind: PropKind) {
       return images.decorGreenTree;
     case 'rock':
       return images.decorGreenRock;
+    case 'green-bike':
+      return images.propGreenBike;
     default:
       throw new Error(`Unsupported decor kind: "${kind}"`);
   }
@@ -204,13 +229,19 @@ export function generateProps({
     const inAreaOffset = randomNumber(0, areaSize);
 
     const start = startOffset + areaStart + inAreaOffset;
-    const kind = randomElement<PropKind>(['bush', 'tree', 'rock']);
+    const kind = randomElement<PropKind>(['green-bike']);
     const position = randomNumber(10, 90) / 100;
+
+    let moveSpeed = undefined;
+    if (kind === 'green-bike') {
+      moveSpeed = 1;
+    }
 
     props.push({
       start,
       kind,
       position,
+      moveSpeed,
     });
   }
 

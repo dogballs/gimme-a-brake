@@ -33,6 +33,7 @@ export const defaultMenuState: MenuState = {
   isOpen: SKIP_FOR_DEV ? false : true,
   isAnyKey: SKIP_FOR_DEV ? false : true,
   isSoundOn: true,
+  // isSoundOn: false,
   isPlaying: false,
   isGameOver: false,
   deathTimePassed: 0,
