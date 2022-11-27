@@ -1,4 +1,4 @@
-import { IH, HH, RS } from './config';
+import { IH, HH, RS, POLE_START } from './config';
 import { CollisionBox } from './collision';
 import {
   Curve,
@@ -449,9 +449,12 @@ export function generatePropsForZones({ zones }: { zones: Zone[] }): Prop[] {
     const zone = zones[i];
     const nextZone = zones[i + 1];
 
+    const startOffset = zone.start + POLE_START;
+    const size = nextZone ? nextZone.start - startOffset - POLE_START : 0;
+
     const zoneProps = generateProps({
-      startOffset: zone.start,
-      size: nextZone ? nextZone.start - zone.start : 0,
+      startOffset,
+      size,
       count: zone.propCount,
       zoneKind: zone.kind,
     });
