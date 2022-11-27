@@ -285,8 +285,8 @@ function updateLevelState() {
     upgrades: state.upgradeState.upgrades,
     carState: state.carState,
     moveOffset: state.moveOffset,
-    // isThrottleActive,
-    // isReverseActive,
+    isThrottleActive,
+    isReverseActive,
     ...state.speedState,
   });
 

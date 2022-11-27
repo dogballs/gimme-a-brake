@@ -17,7 +17,7 @@ const zones: Zone[] = [
     start: 0,
     kind: 'green',
     propCount: 0,
-    decorCount: 50,
+    decorCount: 20,
     skipPole: true,
   },
   {
@@ -30,21 +30,21 @@ const zones: Zone[] = [
   {
     start: 30000,
     kind: 'desert',
-    propCount: 40,
+    propCount: 20,
     decorCount: 100,
     // skipPole: true,
   },
   {
-    start: 5000,
+    start: 50000,
     kind: 'beach',
-    propCount: 40,
+    propCount: 20,
     decorCount: 20,
     // skipPole: true,
   },
   {
     start: 70000,
     kind: 'forest',
-    propCount: 40,
+    propCount: 20,
     decorCount: 2000,
   },
   {

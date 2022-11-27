@@ -20,7 +20,7 @@ import {
   randomNumber,
 } from './random';
 import { Path, getCenterCurve } from './path';
-import { Zone } from './zone';
+import { Zone, ZoneKind } from './zone';
 import { Context2D } from './types';
 
 type PropKind =
@@ -28,14 +28,18 @@ type PropKind =
   | 'green-roadwork'
   | 'green-sheep'
   | 'green-car'
-  | 'green-turtle';
+  | 'green-turtle'
+  | 'desert-tumbleweed'
+  | 'desert-bike';
 
 export type Prop = {
   kind: PropKind;
   start: number;
+  moveOffset: number;
+  moveSpeed: number;
+  initialPosition: number;
   position: number;
-  moveOffset?: number;
-  moveSpeed?: number;
+  positionSpeed: number;
 };
 
 export type PropBox = CollisionBox & {
@@ -98,8 +102,26 @@ export function getPropBoxes({
 
       const steeredCurve = steerCurve(curve, { steerOffset });
 
-      if (prop.moveSpeed != null) {
+      if (prop.moveSpeed > 0) {
         prop.moveOffset = propMoveOffset - prop.moveSpeed;
+      }
+
+      if (prop.positionSpeed !== 0) {
+        let minPosition = 0;
+        let maxPosition = 1;
+        if (['desert-bike'].includes(prop.kind)) {
+          const drift = 0.2;
+          minPosition = Math.max(0, prop.initialPosition - drift);
+          maxPosition = Math.min(1, prop.initialPosition + drift);
+        }
+        prop.position += prop.positionSpeed;
+        if (prop.position < minPosition) {
+          prop.position = minPosition;
+          prop.positionSpeed *= -1;
+        } else if (prop.position > maxPosition) {
+          prop.position = maxPosition;
+          prop.positionSpeed *= -1;
+        }
       }
 
       let inOffset = moveOffset - prop.start + roadDepth + propMoveOffset;
@@ -174,15 +196,22 @@ export function drawProps(
   for (const propBox of propBoxes) {
     const image = imageByKind(images, propBox.prop.kind);
 
-    // drawCurve(ctx, propBox.curve, { moveOffset, steerOffset: 0 });
-
     let flipped = false;
-    if (propBox.prop.kind === 'green-bike') {
+    if (['green-bike', 'desert-tumbleweed'].includes(propBox.prop.kind)) {
       const shouldFlip = Math.round(lastTime / 0.2) % 2 === 1;
       if (shouldFlip) {
         ctx.translate(propBox.x + propBox.width / 2, 0);
         ctx.scale(-1, 1);
         flipped = true;
+      }
+    }
+
+    let jumped = false;
+    if (['desert-bike'].includes(propBox.prop.kind)) {
+      const shouldJump = Math.round(lastTime / 0.05) % 2 === 1;
+      if (shouldJump) {
+        ctx.translate(0, 1);
+        jumped = true;
       }
     }
 
@@ -200,6 +229,9 @@ export function drawProps(
       ctx.scale(-1, 1);
       ctx.translate(-(propBox.x + propBox.width / 2), 0);
     }
+    if (jumped) {
+      ctx.translate(0, -1);
+    }
   }
 }
 
@@ -215,21 +247,73 @@ function imageByKind(images: ImageMap, kind: PropKind) {
       return images.propGreenCar;
     case 'green-turtle':
       return images.propGreenTurtle;
+    case 'desert-tumbleweed':
+      return images.propDesertTumbleweed;
+    case 'desert-bike':
+      return images.propDesertBike;
     default:
       throw new Error(`Unsupported decor kind: "${kind}"`);
   }
 }
 
+const KINDS_BY_ZONE = new Map<
+  ZoneKind,
+  {
+    kinds: PropKind[];
+    distributions: number[];
+    moveSpeeds: number[];
+    positionSpeeds: number[];
+  }
+>();
+KINDS_BY_ZONE.set('green', {
+  kinds: ['green-bike', 'green-roadwork', 'green-turtle'],
+  distributions: [0.5, 0.7, 1],
+  moveSpeeds: [1, 0, 0],
+  positionSpeeds: [0, 0, 0],
+});
+KINDS_BY_ZONE.set('desert', {
+  kinds: ['desert-bike', 'desert-tumbleweed', 'green-sheep'],
+  distributions: [0.5, 0.75, 1],
+  moveSpeeds: [2, 0, 0],
+  positionSpeeds: [0.005, 0.005, 0],
+});
+KINDS_BY_ZONE.set('forest', {
+  kinds: [],
+  distributions: [],
+  moveSpeeds: [],
+  positionSpeeds: [],
+});
+KINDS_BY_ZONE.set('beach', {
+  kinds: [],
+  distributions: [],
+  moveSpeeds: [],
+  positionSpeeds: [],
+});
+
 export function generateProps({
   startOffset,
   size,
   count,
+  zoneKind,
 }: {
   startOffset: number;
   size: number;
   count: number;
+  zoneKind: ZoneKind;
 }) {
   const props: Prop[] = [];
+
+  const { kinds, distributions, moveSpeeds, positionSpeeds } =
+    KINDS_BY_ZONE.get(zoneKind);
+
+  if (kinds.length === 0) {
+    return props;
+  }
+
+  console.assert(
+    kinds.length === distributions.length && kinds.length === moveSpeeds.length,
+    'prop lengths dont match',
+  );
 
   const areaSize = size / count;
 
@@ -240,25 +324,23 @@ export function generateProps({
     const inAreaOffset = randomNumber(0, areaSize);
 
     const start = startOffset + areaStart + inAreaOffset;
-    const kind = randomElementDistributed<PropKind>(
-      ['green-bike', 'green-roadwork', 'green-turtle'],
-      [0.5, 0.7, 1],
+    const { item: kind, index: kindIndex } = randomElementDistributed<PropKind>(
+      kinds,
+      distributions,
     );
-    const position = randomNumber(10, 90) / 100;
+    const moveSpeed = moveSpeeds[kindIndex];
 
-    let moveSpeed = undefined;
-    if (kind === 'green-bike') {
-      moveSpeed = 1;
-    }
-    if (kind === 'green-car') {
-      moveSpeed = 2;
-    }
+    const initialPosition = randomNumber(10, 90) / 100;
+    const positionSpeed = positionSpeeds[kindIndex];
 
     props.push({
       start,
       kind,
-      position,
+      initialPosition,
+      position: initialPosition,
+      positionSpeed,
       moveSpeed,
+      moveOffset: 0,
     });
   }
 
@@ -271,11 +353,12 @@ export function generatePropsForZones({ zones }: { zones: Zone[] }): Prop[] {
   for (let i = 0; i < zones.length; i++) {
     const zone = zones[i];
     const nextZone = zones[i + 1];
+
     const zoneProps = generateProps({
       startOffset: zone.start,
       size: nextZone ? nextZone.start - zone.start : 0,
       count: zone.propCount,
-      // kinds: KINDS_BY_ZONE.get(zone.kind),
+      zoneKind: zone.kind,
     });
 
     props.push(...zoneProps);

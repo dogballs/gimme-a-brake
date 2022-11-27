@@ -30,6 +30,11 @@ export async function loadImages(): Promise<ImageMap> {
     propGreenSheep: await loadImage('data/graphics/prop-green-sheep.png'),
     propGreenCar: await loadImage('data/graphics/prop-green-car.png'),
     propGreenTurtle: await loadImage('data/graphics/prop-green-turtle.png'),
+    // Prop - desert
+    propDesertTumbleweed: await loadImage(
+      'data/graphics/prop-desert-tumbleweed.png',
+    ),
+    propDesertBike: await loadImage('data/graphics/prop-desert-bike.png'),
 
     // Upgrades
     upgrades: await loadImage('data/graphics/upgrades.png'),

@@ -67,8 +67,8 @@ export function updateMoveSpeedState({
   carState,
   upgrades,
   moveOffset,
-  // isThrottleActive,
-  // isReverseActive,
+  isThrottleActive,
+  isReverseActive,
   moveGear: currentMoveGear,
   moveSpeedChange: currentMoveSpeedChange,
   moveSpeed: currentMoveSpeed,
@@ -78,12 +78,14 @@ export function updateMoveSpeedState({
   carState: CarState;
   upgrades: Upgrade[];
   moveOffset: number;
-  // isThrottleActive: boolean;
-  // isReverseActive: boolean;
+  isThrottleActive: boolean;
+  isReverseActive: boolean;
 } & SpeedState): SpeedState {
   // Story mode - forced acceleration, no brakes
-  const isThrottleActive = true;
-  const isReverseActive = false;
+  // const isThrottle = isThrottleActive;
+  // const isReverse = isReverseActive;
+  const isThrottle = true;
+  const isReverse = false;
 
   let gear = currentMoveGear;
   let speedChange = currentMoveSpeedChange;
@@ -137,7 +139,7 @@ export function updateMoveSpeedState({
   //   speedChange = (speedChange - MOVE_DECELERATION_REVERSE) / gearDesc.delim;
   //   speed = Math.max(2, speed + speedChange);
   // } else
-  if (isThrottleActive) {
+  if (isThrottle) {
     if (speedChange < 0) {
       speedChange = 0;
     }
@@ -158,7 +160,7 @@ export function updateMoveSpeedState({
     }
   } else {
     if (speed > 0) {
-      if (isReverseActive) {
+      if (isReverse) {
         speedChange =
           (speedChange - MOVE_DECELERATION_REVERSE) / gearDesc.delim;
         speed = Math.max(0, speed + speedChange);

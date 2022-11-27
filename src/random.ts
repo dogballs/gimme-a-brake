@@ -11,7 +11,7 @@ export function randomElementDistributed<T>(
   const index = distributions.findIndex((d) => {
     return d > number;
   });
-  return items[index];
+  return { item: items[index], index };
 }
 
 export function randomElements<T>(items: readonly T[], count: number): T[] {
