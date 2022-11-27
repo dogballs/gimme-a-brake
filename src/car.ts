@@ -340,7 +340,11 @@ export function updateCarState({
     curbFrameIndex = curbFrameIndex + 1;
 
     let allowedTime = CURB_ALLOWED_TIME;
-    if (curbDurationUpgrade && curbDurationUpgrade.usagePassed == null) {
+    if (
+      curbDurationUpgrade &&
+      curbDurationUpgrade.usagePassed == null &&
+      curbDurationUpgrade.cooldownPassed == null
+    ) {
       curbDurationUpgrade.cooldownPassed = 0;
       curbDurationUpgrade.usagePassed = 0;
     }
@@ -359,6 +363,10 @@ export function updateCarState({
     curbTimePassed = 0;
     curbFrameIndex = 0;
     soundController.stop(SOUND_CURB_ID);
+
+    if (curbDurationUpgrade && curbDurationUpgrade.usagePassed != null) {
+      curbDurationUpgrade.usagePassed = null;
+    }
   }
 
   return {
