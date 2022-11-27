@@ -38,11 +38,15 @@ export function createGlobalState() {
 
 export type ResetGlobalState = (override: Partial<GlobalState>) => void;
 
-export function createResetGlobalState(state: GlobalState): ResetGlobalState {
+export function createResetGlobalState(
+  state: GlobalState,
+  onReset: () => void,
+): ResetGlobalState {
   return (override: Partial<GlobalState> = {}) => {
     Object.assign(state, {
       ...createGlobalState(),
       ...override,
     });
+    onReset();
   };
 }

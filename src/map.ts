@@ -98,6 +98,22 @@ export const coolMap: Map = {
   ],
 };
 
+export function generateMap(): Map {
+  const decors = generateDecorsForZones({ zones });
+  const poles = generatePolesForZones({ zones });
+  const props = generatePropsForZones({ zones });
+
+  const map: Map = {
+    zones,
+    decors,
+    poles,
+    props,
+    sections: [],
+  };
+
+  return map;
+}
+
 export const longUphillMap: Map = {
   zones,
   decors,

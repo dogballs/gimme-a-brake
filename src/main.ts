@@ -17,7 +17,7 @@ import {
 import { loadImages } from './images';
 import { drawMenu, updateMenuState } from './menu';
 import { GameLoop } from './loop';
-import { straightMap, coolMap, longLeftTurnMap, longUphillMap } from './map';
+import { generateMap } from './map';
 import { Path } from './path';
 import { drawPoles, getNextPole } from './pole';
 import { getPropBoxes, drawProps, PropBox } from './prop';
@@ -66,14 +66,16 @@ const speedAudio = new SpeedAudio(audioCtx);
 const soundController = new SoundController(audioCtx);
 
 const resources = {
-  map: straightMap,
+  map: generateMap(),
   images: undefined,
   sounds: undefined,
 };
 
 const state = createGlobalState();
 
-const resetGlobalState = createResetGlobalState(state);
+const resetGlobalState = createResetGlobalState(state, () => {
+  resources.map = generateMap();
+});
 
 const loop = new GameLoop({
   onTick: tick,
