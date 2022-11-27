@@ -3,57 +3,65 @@ export type ImageMap = {
 };
 
 export async function loadImages(): Promise<ImageMap> {
-  return {
-    car: await loadImage('data/graphics/car.png'),
+  const images = [
+    ['car', 'data/graphics/car.png'],
     // Backgrounds
-    bgDebug: await loadImage('data/graphics/bg-debug.png'),
-    bgGreen: await loadImage('data/graphics/bg-green.png'),
-    bgDesert: await loadImage('data/graphics/bg-desert.png'),
-    bgForest: await loadImage('data/graphics/bg-forest.png'),
-    bgBeach: await loadImage('data/graphics/bg-beach.png'),
+    ['bgDebug', 'data/graphics/bg-debug.png'],
+    ['bgGreen', 'data/graphics/bg-green.png'],
+    ['bgDesert', 'data/graphics/bg-desert.png'],
+    ['bgForest', 'data/graphics/bg-forest.png'],
+    ['bgBeach', 'data/graphics/bg-beach.png'],
     // Decor - green
-    decorGreenBush: await loadImage('data/graphics/decor-green-bush.png'),
-    decorGreenTree: await loadImage('data/graphics/decor-green-tree.png'),
-    decorGreenRock: await loadImage('data/graphics/decor-green-rock.png'),
+    ['decorGreenBush', 'data/graphics/decor-green-bush.png'],
+    ['decorGreenTree', 'data/graphics/decor-green-tree.png'],
+    ['decorGreenRock', 'data/graphics/decor-green-rock.png'],
     // Decor - desert
-    decorDesertCactus: await loadImage('data/graphics/decor-desert-cactus.png'),
-    decorDesertSand: await loadImage('data/graphics/decor-desert-sand.png'),
-    decorDesertBush: await loadImage('data/graphics/decor-desert-bush.png'),
+    ['decorDesertCactus', 'data/graphics/decor-desert-cactus.png'],
+    ['decorDesertSand', 'data/graphics/decor-desert-sand.png'],
+    ['decorDesertBush', 'data/graphics/decor-desert-bush.png'],
     // Decor - forest
-    decorForestTree: await loadImage('data/graphics/decor-forest-tree.png'),
-    decorForestSpruce: await loadImage('data/graphics/decor-forest-spruce.png'),
+    ['decorForestTree', 'data/graphics/decor-forest-tree.png'],
+    ['decorForestSpruce', 'data/graphics/decor-forest-spruce.png'],
     // Decor - beach
-    decorBeachBuoy: await loadImage('data/graphics/decor-beach-buoy.png'),
+    ['decorBeachBuoy', 'data/graphics/decor-beach-buoy.png'],
     // Prop - green
-    propGreenBike: await loadImage('data/graphics/prop-green-bike.png'),
-    propGreenRoadwork: await loadImage('data/graphics/prop-green-roadwork.png'),
-    propGreenSheep: await loadImage('data/graphics/prop-green-sheep.png'),
-    propGreenCar: await loadImage('data/graphics/prop-green-car.png'),
-    propGreenTurtle: await loadImage('data/graphics/prop-green-turtle.png'),
+    ['propGreenBike', 'data/graphics/prop-green-bike.png'],
+    ['propGreenRoadwork', 'data/graphics/prop-green-roadwork.png'],
+    ['propGreenSheep', 'data/graphics/prop-green-sheep.png'],
+    ['propGreenCar', 'data/graphics/prop-green-car.png'],
+    ['propGreenTurtle', 'data/graphics/prop-green-turtle.png'],
     // Prop - desert
-    propDesertTumbleweed: await loadImage(
-      'data/graphics/prop-desert-tumbleweed.png',
-    ),
-    propDesertBike: await loadImage('data/graphics/prop-desert-bike.png'),
+    ['propDesertTumbleweed', 'data/graphics/prop-desert-tumbleweed.png'],
+    ['propDesertBike', 'data/graphics/prop-desert-bike.png'],
     // Prop - beach
-    propBeachBarrel: await loadImage('data/graphics/prop-beach-barrel.png'),
-    propBeachBarrelStand: await loadImage(
-      'data/graphics/prop-beach-barrel-stand.png',
-    ),
-    propBeachDolphin: await loadImage('data/graphics/prop-beach-dolphin.png'),
-    propBeachDolphinHead: await loadImage(
-      'data/graphics/prop-beach-dolphin-head.png',
-    ),
+    ['propBeachBarrel', 'data/graphics/prop-beach-barrel.png'],
+    ['propBeachBarrelStand', 'data/graphics/prop-beach-barrel-stand.png'],
+    ['propBeachDolphin', 'data/graphics/prop-beach-dolphin.png'],
+    ['propBeachDolphinHead', 'data/graphics/prop-beach-dolphin-head.png'],
 
     // Upgrades
-    upgrades: await loadImage('data/graphics/upgrades.png'),
+    ['upgrades', 'data/graphics/upgrades.png'],
     // Poles
-    poleRed: await loadImage('data/graphics/pole-red.png'),
-    poleGreen: await loadImage('data/graphics/pole-green.png'),
-    poleEnergy: await loadImage('data/graphics/pole-energy.png'),
+    ['poleRed', 'data/graphics/pole-red.png'],
+    ['poleGreen', 'data/graphics/pole-green.png'],
+    ['poleEnergy', 'data/graphics/pole-energy.png'],
     // Menu
-    menuBullet: await loadImage('data/graphics/menu-bullet.png'),
-  };
+    ['menuBullet', 'data/graphics/menu-bullet.png'],
+  ];
+
+  const promises = images.map(async ([id, path]) => {
+    return { id, image: await loadImage(path) };
+  });
+
+  const results = await Promise.all(promises);
+
+  const map: ImageMap = {};
+
+  results.forEach(({ id, image }) => {
+    map[id] = image;
+  });
+
+  return map;
 }
 
 async function loadImage(imagePath: string) {

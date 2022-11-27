@@ -3,25 +3,39 @@ export type SoundMap = {
 };
 
 export async function loadSounds() {
-  return {
-    menu1: await loadSound('data/audio/menu1.mp3'),
-    menu2: await loadSound('data/audio/menu2.mp3'),
-    menu3: await loadSound('data/audio/menu3.mp3'),
-    menuSelect1: await loadSound('data/audio/menu-select1.mp3', 0.4),
-    menuFocus1: await loadSound('data/audio/menu-focus1.mp3', 0.4),
-    menuFocus2: await loadSound('data/audio/menu-focus2.mp3', 0.4),
-    theme1: await loadSound('data/audio/theme1.mp3'),
-    lost1: await loadSound('data/audio/lost1.mp3'),
-    upgradePicked1: await loadSound('data/audio/upgrade-picked1.mp3'),
-    curb1: await loadSound('data/audio/curb1.mp3'),
-    curb2: await loadSound('data/audio/curb2.mp3', 0.5),
-    curb3: await loadSound('data/audio/curb3.mp3'),
-    curb4: await loadSound('data/audio/curb4.mp3'),
-    hit1: await loadSound('data/audio/hit1.mp3'),
-    hit2: await loadSound('data/audio/hit2.mp3'),
-    death1: await loadSound('data/audio/death1.mp3'),
-    dolphin1: await loadSound('data/audio/dolphin1.mp3'),
-  };
+  const sounds: [string, string, number?][] = [
+    ['menu1', 'data/audio/menu1.mp3'],
+    ['menu2', 'data/audio/menu2.mp3'],
+    ['menu3', 'data/audio/menu3.mp3'],
+    ['menuSelect1', 'data/audio/menu-select1.mp3', 0.4],
+    ['menuFocus1', 'data/audio/menu-focus1.mp3', 0.4],
+    ['menuFocus2', 'data/audio/menu-focus2.mp3', 0.4],
+    ['theme1', 'data/audio/theme1.mp3'],
+    ['lost1', 'data/audio/lost1.mp3'],
+    ['upgradePicked1', 'data/audio/upgrade-picked1.mp3'],
+    ['curb1', 'data/audio/curb1.mp3'],
+    ['curb2', 'data/audio/curb2.mp3', 0.5],
+    ['curb3', 'data/audio/curb3.mp3'],
+    ['curb4', 'data/audio/curb4.mp3'],
+    ['hit1', 'data/audio/hit1.mp3'],
+    ['hit2', 'data/audio/hit2.mp3'],
+    ['death1', 'data/audio/death1.mp3'],
+    ['dolphin1', 'data/audio/dolphin1.mp3'],
+  ];
+
+  const promises = sounds.map(async ([id, path, baseVolume]) => {
+    return { id, sound: await loadSound(path, baseVolume) };
+  });
+
+  const results = await Promise.all(promises);
+
+  const map: SoundMap = {};
+
+  results.forEach(({ id, sound }) => {
+    map[id] = sound;
+  });
+
+  return map;
 }
 
 async function loadSound(audioPath: string, baseVolume = 1) {
