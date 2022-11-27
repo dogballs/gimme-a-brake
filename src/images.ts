@@ -35,6 +35,15 @@ export async function loadImages(): Promise<ImageMap> {
       'data/graphics/prop-desert-tumbleweed.png',
     ),
     propDesertBike: await loadImage('data/graphics/prop-desert-bike.png'),
+    // Prop - beach
+    propBeachBarrel: await loadImage('data/graphics/prop-beach-barrel.png'),
+    propBeachBarrelStand: await loadImage(
+      'data/graphics/prop-beach-barrel-stand.png',
+    ),
+    propBeachDolphin: await loadImage('data/graphics/prop-beach-dolphin.png'),
+    propBeachDolphinHead: await loadImage(
+      'data/graphics/prop-beach-dolphin-head.png',
+    ),
 
     // Upgrades
     upgrades: await loadImage('data/graphics/upgrades.png'),

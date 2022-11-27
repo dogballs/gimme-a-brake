@@ -333,6 +333,7 @@ function updateCollisions({
   });
 
   const propBoxes = getPropBoxes({
+    soundController,
     props: resources.map.props,
     images: resources.images,
     path,

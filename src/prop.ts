@@ -13,6 +13,7 @@ import {
 import { ImageMap } from './images';
 import { getCurbPath } from './road';
 import { Section } from './section';
+import { SoundController } from './sound';
 import { generateStripes, stripesToY, stripesUnscaledHeight } from './stripes';
 import {
   randomElement,
@@ -30,7 +31,11 @@ type PropKind =
   | 'green-car'
   | 'green-turtle'
   | 'desert-tumbleweed'
-  | 'desert-bike';
+  | 'desert-bike'
+  | 'beach-barrel'
+  | 'beach-barrel-stand'
+  | 'beach-dolphin'
+  | 'beach-dolphin-head';
 
 export type Prop = {
   kind: PropKind;
@@ -48,7 +53,10 @@ export type PropBox = CollisionBox & {
   opacity: number;
 };
 
+const DOLPHIN_IN_OFFSET = 5;
+
 export function getPropBoxes({
+  soundController,
   props,
   images,
   path,
@@ -58,6 +66,7 @@ export function getPropBoxes({
   steerOffset,
   yOverride,
 }: {
+  soundController: SoundController;
   props: Prop[];
   images: ImageMap;
   path: Path;
@@ -102,31 +111,46 @@ export function getPropBoxes({
 
       const steeredCurve = steerCurve(curve, { steerOffset });
 
+      let inOffset = moveOffset - prop.start + roadDepth + propMoveOffset;
+      if (isPreshow) {
+        inOffset = 1;
+      }
+
       if (prop.moveSpeed > 0) {
         prop.moveOffset = propMoveOffset - prop.moveSpeed;
       }
 
-      if (prop.positionSpeed !== 0) {
-        let minPosition = 0;
-        let maxPosition = 1;
-        if (['desert-bike'].includes(prop.kind)) {
-          const drift = 0.2;
-          minPosition = Math.max(0, prop.initialPosition - drift);
-          maxPosition = Math.min(1, prop.initialPosition + drift);
+      if (['beach-dolphin'].includes(prop.kind)) {
+        if (prop.positionSpeed !== 0 && inOffset >= DOLPHIN_IN_OFFSET) {
+          let minPosition = 0;
+          let maxPosition = 1;
+          prop.position += prop.positionSpeed;
+          if (prop.position < minPosition) {
+            prop.position = minPosition;
+            prop.positionSpeed = 0;
+          } else if (prop.position > maxPosition) {
+            prop.position = maxPosition;
+            prop.positionSpeed = 0;
+          }
         }
-        prop.position += prop.positionSpeed;
-        if (prop.position < minPosition) {
-          prop.position = minPosition;
-          prop.positionSpeed *= -1;
-        } else if (prop.position > maxPosition) {
-          prop.position = maxPosition;
-          prop.positionSpeed *= -1;
+      } else {
+        if (prop.positionSpeed !== 0) {
+          let minPosition = 0;
+          let maxPosition = 1;
+          if (['desert-bike'].includes(prop.kind)) {
+            const drift = 0.2;
+            minPosition = Math.max(0, prop.initialPosition - drift);
+            maxPosition = Math.min(1, prop.initialPosition + drift);
+          }
+          prop.position += prop.positionSpeed;
+          if (prop.position < minPosition) {
+            prop.position = minPosition;
+            prop.positionSpeed *= -1;
+          } else if (prop.position > maxPosition) {
+            prop.position = maxPosition;
+            prop.positionSpeed *= -1;
+          }
         }
-      }
-
-      let inOffset = moveOffset - prop.start + roadDepth + propMoveOffset;
-      if (isPreshow) {
-        inOffset = 1;
       }
 
       const stripesY = stripesToY(stripes, { inOffset });
@@ -155,10 +179,40 @@ export function getPropBoxes({
 
       const image = imageByKind(images, prop.kind);
 
-      const imageWidth = image.width * imageScale;
-      const imageHeight = image.height * imageScale;
-      const imageX = propX - imageWidth / 2;
-      const imageY = propY - imageHeight;
+      let imageWidth = image.width * imageScale;
+      let imageHeight = image.height * imageScale;
+      let imageX = propX - imageWidth / 2;
+      let imageY = propY - imageHeight;
+
+      if (prop.kind === 'beach-dolphin-head') {
+        if (inOffset > DOLPHIN_IN_OFFSET) {
+          continue;
+        }
+        soundController.playIfNotPlaying('dolphin1');
+        if (prop.position === 0) {
+          imageX = propX - 2.5 * imageWidth;
+        } else {
+          imageX = propX + 2.5 * imageWidth;
+        }
+      }
+      if (prop.kind === 'beach-dolphin') {
+        if (prop.position >= 1 || prop.position <= 0) {
+          continue;
+        }
+        if (inOffset < DOLPHIN_IN_OFFSET) {
+          continue;
+        }
+
+        const d =
+          prop.position <= 0.5 ? prop.position * 2 : (1 - prop.position) * 2;
+
+        imageX = propX - imageWidth * (1 - prop.position);
+        if (prop.initialPosition === 1) {
+          imageX = propX + imageWidth / 2 - imageWidth * (1 - prop.position);
+        }
+
+        imageY = imageY - 20 * RS * d;
+      }
 
       propBoxes.push({
         prop,
@@ -197,8 +251,20 @@ export function drawProps(
     const image = imageByKind(images, propBox.prop.kind);
 
     let flipped = false;
-    if (['green-bike', 'desert-tumbleweed'].includes(propBox.prop.kind)) {
+    if (
+      ['green-bike', 'desert-tumbleweed', 'beach-barrel'].includes(
+        propBox.prop.kind,
+      )
+    ) {
       const shouldFlip = Math.round(lastTime / 0.2) % 2 === 1;
+      if (shouldFlip) {
+        ctx.translate(propBox.x + propBox.width / 2, 0);
+        ctx.scale(-1, 1);
+        flipped = true;
+      }
+    }
+    if (['beach-dolphin-head', 'beach-dolphin'].includes(propBox.prop.kind)) {
+      const shouldFlip = propBox.prop.initialPosition === 1;
       if (shouldFlip) {
         ctx.translate(propBox.x + propBox.width / 2, 0);
         ctx.scale(-1, 1);
@@ -251,6 +317,14 @@ function imageByKind(images: ImageMap, kind: PropKind) {
       return images.propDesertTumbleweed;
     case 'desert-bike':
       return images.propDesertBike;
+    case 'beach-barrel':
+      return images.propBeachBarrel;
+    case 'beach-barrel-stand':
+      return images.propBeachBarrelStand;
+    case 'beach-dolphin':
+      return images.propBeachDolphin;
+    case 'beach-dolphin-head':
+      return images.propBeachDolphinHead;
     default:
       throw new Error(`Unsupported decor kind: "${kind}"`);
   }
@@ -277,13 +351,13 @@ KINDS_BY_ZONE.set('desert', {
   moveSpeeds: [2, 0, 0],
   positionSpeeds: [0.005, 0.005, 0],
 });
-KINDS_BY_ZONE.set('forest', {
-  kinds: [],
-  distributions: [],
-  moveSpeeds: [],
-  positionSpeeds: [],
-});
 KINDS_BY_ZONE.set('beach', {
+  kinds: ['beach-barrel', 'beach-barrel-stand', 'beach-dolphin'],
+  distributions: [0.3, 0.8, 1],
+  moveSpeeds: [0, 0, 0],
+  positionSpeeds: [-0.003, 0, 0.005],
+});
+KINDS_BY_ZONE.set('forest', {
   kinds: [],
   distributions: [],
   moveSpeeds: [],
@@ -330,10 +404,14 @@ export function generateProps({
     );
     const moveSpeed = moveSpeeds[kindIndex];
 
-    const initialPosition = randomNumber(10, 90) / 100;
-    const positionSpeed = positionSpeeds[kindIndex];
+    let initialPosition = randomNumber(10, 90) / 100;
+    let positionSpeed = positionSpeeds[kindIndex];
+    if (kind === 'beach-dolphin') {
+      initialPosition = randomElement([0, 1]);
+      positionSpeed = initialPosition === 1 ? -positionSpeed : positionSpeed;
+    }
 
-    props.push({
+    const prop: Prop = {
       start,
       kind,
       initialPosition,
@@ -341,7 +419,24 @@ export function generateProps({
       positionSpeed,
       moveSpeed,
       moveOffset: 0,
-    });
+    };
+
+    props.push(prop);
+
+    if (['beach-barrel'].includes(kind)) {
+      props.push({
+        ...prop,
+        position: 1 - prop.position,
+        positionSpeed: -prop.positionSpeed,
+      });
+    }
+    if (['beach-dolphin'].includes(kind)) {
+      props.push({
+        ...prop,
+        kind: 'beach-dolphin-head',
+        positionSpeed: 0,
+      });
+    }
   }
 
   return props;
