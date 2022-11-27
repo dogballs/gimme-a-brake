@@ -9,6 +9,8 @@ import {
   SOUND_MENU_FOCUS_ID,
   SOUND_MENU_THEME_ID,
   SOUND_GAME_THEME_ID,
+  GH_LINK,
+  ITCH_LINK,
 } from './config';
 import { CarState } from './car';
 import { KeyboardListener, InputControl } from './controls';
@@ -66,6 +68,12 @@ const WIN_ITEMS: MenuItem[] = [
   { id: 'main', label: 'MAIN MENU' },
 ];
 
+const CREDITS_ITEMS: MenuItem[] = [
+  { id: 'github', label: 'GITHUB' },
+  { id: 'itch', label: 'ITCH.IO' },
+  { id: 'main', label: 'MAIN MENU' },
+];
+
 export function drawMenu(
   ctx,
   {
@@ -81,6 +89,12 @@ export function drawMenu(
   if (!state.isOpen) {
     return;
   }
+
+  if (state.isCredits) {
+    drawCreditsMenu(ctx, { lastTime, state, images });
+    return;
+  }
+
   if (state.isWin) {
     drawWinMenu(ctx, { lastTime, state, images });
     return;
@@ -162,6 +176,8 @@ function drawItem(
     item,
     index,
     isSelected,
+    offX = 90,
+    startY = 100,
   }: {
     lastTime: number;
     images: ImageMap;
@@ -169,10 +185,12 @@ function drawItem(
     item: MenuItem;
     index: number;
     isSelected: boolean;
+    offX?: number;
+    startY?: number;
   },
 ) {
-  const textX = (IW - 90 * RS) / 2;
-  const textY = 100 * RS + 22 * RS * index;
+  const textX = (IW - offX * RS) / 2;
+  const textY = startY * RS + 22 * RS * index;
 
   ctx.font = `${17 * RS}px ${FONT_PRIMARY}`;
   ctx.fillStyle = isSelected ? '#e42424' : '#fff';
@@ -272,6 +290,46 @@ function drawWinMenu(
   });
 }
 
+function drawCreditsMenu(
+  ctx,
+  {
+    lastTime,
+    state,
+    images,
+  }: { lastTime: number; state: MenuState; images: ImageMap },
+) {
+  drawOverlay(ctx);
+
+  ctx.fillStyle = '#aaa';
+  ctx.font = `${8 * RS}px ${FONT_PRIMARY}`;
+  ctx.fillText('CODE + ART', 80 * RS, 40 * RS);
+
+  ctx.fillStyle = '#fff';
+  ctx.font = `${14 * RS}px ${FONT_PRIMARY}`;
+  ctx.fillText('@heck_x2', 65 * RS, 60 * RS);
+
+  ctx.fillStyle = '#aaa';
+  ctx.font = `${8 * RS}px ${FONT_PRIMARY}`;
+  ctx.fillText('MUSIC + SOUND', 240 * RS, 40 * RS);
+
+  ctx.fillStyle = '#fff';
+  ctx.font = `${14 * RS}px ${FONT_PRIMARY}`;
+  ctx.fillText('TBD', 240 * RS, 60 * RS);
+
+  CREDITS_ITEMS.forEach((item, index) => {
+    drawItem(ctx, {
+      lastTime,
+      images,
+      state,
+      item,
+      index,
+      isSelected: index === state.selectedIndex,
+      startY: 120,
+      // offX: 100,
+    });
+  });
+}
+
 export function updateMenuState({
   state,
   carState,
@@ -343,6 +401,16 @@ export function updateMenuState({
     return state;
   }
 
+  // Credits screen
+  if (state.isCredits) {
+    return updateCreditsState({
+      keyboardListener,
+      soundController,
+      state,
+      resetGlobalState,
+    });
+  }
+
   // Win screen
   if (state.isWin) {
     return updateWinState({
@@ -409,7 +477,14 @@ export function updateMenuState({
       };
     }
 
-    // TODO: credits menu
+    if (selectedIndex === 2) {
+      soundController.play(SOUND_MENU_SELECT_ID);
+      return {
+        ...state,
+        selectedIndex: 2,
+        isCredits: true,
+      };
+    }
 
     return {
       ...state,
@@ -488,6 +563,7 @@ function updateGameOverState({
     // Try again
     if (selectedIndex === 0) {
       soundController.stopAll();
+      soundController.play(SOUND_MENU_SELECT_ID);
       const newMenuState = {
         ...startPlaying({ state: defaultMenuState, soundController }),
         isAnyKey: false,
@@ -505,6 +581,7 @@ function updateGameOverState({
         isAnyKey: false,
       };
       soundController.stopAll();
+      soundController.play(SOUND_MENU_SELECT_ID);
       resetGlobalState({
         gotReset: true,
         menuState: newMenuState,
@@ -546,6 +623,19 @@ function updateWinState({
   if (isSelect) {
     // Credits
     if (selectedIndex === 0) {
+      const newMenuState = {
+        ...defaultMenuState,
+        isAnyKey: false,
+        isCredits: true,
+        selectedIndex: 2,
+      };
+      soundController.stopAll();
+      soundController.play(SOUND_MENU_SELECT_ID);
+      resetGlobalState({
+        gotReset: true,
+        menuState: newMenuState,
+      });
+      return newMenuState;
     }
     // Main menu
     if (selectedIndex === 1) {
@@ -554,6 +644,7 @@ function updateWinState({
         isAnyKey: false,
       };
       soundController.stopAll();
+      soundController.play(SOUND_MENU_SELECT_ID);
       resetGlobalState({
         gotReset: true,
         menuState: newMenuState,
@@ -572,5 +663,49 @@ function updateWinState({
     soundController.play(SOUND_MENU_FOCUS_ID);
   }
 
+  return { ...state, selectedIndex };
+}
+
+function updateCreditsState({
+  keyboardListener,
+  soundController,
+  resetGlobalState,
+  state,
+}: {
+  keyboardListener: KeyboardListener;
+  soundController: SoundController;
+  resetGlobalState: ResetGlobalState;
+  state: MenuState;
+}) {
+  let selectedIndex = state.selectedIndex;
+
+  const isSelect = keyboardListener.isDown(InputControl.Select);
+  const isUp = keyboardListener.isDown(InputControl.Up);
+  const isDown = keyboardListener.isDown(InputControl.Down);
+
+  if (isSelect) {
+    if (selectedIndex === 0) {
+      window.open(GH_LINK);
+      return state;
+    }
+    if (selectedIndex === 1) {
+      window.open(ITCH_LINK);
+      return state;
+    }
+    // Main menu
+    if (selectedIndex === 2) {
+      soundController.play(SOUND_MENU_SELECT_ID);
+      return { ...state, isCredits: false, selectedIndex: 0 };
+    }
+  }
+
+  if (isUp) {
+    selectedIndex = Math.max(0, selectedIndex - 1);
+  } else if (isDown) {
+    selectedIndex = Math.min(CREDITS_ITEMS.length - 1, selectedIndex + 1);
+  }
+  if (isUp || isDown) {
+    soundController.play(SOUND_MENU_FOCUS_ID);
+  }
   return { ...state, selectedIndex };
 }
