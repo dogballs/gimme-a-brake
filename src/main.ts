@@ -153,13 +153,15 @@ function draw({
     yOverride,
   });
 
-  drawProps(ctx, {
-    lastTime,
-    propBoxes,
-    images: resources.images,
-    moveOffset,
-    steerOffset,
-  });
+  if (!state.menuState.isOpen) {
+    drawProps(ctx, {
+      lastTime,
+      propBoxes,
+      images: resources.images,
+      moveOffset,
+      steerOffset,
+    });
+  }
 
   drawPoles(ctx, {
     images: resources.images,

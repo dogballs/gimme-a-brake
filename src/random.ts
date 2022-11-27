@@ -3,6 +3,17 @@ export function randomElement<T>(items: readonly T[]): T {
   return items[index];
 }
 
+export function randomElementDistributed<T>(
+  items: readonly T[],
+  distributions: readonly number[],
+) {
+  const number = Math.random();
+  const index = distributions.findIndex((d) => {
+    return d > number;
+  });
+  return items[index];
+}
+
 export function randomElements<T>(items: readonly T[], count: number): T[] {
   const clonedItems = items.slice();
 

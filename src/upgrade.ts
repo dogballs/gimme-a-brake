@@ -77,13 +77,13 @@ export const ALL_UPGRADES: Upgrade[] = [
   //   // cd?
   //   // count
   // },
-  {
-    kind: 'curb-duration',
-    description: 'Increases time you can stay on the curb',
-    description2: 'Cooldown: 16',
-    active: false,
-    cooldown: 20,
-  },
+  // {
+  //   kind: 'curb-duration',
+  //   description: 'Increases time you can stay on the curb',
+  //   description2: 'Cooldown: 16',
+  //   active: false,
+  //   cooldown: 20,
+  // },
   {
     kind: 'curb-stop',
     description: 'Use curb to slow down',
@@ -423,7 +423,7 @@ function drawActiveUpgradeItem(
     index: number;
   },
 ) {
-  const x = 5 * RS - 28 * RS * index;
+  const x = 5 * RS + 28 * RS * index;
   const y = 5 * RS;
   const size = 24 * RS;
 

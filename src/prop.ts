@@ -14,12 +14,21 @@ import { ImageMap } from './images';
 import { getCurbPath } from './road';
 import { Section } from './section';
 import { generateStripes, stripesToY, stripesUnscaledHeight } from './stripes';
-import { randomElement, randomNumber } from './random';
+import {
+  randomElement,
+  randomElementDistributed,
+  randomNumber,
+} from './random';
 import { Path, getCenterCurve } from './path';
 import { Zone } from './zone';
 import { Context2D } from './types';
 
-type PropKind = 'green-bike' | 'bush' | 'tree' | 'rock';
+type PropKind =
+  | 'green-bike'
+  | 'green-roadwork'
+  | 'green-sheep'
+  | 'green-car'
+  | 'green-turtle';
 
 export type Prop = {
   kind: PropKind;
@@ -196,14 +205,16 @@ export function drawProps(
 
 function imageByKind(images: ImageMap, kind: PropKind) {
   switch (kind) {
-    case 'bush':
-      return images.decorGreenBush;
-    case 'tree':
-      return images.decorGreenTree;
-    case 'rock':
-      return images.decorGreenRock;
     case 'green-bike':
       return images.propGreenBike;
+    case 'green-roadwork':
+      return images.propGreenRoadwork;
+    case 'green-sheep':
+      return images.propGreenSheep;
+    case 'green-car':
+      return images.propGreenCar;
+    case 'green-turtle':
+      return images.propGreenTurtle;
     default:
       throw new Error(`Unsupported decor kind: "${kind}"`);
   }
@@ -229,12 +240,18 @@ export function generateProps({
     const inAreaOffset = randomNumber(0, areaSize);
 
     const start = startOffset + areaStart + inAreaOffset;
-    const kind = randomElement<PropKind>(['green-bike']);
+    const kind = randomElementDistributed<PropKind>(
+      ['green-bike', 'green-roadwork', 'green-turtle'],
+      [0.5, 0.7, 1],
+    );
     const position = randomNumber(10, 90) / 100;
 
     let moveSpeed = undefined;
     if (kind === 'green-bike') {
       moveSpeed = 1;
+    }
+    if (kind === 'green-car') {
+      moveSpeed = 2;
     }
 
     props.push({

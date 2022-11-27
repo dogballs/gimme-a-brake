@@ -26,6 +26,10 @@ export async function loadImages(): Promise<ImageMap> {
     decorBeachBuoy: await loadImage('data/graphics/decor-beach-buoy.png'),
     // Prop - green
     propGreenBike: await loadImage('data/graphics/prop-green-bike.png'),
+    propGreenRoadwork: await loadImage('data/graphics/prop-green-roadwork.png'),
+    propGreenSheep: await loadImage('data/graphics/prop-green-sheep.png'),
+    propGreenCar: await loadImage('data/graphics/prop-green-car.png'),
+    propGreenTurtle: await loadImage('data/graphics/prop-green-turtle.png'),
 
     // Upgrades
     upgrades: await loadImage('data/graphics/upgrades.png'),

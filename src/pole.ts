@@ -1,4 +1,4 @@
-import { IH, HH, RENDER_SCALE } from './config';
+import { IH, HH, RS } from './config';
 import { drawCurve, curveXByY, steerCurve } from './curve';
 import { ImageMap } from './images';
 import { Path } from './path';
@@ -98,7 +98,7 @@ export function drawPoles(
 
   let inHalfHeightT = stripesY / HH;
 
-  let imageScale = Math.max(0, 1 - (1 - 0.1 * RENDER_SCALE) * inHalfHeightT);
+  let imageScale = Math.max(0, 1 - (1 - 0.1 * RS) * inHalfHeightT);
   let imageOpacity = 1;
 
   if (poleRightX) {
@@ -189,10 +189,10 @@ function drawPole(
 
     const energyImage = images.poleEnergy;
 
-    const energyWidth = energyImage.width * imageScale * 1.5;
+    const energyWidth = energyImage.width * imageScale * 1.5 * RS;
 
     const energyHeight = energyImage.height * imageScale;
-    const energyX = side === 'right' ? imageX - energyWidth : imageX + 20;
+    const energyX = side === 'right' ? imageX - energyWidth : imageX + 20 * RS;
     const energyY = imageY;
 
     if (pole.energyFrameIndex === 1) {
