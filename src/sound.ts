@@ -21,6 +21,11 @@ export async function loadSounds() {
     ['hit2', 'data/audio/hit2.mp3'],
     ['death1', 'data/audio/death1.mp3'],
     ['dolphin1', 'data/audio/dolphin1.mp3'],
+    ['life1', 'data/audio/life1.mp3'],
+    ['brake1', 'data/audio/brake1.mp3'],
+    ['brake2', 'data/audio/brake2.mp3'],
+    ['brake3', 'data/audio/brake3.mp3'],
+    ['bumper1', 'data/audio/bumper1.mp3'],
   ];
 
   const promises = sounds.map(async ([id, path, baseVolume]) => {

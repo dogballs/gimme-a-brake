@@ -7,7 +7,10 @@ import {
   MOVE_ACCELERATION,
   MOVE_DECELERATION_FREE,
   MOVE_DECELERATION_REVERSE,
-  MOVE_DECELERATION_UPGRADE,
+  MOVE_DECELERATION_UPHILL_UPGRADE,
+  MOVE_DECELERATION_BUMPER_UPGRADE,
+  MOVE_DECELERATION_PARACHUTE_UPGRADE,
+  MOVE_DECELERATION_NITRO_UPGRADE,
   MOVE_SPEED_MAX,
   MOVE_SPEED_MAX_UPGRADE,
   STEER_LIMIT,
@@ -130,28 +133,37 @@ export function updateMoveSpeedState({
     }
   }
 
-  const curbStopUpgrade = upgrades.find(
-    (u) => u.kind === 'curb-stop' && u.cooldownPassed == null,
-  );
-  // if (curbStopUpgrade && carState.curbTimePassed > 0) {
-  //   // curbStopUpgrade.cooldownPassed = 0;
-  //   // tODO: doesnot work
-  //   speedChange = (speedChange - MOVE_DECELERATION_REVERSE) / gearDesc.delim;
-  //   speed = Math.max(2, speed + speedChange);
-  // } else
   if (isThrottle) {
     if (speedChange < 0) {
       speedChange = 0;
     }
-    const hasUphillSlowUpgrade = upgrades.some(
+    const parachuteUpgrade = upgrades.find((u) => u.kind === 'parachute');
+    const bumperUpgrade = upgrades.find((u) => u.kind === 'bumper');
+    const nitroUpgrade = upgrades.find((u) => u.kind === 'anti-nitro');
+    const uphillSlowUpgrade = upgrades.find(
       (u) => u.kind === 'turn-uphill-slow',
     );
-    const hasSection = ['turn-left', 'turn-right', 'uphill'].includes(
-      section.kind,
-    );
-    if (hasUphillSlowUpgrade && hasSection) {
+    const hasUphillOrTurnSection = [
+      'turn-left',
+      'turn-right',
+      'uphill',
+    ].includes(section.kind);
+    if (bumperUpgrade && bumperUpgrade.usagePassed != null) {
+      speedChange =
+        (speedChange - MOVE_DECELERATION_BUMPER_UPGRADE) / gearDesc.delim;
+      speed = Math.max(2, speed + speedChange);
+    } else if (parachuteUpgrade && parachuteUpgrade.usagePassed != null) {
+      speedChange =
+        (speedChange - MOVE_DECELERATION_PARACHUTE_UPGRADE) / gearDesc.delim;
+      speed = Math.max(0, speed + speedChange);
+    } else if (nitroUpgrade && nitroUpgrade.usagePassed != null) {
+      speedChange =
+        (speedChange - MOVE_DECELERATION_NITRO_UPGRADE) / gearDesc.delim;
+      speed = Math.max(0, speed + speedChange);
+    } else if (uphillSlowUpgrade && hasUphillOrTurnSection) {
       // Slows down and drops to certain speed with an upgrade
-      speedChange = (speedChange - MOVE_DECELERATION_UPGRADE) / gearDesc.delim;
+      speedChange =
+        (speedChange - MOVE_DECELERATION_UPHILL_UPGRADE) / gearDesc.delim;
       speed = Math.max(3, speed + speedChange);
     } else {
       // Default acceleration

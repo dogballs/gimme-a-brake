@@ -28,14 +28,14 @@ const zones: Zone[] = [
     skipPole: true,
   },
   {
-    start: 31000,
+    start: 25000,
     kind: 'desert',
     propCount: 20,
     decorCount: 100,
     // skipPole: true,
   },
   {
-    start: 620000,
+    start: 62000,
     kind: 'beach',
     propCount: 20,
     decorCount: 20,

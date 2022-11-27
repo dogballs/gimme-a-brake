@@ -7,7 +7,6 @@ import {
   MOVE_ACCELERATION,
   MOVE_DECELERATION_FREE,
   MOVE_DECELERATION_REVERSE,
-  MOVE_DECELERATION_UPGRADE,
   MOVE_SPEED_MAX,
   MOVE_SPEED_MAX_UPGRADE,
   STEER_LIMIT,
@@ -21,6 +20,9 @@ import {
   SOUND_CURB_ID,
   SOUND_DEATH_ID,
   SOUND_HIT_ID,
+  SOUND_LIFE_LOST_ID,
+  SOUND_BRAKE_ID,
+  SOUND_BUMPER_ID,
 } from './config';
 import { CollisionBox } from './collision';
 import { curveXByY, steerCurve } from './curve';
@@ -123,14 +125,24 @@ export function drawCar(
     ctx.rotate(-angleInRadians);
     ctx.translate(-x - carWidth / 2, -y - carHeight / 2);
   } else {
+    if (state.invincibleTimePassed > 0) {
+      const shouldAlpha =
+        Math.round(state.invincibleTimePassed / 0.1) % 2 === 0;
+      if (shouldAlpha) {
+        ctx.globalAlpha = 0.3;
+      }
+    }
+
     ctx.drawImage(image, x, y, carWidth, carHeight);
-    ctx.globalAlpha = 1;
 
     if (state.curbTimePassed > 0) {
-      const hasCurbStopUpgrade = upgrades.some((u) => u.kind === 'curb-stop');
-      const allowedTime = hasCurbStopUpgrade
-        ? CURB_ALLOWED_TIME_UPGRADE
-        : CURB_ALLOWED_TIME;
+      const curbDurationUpgrade = upgrades.find(
+        (u) => u.kind === 'curb-duration',
+      );
+      let allowedTime = CURB_ALLOWED_TIME;
+      if (curbDurationUpgrade && curbDurationUpgrade.usagePassed != null) {
+        allowedTime = CURB_ALLOWED_TIME_UPGRADE;
+      }
 
       const displayTime = (allowedTime - state.curbTimePassed).toFixed(1);
 
@@ -139,6 +151,37 @@ export function drawCar(
       ctx.font = `10px ${FONT_PRIMARY}`;
       ctx.strokeText(displayTime, x + carWidth / 2 - 6, y + carHeight / 2 + 15);
     }
+
+    const parachuteUpgrade = upgrades.find((u) => u.kind === 'parachute');
+
+    if (parachuteUpgrade && parachuteUpgrade.usagePassed != null) {
+      const parachuteImage = images.upgradeParachute;
+      let parachuteY = y;
+      if (Math.round(parachuteUpgrade.usagePassed / 0.05) % 2 === 0) {
+        parachuteY -= 2 * RS;
+      }
+
+      ctx.drawImage(
+        parachuteImage,
+        x,
+        parachuteY,
+        parachuteImage.width,
+        parachuteImage.height,
+      );
+    }
+
+    const nitroUpgrade = upgrades.find((u) => u.kind === 'anti-nitro');
+    if (nitroUpgrade && nitroUpgrade.usagePassed != null) {
+      const nitroImage = images.upgradeNitro;
+      let nitroY = y;
+      if (Math.round(nitroUpgrade.usagePassed / 0.01) % 2 === 0) {
+        nitroY -= 1 * RS;
+      }
+
+      ctx.drawImage(nitroImage, x, nitroY, nitroImage.width, nitroImage.height);
+    }
+
+    ctx.globalAlpha = 1;
   }
 }
 
@@ -176,11 +219,13 @@ export function getCarBox({
 const CURB_ALLOWED_OVERFLOW = 20 * RS;
 const CURB_ALLOWED_TIME = 2;
 const CURB_ALLOWED_TIME_UPGRADE = 4;
+const INVINCIBLE_DURATION = 2;
 
 export type CarState = {
   curbTimePassed: number;
   curbFrameIndex: number;
   flipTimePassed: number;
+  invincibleTimePassed: number;
   isDead: boolean;
 };
 
@@ -188,6 +233,7 @@ export const defaultCarState: CarState = {
   curbTimePassed: 0,
   curbFrameIndex: 0,
   flipTimePassed: 0,
+  invincibleTimePassed: 0,
   isDead: false,
 };
 
@@ -215,6 +261,14 @@ export function updateCarState({
   let curbTimePassed = state.curbTimePassed;
   let curbFrameIndex = state.curbFrameIndex;
   let flipTimePassed = state.flipTimePassed;
+  let invincibleTimePassed = state.invincibleTimePassed;
+
+  if (invincibleTimePassed > 0) {
+    invincibleTimePassed += deltaTime;
+    if (invincibleTimePassed > INVINCIBLE_DURATION) {
+      invincibleTimePassed = 0;
+    }
+  }
 
   if (flipTimePassed > 0) {
     flipTimePassed += deltaTime;
@@ -227,7 +281,35 @@ export function updateCarState({
   }
 
   const hasHitSomething = collidedBoxes.length > 0;
-  if (hasHitSomething) {
+  const isInvincible = invincibleTimePassed > 0;
+  if (hasHitSomething && !isInvincible) {
+    // Prioritize bumper over lives is bumper is available
+    const bumperUpgrade = upgrades.find((u) => u.kind === 'bumper');
+    if (bumperUpgrade && bumperUpgrade.cooldownPassed == null) {
+      invincibleTimePassed += deltaTime;
+      bumperUpgrade.cooldownPassed = 0;
+      bumperUpgrade.usagePassed = 0;
+      soundController.play(SOUND_BRAKE_ID);
+      soundController.play(SOUND_BUMPER_ID);
+      return {
+        ...state,
+        invincibleTimePassed,
+      };
+    }
+
+    const livesUpgrade = upgrades.find((u) => u.kind === 'lives');
+    if (livesUpgrade?.count > 0) {
+      livesUpgrade.count -= 1;
+      soundController.play(SOUND_LIFE_LOST_ID);
+
+      invincibleTimePassed += deltaTime;
+
+      return {
+        ...state,
+        invincibleTimePassed,
+      };
+    }
+
     flipTimePassed += deltaTime;
     soundController.stopAll();
     soundController.play(SOUND_HIT_ID);
@@ -251,17 +333,20 @@ export function updateCarState({
   const isTouchingRightCurb =
     rightCurbX + CURB_ALLOWED_OVERFLOW < carBox.x + carBox.width;
 
-  const hasCurbStopUpgrade = upgrades.some(
-    (u) => u.kind === 'curb-stop' && u.cooldownPassed == null,
-  );
+  const curbDurationUpgrade = upgrades.find((u) => u.kind === 'curb-duration');
 
   if (isTouchingLeftCurb || isTouchingRightCurb) {
     curbTimePassed += deltaTime;
     curbFrameIndex = curbFrameIndex + 1;
 
-    const allowedTime = hasCurbStopUpgrade
-      ? CURB_ALLOWED_TIME_UPGRADE
-      : CURB_ALLOWED_TIME;
+    let allowedTime = CURB_ALLOWED_TIME;
+    if (curbDurationUpgrade && curbDurationUpgrade.usagePassed == null) {
+      curbDurationUpgrade.cooldownPassed = 0;
+      curbDurationUpgrade.usagePassed = 0;
+    }
+    if (curbDurationUpgrade && curbDurationUpgrade.usagePassed != null) {
+      allowedTime = CURB_ALLOWED_TIME_UPGRADE;
+    }
 
     if (curbTimePassed > allowedTime) {
       flipTimePassed += deltaTime;
@@ -281,6 +366,7 @@ export function updateCarState({
     curbTimePassed,
     curbFrameIndex,
     flipTimePassed,
+    invincibleTimePassed,
   };
 }
 

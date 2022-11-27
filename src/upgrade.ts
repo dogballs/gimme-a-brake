@@ -1,4 +1,11 @@
-import { IW, IH, RS, FONT_PRIMARY } from './config';
+import {
+  IW,
+  IH,
+  RS,
+  FONT_PRIMARY,
+  SOUND_BRAKE_ID,
+  SOUND_NITRO_ID,
+} from './config';
 import { KeyboardListener, InputControl } from './controls';
 import { ImageMap } from './images';
 import { randomElements } from './random';
@@ -22,9 +29,11 @@ export type Upgrade = {
   active: boolean;
   description: string;
   description2?: string;
+  count?: number;
   cooldown?: number;
   cooldownPassed?: number;
-  count?: number;
+  usageDuration?: number;
+  usagePassed?: number;
 };
 
 export const ALL_UPGRADES: Upgrade[] = [
@@ -41,10 +50,12 @@ export const ALL_UPGRADES: Upgrade[] = [
   {
     kind: 'bumper',
     description: 'Slows by bumping into obstacles',
-    description2: 'Cooldown: 10 sec',
+    description2: 'Cooldown: 15 sec',
     active: false,
-    cooldown: 10,
-    // breaks and blocks a slot?
+    cooldown: 15,
+    cooldownPassed: null,
+    usageDuration: 2,
+    usagePassed: null,
   },
   {
     kind: 'lives',
@@ -52,54 +63,47 @@ export const ALL_UPGRADES: Upgrade[] = [
     description2: 'Lives: 3',
     active: false,
     count: 3,
-    // slow down?
-    // expires? blocks a slot?
   },
   {
     kind: 'parachute',
-    description: 'Decelerates to 0',
+    description: 'Decelerates on use',
+    description2: 'Cooldown: 20 sec',
     active: true,
-    cooldown: 10,
-    // count?
-    // cd?
+    cooldown: 20,
+    cooldownPassed: null,
+    usageDuration: 2,
+    usagePassed: null,
   },
   {
     kind: 'anti-nitro',
     description: 'Backwards nitro',
+    description2: 'Cooldown: 8 sec',
     active: true,
-    cooldown: 10,
-    // cd?
-  },
-  // {
-  //   kind: 'rocket-launcher',
-  //   description: 'Shoot rockets to kill obstacles. Cooldown: 10 sec',
-  //   active: true,
-  //   // cd?
-  //   // count
-  // },
-  // {
-  //   kind: 'curb-duration',
-  //   description: 'Increases time you can stay on the curb',
-  //   description2: 'Cooldown: 16',
-  //   active: false,
-  //   cooldown: 20,
-  // },
-  {
-    kind: 'curb-stop',
-    description: 'Use curb to slow down',
-    description2: 'Cooldown: 10',
-    active: false,
-    cooldown: 20,
-    // heat? cd?
+    cooldown: 8,
+    cooldownPassed: null,
+    usageDuration: 1,
+    usagePassed: null,
   },
   {
     kind: 'turn-uphill-slow',
     description: 'Slows down on turns and uphills',
     active: false,
   },
-  // timestop?
-  // reduce amount of obstacles
-  //
+  {
+    kind: 'curb-duration',
+    description: 'Increases time you can stay on the curb',
+    description2: 'Cooldown: 16',
+    cooldown: 20,
+    cooldownPassed: null,
+    usageDuration: 4,
+    usagePassed: null,
+    active: false,
+  },
+  // other ideas
+  // - rocket launcer
+  // - time stop
+  // - curb reduces speed
+  // - reduce amount of obstacles
 ];
 
 export type UpgradeState = {
@@ -148,12 +152,13 @@ export function updateUpgradeState({
     });
 
     const dialogUpgrades = randomElements(availableUpgrades, 3);
+    const copyUpgrades = JSON.parse(JSON.stringify(dialogUpgrades));
 
     return {
       ...state,
       isDialogOpen: true,
       dialogSelectedIndex: 0,
-      dialogUpgrades,
+      dialogUpgrades: copyUpgrades,
     };
   }
 
@@ -168,12 +173,26 @@ export function updateUpgradeState({
         const activeUpgrade = state.upgrades[activeIndex];
         if (activeUpgrade.cooldownPassed == null) {
           activeUpgrade.cooldownPassed = 0;
+          if (activeUpgrade.usageDuration != null) {
+            activeUpgrade.usagePassed = 0;
+            if (activeUpgrade.kind === 'parachute') {
+              soundController.play(SOUND_BRAKE_ID);
+            } else if (activeUpgrade.kind === 'anti-nitro') {
+              soundController.play(SOUND_NITRO_ID);
+            }
+          }
         }
       }
     }
 
     // Mutates upgrades - updates cooldowns
     state.upgrades.forEach((upgrade) => {
+      if (upgrade.usageDuration != null && upgrade.usagePassed != null) {
+        upgrade.usagePassed += deltaTime;
+        if (upgrade.usagePassed > upgrade.usageDuration) {
+          upgrade.usagePassed = null;
+        }
+      }
       if (upgrade.cooldown != null && upgrade.cooldownPassed != null) {
         upgrade.cooldownPassed += deltaTime;
         if (upgrade.cooldownPassed > upgrade.cooldown) {
@@ -206,15 +225,12 @@ export function updateUpgradeState({
 
   let dialogSelectedIndex = state.dialogSelectedIndex;
   if (isLeft) {
-    dialogSelectedIndex -= 1;
-    if (dialogSelectedIndex < 0) {
-      dialogSelectedIndex = state.dialogUpgrades.length - 1;
-    }
+    dialogSelectedIndex = Math.max(0, dialogSelectedIndex - 1);
   } else if (isRight) {
-    dialogSelectedIndex += 1;
-    if (dialogSelectedIndex > state.dialogUpgrades.length - 1) {
-      dialogSelectedIndex = 0;
-    }
+    dialogSelectedIndex = Math.min(
+      state.dialogUpgrades.length - 1,
+      dialogSelectedIndex + 1,
+    );
   }
   if (isLeft || isRight) {
     soundController.play('menuFocus2');
@@ -237,6 +253,7 @@ SPRITE_MAP.set('improved-steering', { x: 0, y: 0 });
 SPRITE_MAP.set('lives', { x: 32, y: 0 });
 SPRITE_MAP.set('bumper', { x: 64, y: 0 });
 SPRITE_MAP.set('curb-stop', { x: 96, y: 0 });
+SPRITE_MAP.set('curb-duration', { x: 32, y: 32 });
 SPRITE_MAP.set('turn-uphill-slow', { x: 128, y: 0 });
 SPRITE_MAP.set('anti-nitro', { x: 160, y: 0 });
 SPRITE_MAP.set('parachute', { x: 192, y: 0 });
@@ -244,7 +261,11 @@ SPRITE_MAP.set('lower-max-speed', { x: 224, y: 0 });
 
 export function drawUpgradeDialog(
   ctx,
-  { images, state }: { images: ImageMap; state: UpgradeState },
+  {
+    lastTime,
+    images,
+    state,
+  }: { lastTime: number; images: ImageMap; state: UpgradeState },
 ) {
   if (!state.isDialogOpen) {
     return;
@@ -270,10 +291,11 @@ export function drawUpgradeDialog(
 
   ctx.fillStyle = '#222';
   ctx.font = `${12 * RS}px ${FONT_PRIMARY}`;
-  ctx.fillText('Pick an upgrade:', x + 10 * RS, y + 20 * RS);
+  ctx.fillText('Pick an upgrade', x + 10 * RS, y + 20 * RS);
 
   state.dialogUpgrades.forEach((upgrade, index) => {
     drawUpgradeDialogItem(ctx, {
+      lastTime,
       images,
       upgrade,
       index,
@@ -282,15 +304,16 @@ export function drawUpgradeDialog(
   });
 }
 
-// TODO: add icons
 function drawUpgradeDialogItem(
   ctx,
   {
+    lastTime,
     images,
     upgrade,
     isSelected,
     index,
   }: {
+    lastTime: number;
     images: ImageMap;
     upgrade: Upgrade;
     isSelected: boolean;
@@ -301,12 +324,14 @@ function drawUpgradeDialogItem(
   const y = 70 * RS;
   const size = 32 * RS;
 
-  drawUpgradeImage(ctx, { upgrade, images, x, y, size });
+  drawUpgradeImage(ctx, { lastTime, upgrade, images, x, y, size });
 
   if (isSelected) {
     ctx.strokeStyle = '#e42424';
     ctx.lineWidth = 2 * RS;
     ctx.strokeRect(x, y, size, size);
+
+    ctx.drawImage(images.menuBullet, x + 12 * RS, y - 10 * RS, 12, 12);
 
     const startY = 124;
     const gapY = 12;
@@ -334,12 +359,14 @@ function drawUpgradeDialogItem(
 function drawUpgradeImage(
   ctx,
   {
+    lastTime,
     upgrade,
     images,
     x,
     y,
     size = 32,
   }: {
+    lastTime: number;
     upgrade: Upgrade;
     images: ImageMap;
     x: number;
@@ -368,56 +395,79 @@ function drawUpgradeImage(
 
   if (upgrade.active) {
     ctx.drawImage(image, 0, 32, sourceWidth, sourceHeight, x, y, size, size);
+    if (size === 24 * RS) {
+      let color = '#444';
+      if (Math.round(lastTime / 0.3) % 2 === 0) {
+        color = '#e4d884';
+      }
+
+      if (upgrade.cooldown != null && upgrade.cooldownPassed == null) {
+        ctx.fillStyle = color;
+        ctx.font = `${6 * RS}px ${FONT_PRIMARY}`;
+        ctx.fillStyle = ctx.fillText('SPACEBAR', x, y + 30 * RS, 24 * RS);
+      }
+    }
   }
 
   if (upgrade.kind === 'lives') {
     ctx.fillStyle = '#fff';
     if (size === 24 * RS) {
-      ctx.font = `${10 * RS}px ${FONT_PRIMARY}`;
-      ctx.fillText(upgrade.count, x + 8 * RS, y + 16 * RS);
+      ctx.font = `${9 * RS}px ${FONT_PRIMARY}`;
+      ctx.fillText(upgrade.count, x + 9.5 * RS, y + 15 * RS, 5 * RS);
     } else {
       ctx.font = `${12 * RS}px ${FONT_PRIMARY}`;
-      ctx.fillText(upgrade.count, x + 11 * RS, y + 21 * RS);
+      ctx.fillText(upgrade.count, x + 11 * RS, y + 21 * RS, 10 * RS);
     }
   }
 
   if (upgrade.cooldown != null && upgrade.cooldownPassed != null) {
     const niceTime = Math.floor(upgrade.cooldown - upgrade.cooldownPassed);
 
-    ctx.globalAlpha = 0.5;
-    ctx.fillStyle = 'grey';
+    ctx.globalAlpha = 0.6;
+    ctx.fillStyle = '#333';
     ctx.fillRect(x + 1, y + 1, size - 2, size - 2);
     ctx.globalAlpha = 1;
 
     ctx.lineWidth = 1;
     ctx.font = `${12 * RS}px ${FONT_PRIMARY}`;
-    ctx.strokeStyle = '#fff';
-    ctx.fillText(niceTime, x + 10 * RS, y + 16 * RS);
+    ctx.fillStyle = '#fff';
+    ctx.fillText(niceTime, x + 7 * RS, y + 16 * RS, 10 * RS);
+  }
+
+  if (upgrade.kind === 'lives' && upgrade.count === 0) {
+    ctx.globalAlpha = 0.6;
+    ctx.fillStyle = '#333';
+    ctx.fillRect(x + 1, y + 1, size - 2, size - 2);
+    ctx.globalAlpha = 1;
   }
 }
 
 export function drawActiveUpgrades(
   ctx,
   {
+    lastTime,
     state,
     images,
   }: {
+    lastTime: number;
     state: UpgradeState;
     images: ImageMap;
   },
 ) {
   state.upgrades.forEach((upgrade, index) => {
-    drawActiveUpgradeItem(ctx, { upgrade, images, index });
+    drawActiveUpgradeItem(ctx, { lastTime, upgrade, images, index });
   });
 }
 
 function drawActiveUpgradeItem(
   ctx,
   {
+    lastTime,
     upgrade,
     images,
     index,
   }: {
+    lastTime: number;
     upgrade: Upgrade;
     images: ImageMap;
     index: number;
@@ -427,5 +477,5 @@ function drawActiveUpgradeItem(
   const y = 5 * RS;
   const size = 24 * RS;
 
-  drawUpgradeImage(ctx, { upgrade, images, x, y, size });
+  drawUpgradeImage(ctx, { lastTime, upgrade, images, x, y, size });
 }

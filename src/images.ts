@@ -41,6 +41,8 @@ export async function loadImages(): Promise<ImageMap> {
 
     // Upgrades
     ['upgrades', 'data/graphics/upgrades.png'],
+    ['upgradeParachute', 'data/graphics/upgrade-parachute.png'],
+    ['upgradeNitro', 'data/graphics/upgrade-nitro.png'],
     // Poles
     ['poleRed', 'data/graphics/pole-red.png'],
     ['poleGreen', 'data/graphics/pole-green.png'],

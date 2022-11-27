@@ -452,6 +452,8 @@ export function generatePropsForZones({ zones }: { zones: Zone[] }): Prop[] {
     const startOffset = zone.start + POLE_START;
     const size = nextZone ? nextZone.start - startOffset - POLE_START : 0;
 
+    console.assert(size >= 0, 'zone size < 0');
+
     const zoneProps = generateProps({
       startOffset,
       size,

@@ -198,6 +198,7 @@ function draw({
   // drawHorizon(ctx);
 
   drawActiveUpgrades(ctx, {
+    lastTime,
     images: resources.images,
     state: state.upgradeState,
   });
@@ -210,6 +211,7 @@ function draw({
   }
 
   drawUpgradeDialog(ctx, {
+    lastTime,
     images: resources.images,
     state: state.upgradeState,
   });

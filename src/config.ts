@@ -20,7 +20,10 @@ export const STEER_SPEED_IMPROVED = 8 * RS;
 export const BG_SPEED_PER_MOVE_OFFSET = 0.4;
 
 export const MOVE_ACCELERATION = 0.03;
-export const MOVE_DECELERATION_UPGRADE = 0.01;
+export const MOVE_DECELERATION_UPHILL_UPGRADE = 0.01;
+export const MOVE_DECELERATION_BUMPER_UPGRADE = 0.07;
+export const MOVE_DECELERATION_PARACHUTE_UPGRADE = 0.15;
+export const MOVE_DECELERATION_NITRO_UPGRADE = 0.11;
 export const MOVE_DECELERATION_FREE = 0.05;
 export const MOVE_DECELERATION_REVERSE = 0.1;
 
@@ -40,3 +43,7 @@ export const SOUND_GAME_THEME_ID = 'theme1';
 export const SOUND_CURB_ID = 'curb2';
 export const SOUND_DEATH_ID = 'death1';
 export const SOUND_HIT_ID = 'hit1';
+export const SOUND_LIFE_LOST_ID = 'life1';
+export const SOUND_BRAKE_ID = 'brake2';
+export const SOUND_BUMPER_ID = 'bumper1';
+export const SOUND_NITRO_ID = 'brake3';
