@@ -1,11 +1,8 @@
-import {
-  defaultSteerState,
-  defaultCarState,
-  SteerState,
-  CarState,
-} from './car';
+import { defaultCarState, CarState } from './car';
+import { defaultEndingState, EndingState } from './ending';
 import { defaultMenuState, MenuState } from './menu';
 import { SpeedState, defaultMoveSpeedState } from './speed';
+import { SteerState, defaultSteerState } from './steer';
 import { defaultUpgradeState, UpgradeState } from './upgrade';
 
 type GlobalState = {
@@ -27,6 +24,7 @@ const defaultGlobalState = {
   upgradeState: defaultUpgradeState,
   carState: defaultCarState,
   menuState: defaultMenuState,
+  endingState: defaultEndingState,
   moveOffset: 0,
   moveOffsetChange: 0,
   bgOffset: 0,

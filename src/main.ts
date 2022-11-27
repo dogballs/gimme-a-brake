@@ -1,11 +1,12 @@
 import { IW, IH, HH } from './config';
-import { drawCar, getCarBox, updateSteerState, updateCarState } from './car';
+import { drawCar, getCarBox, updateCarState } from './car';
 import { findCollisions, drawCollisionBoxes } from './collision';
 import { InputControl, KeyboardListener } from './controls';
 import { drawCurve } from './curve';
 import { drawBackground, updateBackgroundOffset } from './background';
 import { drawDebug, drawHorizon } from './debug';
 import { drawDecors } from './decor';
+import { updateEndingState, drawEnding } from './ending';
 import {
   Fragment,
   straightFragment,
@@ -31,6 +32,7 @@ import {
 import { loadSounds, SoundController } from './sound';
 import { SpeedAudio, updateMoveSpeedState, drawSpeedometer } from './speed';
 import { createGlobalState, createResetGlobalState } from './state';
+import { updateSteerState } from './steer';
 import {
   Stripe,
   drawCurbStripes,
@@ -177,7 +179,7 @@ function draw({
     yOverride,
   });
 
-  if (!state.menuState.isOpen) {
+  if (!state.menuState.isOpen && !state.endingState.isCarGone) {
     drawCar(ctx, {
       images: resources.images,
       upgrades: state.upgradeState.upgrades,
@@ -197,16 +199,25 @@ function draw({
 
   // drawHorizon(ctx);
 
-  drawActiveUpgrades(ctx, {
-    lastTime,
-    images: resources.images,
-    state: state.upgradeState,
-  });
+  if (!state.endingState.isInitiated) {
+    drawActiveUpgrades(ctx, {
+      lastTime,
+      images: resources.images,
+      state: state.upgradeState,
+    });
+  }
 
-  if (!state.menuState.isOpen) {
+  if (!state.menuState.isOpen && !state.endingState.isInitiated) {
     drawSpeedometer(ctx, {
       state: state.speedState,
       upgrades: state.upgradeState.upgrades,
+    });
+  }
+
+  if (!state.menuState.isOpen) {
+    drawEnding(ctx, {
+      images: resources.images,
+      state: state.endingState,
     });
   }
 
@@ -259,13 +270,6 @@ function getInput() {
 function updateLevelState() {
   // NOTE: don't destructure the state here because it is constantly updated
 
-  if (state.menuState.isOpen) {
-    return;
-  }
-  if (state.upgradeState.isDialogOpen) {
-    return;
-  }
-
   const {
     isThrottleActive,
     isReverseActive,
@@ -302,6 +306,7 @@ function updateLevelState() {
     upgrades: state.upgradeState.upgrades,
     nextPole,
     carState: state.carState,
+    endingState: state.endingState,
     isLeftTurnActive,
     isRightTurnActive,
     moveSpeed: state.speedState.moveSpeed,
@@ -383,6 +388,7 @@ function tick({
     state: state.menuState,
     carState: state.carState,
     speedState: state.speedState,
+    endingState: state.endingState,
     deltaTime,
   });
 
@@ -410,7 +416,11 @@ function tick({
     moveOffset: state.moveOffset,
   });
 
-  updateLevelState();
+  if (!state.menuState.isOpen && !state.upgradeState.isDialogOpen) {
+    updateLevelState();
+  } else if (state.menuState.isWin) {
+    state.moveOffset += state.moveOffsetChange;
+  }
 
   const section = getActiveSection({
     sections: resources.map.sections,
@@ -428,6 +438,14 @@ function tick({
   const nextZone = getNextZone({
     zones: resources.map.zones,
     moveOffset: state.moveOffset,
+  });
+
+  state.endingState = updateEndingState({
+    keyboardListener,
+    soundController,
+    deltaTime,
+    zone,
+    state: state.endingState,
   });
 
   const { path, yOverride } = createSectionFragments({
@@ -478,12 +496,8 @@ function tick({
   // });
 
   if (!state.menuState.isOpen) {
-    if (state.menuState.isSoundOn) {
-      audioCtx.resume();
-    } else {
-      audioCtx.suspend();
-    }
     speedAudio.update({
+      menuState: state.menuState,
       upgrades: state.upgradeState.upgrades,
       ...state.speedState,
     });

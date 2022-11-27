@@ -32,14 +32,12 @@ const zones: Zone[] = [
     kind: 'desert',
     propCount: 20,
     decorCount: 100,
-    // skipPole: true,
   },
   {
     start: 62000,
     kind: 'beach',
     propCount: 20,
     decorCount: 20,
-    // skipPole: true,
   },
   {
     start: 93000,
@@ -51,9 +49,46 @@ const zones: Zone[] = [
     start: 124000,
     kind: 'forest',
     propCount: 0,
-    decorCount: 0,
+    decorCount: 1000,
+    skipPole: true,
+    isEnding: true,
+  },
+  {
+    start: 124000 + 18000,
+    kind: 'forest',
+    propCount: 0,
+    decorCount: 20,
+    skipPole: true,
+    isEnding: true,
   },
 ];
+
+// Test the ending
+// const zones: Zone[] = [
+//   {
+//     start: 0,
+//     kind: 'green',
+//     propCount: 0,
+//     decorCount: 20,
+//     skipPole: true,
+//   },
+//   {
+//     start: 2000,
+//     kind: 'forest',
+//     propCount: 0,
+//     decorCount: 1000,
+//     skipPole: true,
+//     isEnding: true,
+//   },
+//   {
+//     start: 18000,
+//     kind: 'forest',
+//     propCount: 0,
+//     decorCount: 20,
+//     skipPole: true,
+//     isEnding: true,
+//   },
+// ];
 
 const decors = generateDecorsForZones({ zones });
 const poles = generatePolesForZones({ zones });

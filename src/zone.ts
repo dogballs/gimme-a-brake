@@ -7,6 +7,7 @@ export type Zone = {
   skipPole?: boolean;
   decorCount?: number;
   decorDriftMax?: number;
+  isEnding?: boolean;
 };
 
 const defaultZone: Zone = {

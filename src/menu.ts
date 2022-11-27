@@ -12,6 +12,7 @@ import {
 } from './config';
 import { CarState } from './car';
 import { KeyboardListener, InputControl } from './controls';
+import { EndingState } from './ending';
 import { SpeedState } from './speed';
 import { ImageMap } from './images';
 import { SoundController } from './sound';
@@ -23,6 +24,8 @@ export type MenuState = {
   isSoundOn: boolean; // TODO: local storage?
   isPlaying: boolean;
   isGameOver: boolean;
+  isWin: boolean;
+  isCredits: boolean;
   deathTimePassed: number;
   selectedIndex: number;
 };
@@ -36,6 +39,8 @@ export const defaultMenuState: MenuState = {
   // isSoundOn: false,
   isPlaying: false,
   isGameOver: false,
+  isWin: false,
+  isCredits: false,
   deathTimePassed: 0,
   selectedIndex: 0,
 };
@@ -56,6 +61,11 @@ const GAME_OVER_ITEMS: MenuItem[] = [
   { id: 'main', label: 'MAIN MENU' },
 ];
 
+const WIN_ITEMS: MenuItem[] = [
+  { id: 'credits', label: 'CREDITS' },
+  { id: 'main', label: 'MAIN MENU' },
+];
+
 export function drawMenu(
   ctx,
   {
@@ -69,6 +79,10 @@ export function drawMenu(
   },
 ) {
   if (!state.isOpen) {
+    return;
+  }
+  if (state.isWin) {
+    drawWinMenu(ctx, { lastTime, state, images });
     return;
   }
 
@@ -226,10 +240,43 @@ function drawGameOverMenu(
   });
 }
 
+function drawWinMenu(
+  ctx,
+  {
+    lastTime,
+    state,
+    images,
+  }: { lastTime: number; state: MenuState; images: ImageMap },
+) {
+  drawOverlay(ctx);
+
+  const textX = 120 * RS;
+  const textY = 50 * RS;
+  drawBigText(ctx, {
+    text: 'YOU WON?',
+    size: 25,
+    x: textX,
+    y: textY,
+    fillStyle: '#15aa25',
+  });
+
+  WIN_ITEMS.forEach((item, index) => {
+    drawItem(ctx, {
+      lastTime,
+      images,
+      state,
+      item,
+      index,
+      isSelected: index === state.selectedIndex,
+    });
+  });
+}
+
 export function updateMenuState({
   state,
   carState,
   speedState,
+  endingState,
   deltaTime,
   keyboardListener,
   soundController,
@@ -238,12 +285,24 @@ export function updateMenuState({
   state: MenuState;
   carState: CarState;
   speedState: SpeedState;
+  endingState: EndingState;
   deltaTime: number;
   keyboardListener: KeyboardListener;
   soundController: SoundController;
   resetGlobalState: ResetGlobalState;
 }) {
   if (!state.isOpen) {
+    // Ending
+    if (!state.isWin && endingState.isDone) {
+      keyboardListener.listen();
+      soundController.play('win2');
+      return {
+        ...state,
+        isWin: true,
+        isOpen: true,
+      };
+    }
+
     // Observe speed state and car state for triggering death
     if (carState.flipTimePassed > 0 && speedState.moveSpeed === 0) {
       const deathTimePassed = state.deathTimePassed + deltaTime;
@@ -282,6 +341,16 @@ export function updateMenuState({
       };
     }
     return state;
+  }
+
+  // Win screen
+  if (state.isWin) {
+    return updateWinState({
+      keyboardListener,
+      soundController,
+      state,
+      resetGlobalState,
+    });
   }
 
   // Game over screen
@@ -371,6 +440,7 @@ function startPlaying({
 }): MenuState {
   soundController.stopAll();
   soundController.play(SOUND_MENU_SELECT_ID);
+  soundController.play('car');
   // Delay the sound cause it's better like that
   setTimeout(() => {
     if (!soundController.isPlaying(SOUND_MENU_THEME_ID)) {
@@ -389,6 +459,7 @@ function returnToPlaying({
 }): MenuState {
   soundController.stop(SOUND_MENU_THEME_ID);
   soundController.play(SOUND_MENU_SELECT_ID);
+  soundController.play('car');
   soundController.resumeAll();
   if (!soundController.canResume(SOUND_GAME_THEME_ID)) {
     soundController.playLoopIfNotPlaying(SOUND_GAME_THEME_ID);
@@ -426,6 +497,55 @@ function updateGameOverState({
         menuState: newMenuState,
       });
       return newMenuState;
+    }
+    // Main menu
+    if (selectedIndex === 1) {
+      const newMenuState = {
+        ...defaultMenuState,
+        isAnyKey: false,
+      };
+      soundController.stopAll();
+      resetGlobalState({
+        gotReset: true,
+        menuState: newMenuState,
+      });
+      return newMenuState;
+    }
+    return state;
+  }
+
+  if (isUp) {
+    selectedIndex = Math.max(0, selectedIndex - 1);
+  } else if (isDown) {
+    selectedIndex = Math.min(GAME_OVER_ITEMS.length - 1, selectedIndex + 1);
+  }
+  if (isUp || isDown) {
+    soundController.play(SOUND_MENU_FOCUS_ID);
+  }
+
+  return { ...state, selectedIndex };
+}
+
+function updateWinState({
+  keyboardListener,
+  soundController,
+  resetGlobalState,
+  state,
+}: {
+  keyboardListener: KeyboardListener;
+  soundController: SoundController;
+  resetGlobalState: ResetGlobalState;
+  state: MenuState;
+}) {
+  let selectedIndex = state.selectedIndex;
+
+  const isSelect = keyboardListener.isDown(InputControl.Select);
+  const isUp = keyboardListener.isDown(InputControl.Up);
+  const isDown = keyboardListener.isDown(InputControl.Down);
+
+  if (isSelect) {
+    // Credits
+    if (selectedIndex === 0) {
     }
     // Main menu
     if (selectedIndex === 1) {

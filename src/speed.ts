@@ -23,6 +23,7 @@ import {
   FONT_PRIMARY,
 } from './config';
 import { CarState } from './car';
+import { EndingState } from './ending';
 import { MenuState } from './menu';
 import { Path } from './path';
 import { Pole } from './pole';
@@ -68,6 +69,7 @@ export function updateMoveSpeedState({
   section,
   nextPole,
   carState,
+  endingState,
   upgrades,
   moveOffset,
   isThrottleActive,
@@ -79,6 +81,7 @@ export function updateMoveSpeedState({
   section: Section;
   nextPole: Pole | undefined;
   carState: CarState;
+  endingState: EndingState;
   upgrades: Upgrade[];
   moveOffset: number;
   isThrottleActive: boolean;
@@ -254,6 +257,7 @@ export function drawSpeedometer(
 
 export class SpeedAudio {
   private readonly osc: OscillatorNode;
+  private readonly gain: GainNode;
   private isMuted: boolean = true;
 
   constructor(audioCtx: AudioContext) {
@@ -261,22 +265,25 @@ export class SpeedAudio {
     this.osc.type = 'triangle';
 
     // const biquadFilter = audioCtx.createBiquadFilter();
-    const gainNode = audioCtx.createGain();
-    gainNode.gain.value = 0.3;
+    this.gain = audioCtx.createGain();
+    this.gain.gain.value = 0.3;
 
     this.osc.start();
     this.osc
       // .connect(biquadFilter)
-      .connect(gainNode)
+      .connect(this.gain)
       .connect(audioCtx.destination);
   }
 
   update({
+    menuState,
     upgrades,
     moveSpeed,
     moveSpeedChange,
     moveGear,
-  }: { upgrades: Upgrade[] } & SpeedState) {
+  }: { menuState: MenuState; upgrades: Upgrade[] } & SpeedState) {
+    this.gain.gain.value = menuState.isSoundOn ? 0.3 : 0;
+
     const gear = getMoveGears({ upgrades })[moveGear];
     const gearT = (moveSpeed - gear.startAt) / (gear.endAt - gear.startAt);
 

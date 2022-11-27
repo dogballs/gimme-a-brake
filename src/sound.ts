@@ -26,6 +26,12 @@ export async function loadSounds() {
     ['brake2', 'data/audio/brake2.mp3'],
     ['brake3', 'data/audio/brake3.mp3'],
     ['bumper1', 'data/audio/bumper1.mp3'],
+    ['ufo1', 'data/audio/ufo1.mp3'],
+    ['ufo2', 'data/audio/ufo2.mp3', 0.5],
+    ['ufo3', 'data/audio/ufo3.mp3'],
+    ['ufo4', 'data/audio/ufo4.mp3', 0.6],
+    ['win1', 'data/audio/win1.mp3'],
+    ['win2', 'data/audio/win2.mp3'],
   ];
 
   const promises = sounds.map(async ([id, path, baseVolume]) => {
@@ -63,6 +69,10 @@ export class SoundController {
   constructor(private readonly audioCtx) {}
 
   play(name: string) {
+    if (name === 'car') {
+      this.audioCtx.resume();
+      return;
+    }
     this.sounds[name].play();
   }
 
@@ -104,6 +114,10 @@ export class SoundController {
   }
 
   stop(name: string) {
+    if (name === 'car') {
+      this.audioCtx.suspend();
+      return;
+    }
     this.sounds[name].stop();
   }
 
