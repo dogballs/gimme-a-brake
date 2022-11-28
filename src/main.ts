@@ -41,7 +41,7 @@ import {
   generateStripes,
   stripesUnscaledHeight,
 } from './stripes';
-import { Zone, getActiveZone, getNextZone } from './zone';
+import { Zone, getActiveZone, getNextZone, drawZonesRoute } from './zone';
 import {
   drawUpgradeDialog,
   drawActiveUpgrades,
@@ -213,6 +213,12 @@ function draw({
     drawSpeedometer(ctx, {
       state: state.speedState,
       upgrades: state.upgradeState.upgrades,
+    });
+
+    drawZonesRoute(ctx, {
+      images: resources.images,
+      zones: resources.map.zones,
+      moveOffset,
     });
   }
 
