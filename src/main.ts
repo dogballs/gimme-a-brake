@@ -181,9 +181,11 @@ function draw({
 
   if (!state.menuState.isOpen && !state.endingState.isCarGone) {
     drawCar(ctx, {
+      lastTime,
       images: resources.images,
       upgrades: state.upgradeState.upgrades,
       steerOffset,
+      moveOffset,
       state: state.carState,
     });
   }
@@ -416,7 +418,11 @@ function tick({
     moveOffset: state.moveOffset,
   });
 
-  if (!state.menuState.isOpen && !state.upgradeState.isDialogOpen) {
+  if (
+    !state.menuState.isOpen &&
+    !state.upgradeState.isDialogOpen &&
+    !state.menuState.isIntro
+  ) {
     updateLevelState();
   } else if (state.menuState.isWin) {
     state.moveOffset += state.moveOffsetChange;
@@ -467,17 +473,19 @@ function tick({
       yOverride,
     });
 
-  state.carState = updateCarState({
-    soundController,
-    path,
-    state: state.carState,
-    stripes,
-    upgrades: state.upgradeState.upgrades,
-    carBox,
-    collidedBoxes,
-    deltaTime,
-    steerOffset: state.steerState.steerOffset,
-  });
+  if (!state.menuState.isIntro) {
+    state.carState = updateCarState({
+      soundController,
+      path,
+      state: state.carState,
+      stripes,
+      upgrades: state.upgradeState.upgrades,
+      carBox,
+      collidedBoxes,
+      deltaTime,
+      steerOffset: state.steerState.steerOffset,
+    });
+  }
 
   draw({
     deltaTime,
@@ -495,7 +503,7 @@ function tick({
   //   roadDepth,
   // });
 
-  if (!state.menuState.isOpen) {
+  if (!state.menuState.isOpen || state.menuState.isIntro) {
     speedAudio.update({
       menuState: state.menuState,
       upgrades: state.upgradeState.upgrades,

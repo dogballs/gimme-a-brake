@@ -52,6 +52,8 @@ export async function loadImages(): Promise<ImageMap> {
     // Ending
     ['ufoLight', 'data/graphics/ufo-light-Sheet.png'],
     ['ufo', 'data/graphics/ufo.png'],
+    // Intro
+    ['intro', 'data/graphics/intro-Sheet.png'],
   ];
 
   const promises = images.map(async ([id, path]) => {

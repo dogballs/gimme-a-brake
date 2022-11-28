@@ -28,9 +28,15 @@ export type MenuState = {
   isGameOver: boolean;
   isWin: boolean;
   isCredits: boolean;
+  isIntro: boolean; // TODO: local storage?
+  introPassed: number;
   deathTimePassed: number;
   selectedIndex: number;
 };
+
+const INTRO_KEY = 'gimmeabreak.intro';
+
+const hasWatchedIntro = localStorage.getItem(INTRO_KEY) || false;
 
 const SKIP_FOR_DEV = false;
 
@@ -43,6 +49,8 @@ export const defaultMenuState: MenuState = {
   isGameOver: false,
   isWin: false,
   isCredits: false,
+  isIntro: false,
+  introPassed: 0,
   deathTimePassed: 0,
   selectedIndex: 0,
 };
@@ -57,6 +65,9 @@ const MAIN_MENU_ITEMS: MenuItem[] = [
   { id: 'sound', label: 'SOUND: ' },
   { id: 'credits', label: 'CREDITS' },
 ];
+if (hasWatchedIntro) {
+  MAIN_MENU_ITEMS.push({ id: 'intro', label: 'INTRO' });
+}
 
 const GAME_OVER_ITEMS: MenuItem[] = [
   { id: 'retry', label: 'TRY AGAIN' },
@@ -87,6 +98,11 @@ export function drawMenu(
   },
 ) {
   if (!state.isOpen) {
+    return;
+  }
+
+  if (state.isIntro) {
+    drawIntro(ctx, { lastTime, state, images });
     return;
   }
 
@@ -126,7 +142,17 @@ export function drawMenu(
   const textY = 60 * RS;
   drawBigText(ctx, { text: 'GIMME A BRAKE', size: 30, x: textX, y: textY });
 
-  MAIN_MENU_ITEMS.forEach((item, index) => {
+  const items = MAIN_MENU_ITEMS.filter((item) => {
+    if (state.isPlaying && ['credits', 'intro'].includes(item.id)) {
+      return false;
+    }
+    return true;
+  });
+  if (state.isPlaying) {
+    items.push({ id: 'main', label: 'MAIN MENU' });
+  }
+
+  items.forEach((item, index) => {
     drawItem(ctx, {
       lastTime,
       images,
@@ -157,12 +183,12 @@ function drawBigText(
   ctx.strokeText(text, x, y);
 }
 
-function drawOverlay(ctx) {
+function drawOverlay(ctx, opacity = 0.7) {
   const overlayWidth = 200 * RS;
   const overlayHeight = 150 * RS;
 
   ctx.fillStyle = '#444';
-  ctx.globalAlpha = 0.7;
+  ctx.globalAlpha = opacity;
   ctx.fillRect(0, 0, IW, IH);
   ctx.globalAlpha = 1;
 }
@@ -401,6 +427,15 @@ export function updateMenuState({
     return state;
   }
 
+  if (state.isIntro) {
+    return updateIntroState({
+      deltaTime,
+      keyboardListener,
+      soundController,
+      state,
+    });
+  }
+
   // Credits screen
   if (state.isCredits) {
     return updateCreditsState({
@@ -460,30 +495,72 @@ export function updateMenuState({
 
   if (isSelect) {
     // Pressing PLAY
-    if (selectedIndex === 0) {
-      if (state.isPlaying) {
+    if (state.isPlaying) {
+      if (selectedIndex === 0) {
         return returnToPlaying({ state, soundController });
       }
-      return startPlaying({ state, soundController });
-    }
-    if (selectedIndex === 1) {
-      const isSoundOn = !state.isSoundOn;
-      soundController.setGlobalMuted(!isSoundOn);
-      soundController.play(SOUND_MENU_SELECT_ID);
+      if (selectedIndex === 1) {
+        const isSoundOn = !state.isSoundOn;
+        soundController.setGlobalMuted(!isSoundOn);
+        soundController.play(SOUND_MENU_SELECT_ID);
 
-      return {
-        ...state,
-        isSoundOn,
-      };
-    }
+        return {
+          ...state,
+          isSoundOn,
+        };
+      }
+      if (selectedIndex === 2) {
+        const newMenuState = {
+          ...defaultMenuState,
+          isAnyKey: false,
+        };
+        soundController.play(SOUND_MENU_SELECT_ID);
+        resetGlobalState({
+          gotReset: true,
+          menuState: newMenuState,
+        });
+        return newMenuState;
+      }
+    } else {
+      if (selectedIndex === 0) {
+        if (hasWatchedIntro) {
+          soundController.play(SOUND_MENU_SELECT_ID);
+          return startPlaying({ state, soundController });
+        } else {
+          localStorage.setItem(INTRO_KEY, 'true');
+          soundController.stopAll();
+          return { ...state, isIntro: true };
+        }
+      }
+      if (selectedIndex === 1) {
+        const isSoundOn = !state.isSoundOn;
+        soundController.setGlobalMuted(!isSoundOn);
+        soundController.play(SOUND_MENU_SELECT_ID);
 
-    if (selectedIndex === 2) {
-      soundController.play(SOUND_MENU_SELECT_ID);
-      return {
-        ...state,
-        selectedIndex: 2,
-        isCredits: true,
-      };
+        return {
+          ...state,
+          isSoundOn,
+        };
+      }
+
+      if (selectedIndex === 2) {
+        soundController.play(SOUND_MENU_SELECT_ID);
+        return {
+          ...state,
+          selectedIndex: 2,
+          isCredits: true,
+        };
+      }
+
+      if (selectedIndex === 3) {
+        soundController.stopAll();
+        soundController.play(SOUND_MENU_SELECT_ID);
+        return {
+          ...state,
+          selectedIndex: 0,
+          isIntro: true,
+        };
+      }
     }
 
     return {
@@ -514,7 +591,6 @@ function startPlaying({
   soundController: SoundController;
 }): MenuState {
   soundController.stopAll();
-  soundController.play(SOUND_MENU_SELECT_ID);
   soundController.play('car');
   // Delay the sound cause it's better like that
   setTimeout(() => {
@@ -708,4 +784,154 @@ function updateCreditsState({
     soundController.play(SOUND_MENU_FOCUS_ID);
   }
   return { ...state, selectedIndex };
+}
+
+function drawIntro(
+  ctx,
+  {
+    lastTime,
+    state,
+    images,
+  }: { lastTime: number; state: MenuState; images: ImageMap },
+) {
+  const sourceY = 0;
+  const sourceWidth = 380;
+  const sourceHeight = 200;
+  const frameX = 0;
+  const frameY = 0;
+  const frameWidth = IW;
+  const frameHeight = IH;
+
+  let sourceX = 0;
+  if (Math.round(lastTime / 0.1) % 2 === 0) {
+    sourceX = sourceWidth;
+  }
+
+  const introSprite = images.intro;
+
+  ctx.drawImage(
+    introSprite,
+    sourceX,
+    sourceY,
+    sourceWidth,
+    sourceHeight,
+    frameX,
+    frameY,
+    frameWidth,
+    frameHeight,
+  );
+
+  ctx.globalAlpha = 0.5;
+  ctx.font = `${7 * RS}px ${FONT_PRIMARY}`;
+  ctx.fillStyle = '#233459';
+  ctx.fillText('SPACEBAR TO SKIP INTRO', 230 * RS, 195 * RS);
+  ctx.globalAlpha = 1;
+
+  if (state.introPassed > 5 && state.introPassed < 10) {
+    const text = '... I hecking love my new auto-driving car';
+    ctx.font = `${11 * RS}px ${FONT_PRIMARY}`;
+    ctx.fillStyle = '#fff';
+    ctx.fillText(text, 30 * RS, 25 * RS);
+    ctx.fillStyle = '#702142';
+    ctx.fillText(text, 31 * RS, 26 * RS);
+  }
+
+  if (state.introPassed > 12) {
+    ctx.fillStyle =
+      Math.round(lastTime / 0.1) % 2 === 0 ? '#b32929' : '#bc4f4f';
+    ctx.fillRect(147 * RS, 89 * RS, 78 * RS, 52 * RS);
+  }
+
+  if (state.introPassed > 12 && state.introPassed < 15) {
+    ctx.font = `${8 * RS}px ${FONT_PRIMARY}`;
+    ctx.fillStyle = '#fff';
+    ctx.fillText('BRAKES', 155 * RS, 105 * RS);
+    ctx.fillText('NOT ', 155 * RS, 115 * RS);
+    ctx.fillText('RESPONDING', 155 * RS, 125 * RS);
+  }
+
+  if (state.introPassed > 16 && state.introPassed < 19) {
+    ctx.font = `${8 * RS}px ${FONT_PRIMARY}`;
+    ctx.fillStyle = '#fff';
+    ctx.fillText('FULL', 155 * RS, 108 * RS);
+    ctx.fillText('THROTTLE', 155 * RS, 118 * RS);
+  }
+
+  if (state.introPassed > 20) {
+    ctx.font = `${8 * RS}px ${FONT_PRIMARY}`;
+    ctx.fillStyle = '#fff';
+    ctx.fillText('I', 155 * RS, 108 * RS);
+    ctx.fillText('LOVE', 155 * RS, 118 * RS);
+    ctx.fillText('DUCKS ^_^', 155 * RS, 128 * RS);
+  }
+
+  if (state.introPassed > 24) {
+    const text = '... OH BOY, HOW DO I STOP IT !?!?';
+    ctx.font = `${11 * RS}px ${FONT_PRIMARY}`;
+    ctx.fillStyle = '#fff';
+    ctx.fillText(text, 40 * RS, 25 * RS);
+    ctx.fillStyle = '#982d2d';
+    ctx.fillText(text, 41 * RS, 26 * RS);
+  }
+
+  if (state.introPassed < 0.1) {
+    drawOverlay(ctx, 0.7);
+  } else if (state.introPassed < 0.2) {
+    drawOverlay(ctx, 0.6);
+  } else if (state.introPassed < 0.4) {
+    drawOverlay(ctx, 0.5);
+  } else if (state.introPassed < 0.6) {
+    drawOverlay(ctx, 0.4);
+  } else if (state.introPassed < 0.8) {
+    drawOverlay(ctx, 0.3);
+  } else if (state.introPassed < 1) {
+    drawOverlay(ctx, 0.2);
+  } else if (state.introPassed < 1.2) {
+    drawOverlay(ctx, 0.1);
+  }
+}
+
+function updateIntroState({
+  state,
+  deltaTime,
+  keyboardListener,
+  soundController,
+}: {
+  state: MenuState;
+  deltaTime;
+  keyboardListener: KeyboardListener;
+  soundController: SoundController;
+}) {
+  const isSelect = keyboardListener.isDown(InputControl.Select);
+
+  let introPassed = state.introPassed;
+
+  if (introPassed < 12) {
+    soundController.playCarIntro();
+    soundController.playIfNotPlaying(SOUND_GAME_THEME_ID, 0.1);
+  }
+
+  introPassed += deltaTime;
+
+  if (introPassed > 12 && introPassed < 14) {
+    soundController.playIfNotPlaying('curb2');
+    soundController.stop(SOUND_GAME_THEME_ID);
+  }
+
+  if (introPassed > 16 && introPassed < 18) {
+    soundController.playIfNotPlaying('curb2');
+  }
+
+  if (introPassed > 20 && introPassed < 22) {
+    soundController.playIfNotPlaying('curb2');
+  }
+
+  if (isSelect || introPassed > 28) {
+    return startPlaying({
+      state: { ...state, isIntro: false },
+      soundController,
+    });
+  }
+
+  return { ...state, introPassed };
 }

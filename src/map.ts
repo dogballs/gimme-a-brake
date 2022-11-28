@@ -140,7 +140,7 @@ export function generateMap(): Map {
 
   const map: Map = {
     zones,
-    decors,
+    decors: [],
     poles,
     props,
     sections: [],

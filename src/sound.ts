@@ -76,16 +76,20 @@ export class SoundController {
     this.sounds[name].play();
   }
 
+  playCarIntro() {
+    this.audioCtx.resume();
+  }
+
   playLoop(name: string) {
     this.sounds[name].playLoop();
   }
 
-  playIfNotPlaying(name: string) {
-    this.sounds[name].playIfNotPlaying();
+  playIfNotPlaying(name: string, volume = 1) {
+    this.sounds[name].playIfNotPlaying(volume);
   }
 
-  playLoopIfNotPlaying(name: string) {
-    this.sounds[name].playLoopIfNotPlaying();
+  playLoopIfNotPlaying(name: string, volume = 1) {
+    this.sounds[name].playLoopIfNotPlaying(volume);
   }
 
   isPlaying(name: string): boolean {
@@ -152,29 +156,31 @@ export class Sound {
     return this.audioElement.readyState === 4;
   }
 
-  public play(): void {
+  public play(volume = 1): void {
     this.stop();
+    this.audioElement.volume = volume;
     this.audioElement.loop = false;
     this.audioElement.play();
   }
 
-  public playIfNotPlaying(): void {
+  public playIfNotPlaying(volume = 1): void {
     if (this.isPlaying()) return;
-    this.play();
+    this.play(volume);
   }
 
-  public playLoopIfNotPlaying(): void {
+  public playLoopIfNotPlaying(volume = 1): void {
     if (this.isPlaying()) return;
-    this.playLoop();
+    this.playLoop(volume);
   }
 
   public isPlaying(): boolean {
     return !this.audioElement.paused;
   }
 
-  public playLoop(): void {
+  public playLoop(volume = 1): void {
     this.stop();
     this.audioElement.loop = true;
+    this.audioElement.volume = volume;
     this.audioElement.play();
   }
 

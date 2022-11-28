@@ -27,22 +27,26 @@ import { Context2D } from './types';
 export function drawCar(
   ctx,
   {
+    lastTime,
     images,
     upgrades,
     steerOffset,
+    moveOffset,
     state,
   }: {
+    lastTime: number;
     images: ImageMap;
     upgrades: Upgrade[];
     steerOffset: number;
+    moveOffset: number;
     state: CarState;
   },
 ) {
-  const image = images.car;
+  const carImage = images.car;
   const scale = 0.7 * RS;
 
-  const carWidth = image.width * scale;
-  const carHeight = image.height * scale;
+  const carWidth = carImage.width * scale;
+  const carHeight = carImage.height * scale;
 
   const centerX = (IW - carWidth) / 2;
   const carSteerOffset = -1 * steerOffset * 0.02 * RS;
@@ -108,7 +112,7 @@ export function drawCar(
     ctx.translate(x + carWidth / 2, y + carHeight / 2);
     ctx.rotate(angleInRadians);
 
-    ctx.drawImage(image, -carWidth / 2, -carHeight / 2, carWidth, carHeight);
+    ctx.drawImage(carImage, -carWidth / 2, -carHeight / 2, carWidth, carHeight);
 
     ctx.rotate(-angleInRadians);
     ctx.translate(-x - carWidth / 2, -y - carHeight / 2);
@@ -121,7 +125,7 @@ export function drawCar(
       }
     }
 
-    ctx.drawImage(image, x, y, carWidth, carHeight);
+    ctx.drawImage(carImage, x, y, carWidth, carHeight);
 
     if (state.curbTimePassed > 0) {
       const curbDurationUpgrade = upgrades.find(

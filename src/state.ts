@@ -25,7 +25,7 @@ const defaultGlobalState = {
   carState: defaultCarState,
   menuState: defaultMenuState,
   endingState: defaultEndingState,
-  moveOffset: 0,
+  moveOffset: 16,
   moveOffsetChange: 0,
   bgOffset: 0,
 };

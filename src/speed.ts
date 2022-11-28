@@ -39,9 +39,9 @@ export type SpeedState = {
 };
 
 export const defaultMoveSpeedState: SpeedState = {
-  moveGear: getGearMin(),
+  moveGear: 2,
   moveSpeedChange: 0,
-  moveSpeed: 0,
+  moveSpeed: 2.6,
 };
 
 function getMoveGears({ upgrades }: { upgrades: Upgrade[] }) {

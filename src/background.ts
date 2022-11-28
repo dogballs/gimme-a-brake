@@ -32,7 +32,7 @@ export function drawBackground(
   const activeImage = imageByZoneKind(images, zone.kind);
   let activeOpacity = 1;
 
-  if (nextZoneIn > 0 && nextZoneIn < roadDepth) {
+  if (nextZoneIn > 0 && nextZoneIn < roadDepth && nextZone.kind !== zone.kind) {
     const inOffset = roadDepth - nextZoneIn;
     activeOpacity = 1 - inOffset / roadDepth;
   }
