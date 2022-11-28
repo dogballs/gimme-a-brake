@@ -127,6 +127,28 @@ export function drawCar(
 
     ctx.drawImage(carImage, x, y, carWidth, carHeight);
 
+    if (moveOffset < 2500) {
+      if (Math.round(lastTime / 0.2) % 2 === 0) {
+        ctx.globalAlpha = 0.6;
+      } else {
+        ctx.globalAlpha = 0.2;
+      }
+
+      ctx.drawImage(images.ui, 0, 0, 32, 32, x - 30 * RS, y + 10 * RS, 32, 32);
+      ctx.drawImage(
+        images.ui,
+        32,
+        0,
+        32,
+        32,
+        x + carWidth + 6 * RS,
+        y + 10 * RS,
+        32,
+        32,
+      );
+      ctx.globalAlpha = 1;
+    }
+
     if (state.curbTimePassed > 0) {
       const curbDurationUpgrade = upgrades.find(
         (u) => u.kind === 'curb-duration',

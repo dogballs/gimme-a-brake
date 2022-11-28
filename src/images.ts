@@ -49,6 +49,7 @@ export async function loadImages(): Promise<ImageMap> {
     ['poleEnergy', 'data/graphics/pole-energy.png'],
     // Menu
     ['menuBullet', 'data/graphics/menu-bullet.png'],
+    ['ui', 'data/graphics/ui.png'],
     // Ending
     ['ufoLight', 'data/graphics/ufo-light-Sheet.png'],
     ['ufo', 'data/graphics/ufo.png'],
