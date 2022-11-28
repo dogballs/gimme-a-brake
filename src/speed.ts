@@ -7,6 +7,7 @@ import {
   MOVE_ACCELERATION,
   MOVE_DECELERATION_FREE,
   MOVE_DECELERATION_REVERSE,
+  MOVE_DECELERATION_DEATH,
   MOVE_DECELERATION_UPHILL_UPGRADE,
   MOVE_DECELERATION_BUMPER_UPGRADE,
   MOVE_DECELERATION_PARACHUTE_UPGRADE,
@@ -100,7 +101,7 @@ export function updateMoveSpeedState({
   const gearDesc = getMoveGears({ upgrades })[gear];
 
   if (carState.flipTimePassed > 0) {
-    speedChange = (speedChange - MOVE_DECELERATION_REVERSE) / gearDesc.delim;
+    speedChange = (speedChange - MOVE_DECELERATION_DEATH) / gearDesc.delim;
     speed = Math.max(0, speed + speedChange);
     return {
       moveGear: gear,

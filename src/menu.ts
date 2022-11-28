@@ -392,7 +392,7 @@ export function updateMenuState({
       const deathTimePassed = state.deathTimePassed + deltaTime;
 
       // Trigger game over menu a bit later
-      if (deathTimePassed > 1.5) {
+      if (deathTimePassed > 1) {
         soundController.stopAll();
         soundController.play('lost1');
 
@@ -860,9 +860,9 @@ function drawIntro(
   if (state.introPassed > 20) {
     ctx.font = `${8 * RS}px ${FONT_PRIMARY}`;
     ctx.fillStyle = '#fff';
-    ctx.fillText('I', 155 * RS, 108 * RS);
-    ctx.fillText('LOVE', 155 * RS, 118 * RS);
-    ctx.fillText('DUCKS ^_^', 155 * RS, 128 * RS);
+    ctx.fillText('I', 155 * RS, 106 * RS);
+    ctx.fillText('LOVE', 155 * RS, 116 * RS);
+    ctx.fillText('DUCKS ^_^', 155 * RS, 126 * RS);
   }
 
   if (state.introPassed > 24) {
@@ -889,6 +889,22 @@ function drawIntro(
   } else if (state.introPassed < 1.2) {
     drawOverlay(ctx, 0.1);
   }
+
+  // if (state.introPassed > 27.2) {
+  //   drawOverlay(ctx, 0.7);
+  // } else if (state.introPassed > 27) {
+  //   drawOverlay(ctx, 0.6);
+  // } else if (state.introPassed > 26.8) {
+  //   drawOverlay(ctx, 0.5);
+  // } else if (state.introPassed > 26.6) {
+  //   drawOverlay(ctx, 0.4);
+  // } else if (state.introPassed > 26.4) {
+  //   drawOverlay(ctx, 0.3);
+  // } else if (state.introPassed > 26.2) {
+  //   drawOverlay(ctx, 0.2);
+  // } else if (state.introPassed > 26) {
+  //   drawOverlay(ctx, 0.1);
+  // }
 }
 
 function updateIntroState({
