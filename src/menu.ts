@@ -9,8 +9,8 @@ import {
   SOUND_MENU_FOCUS_ID,
   SOUND_MENU_THEME_ID,
   SOUND_GAME_THEME_ID,
-  GH_LINK,
   ITCH_LINK,
+  TSYD_LINK,
 } from './config';
 import { CarState } from './car';
 import { KeyboardListener, InputControl } from './controls';
@@ -81,8 +81,8 @@ const WIN_ITEMS: MenuItem[] = [
 ];
 
 const CREDITS_ITEMS: MenuItem[] = [
-  { id: 'github', label: 'GITHUB' },
-  { id: 'itch', label: 'ITCH.IO' },
+  { id: 'heckx2', label: '  heckx2' },
+  { id: 'tsyd', label: '   TSYD' },
   { id: 'main', label: 'MAIN MENU' },
 ];
 
@@ -203,8 +203,11 @@ function drawItem(
     item,
     index,
     isSelected,
+    color = '#fff',
+    selectColor = '#e42424',
     offX = 90,
     startY = 100,
+    gapY = 22,
   }: {
     lastTime: number;
     images: ImageMap;
@@ -212,15 +215,18 @@ function drawItem(
     item: MenuItem;
     index: number;
     isSelected: boolean;
+    color?: string;
+    selectColor?: string;
     offX?: number;
     startY?: number;
+    gapY?: number;
   },
 ) {
   const textX = (IW - offX * RS) / 2;
-  const textY = startY * RS + 22 * RS * index;
+  const textY = startY * RS + gapY * RS * index;
 
   ctx.font = `${17 * RS}px ${FONT_PRIMARY}`;
-  ctx.fillStyle = isSelected ? '#e42424' : '#fff';
+  ctx.fillStyle = isSelected ? selectColor : color;
 
   let text = item.label;
   if (item.id === 'sound') {
@@ -329,19 +335,19 @@ function drawCreditsMenu(
 
   ctx.fillStyle = '#aaa';
   ctx.font = `${8 * RS}px ${FONT_PRIMARY}`;
-  ctx.fillText('CODE + ART', 80 * RS, 40 * RS);
+  ctx.fillText('CODE + ART', 60 * RS, 48 * RS);
 
-  ctx.fillStyle = '#fff';
-  ctx.font = `${14 * RS}px ${FONT_PRIMARY}`;
-  ctx.fillText('@heck_x2', 65 * RS, 60 * RS);
+  ctx.fillStyle = '#aaa';
+  ctx.font = `${6 * RS}px ${FONT_PRIMARY}`;
+  ctx.fillText('(ITCH.IO)', 244 * RS, 50 * RS);
 
   ctx.fillStyle = '#aaa';
   ctx.font = `${8 * RS}px ${FONT_PRIMARY}`;
-  ctx.fillText('MUSIC + SOUND', 240 * RS, 40 * RS);
+  ctx.fillText('MUSIC + SOUND', 42 * RS, 104 * RS);
 
-  ctx.fillStyle = '#fff';
-  ctx.font = `${14 * RS}px ${FONT_PRIMARY}`;
-  ctx.fillText('TBD', 240 * RS, 60 * RS);
+  ctx.fillStyle = '#aaa';
+  ctx.font = `${6 * RS}px ${FONT_PRIMARY}`;
+  ctx.fillText('(INSTAGRAM.COM)', 225 * RS, 106 * RS);
 
   CREDITS_ITEMS.forEach((item, index) => {
     drawItem(ctx, {
@@ -351,8 +357,10 @@ function drawCreditsMenu(
       item,
       index,
       isSelected: index === state.selectedIndex,
-      startY: 120,
-      // offX: 100,
+      selectColor: '#fff',
+      color: '#999',
+      startY: 50,
+      gapY: 56,
     });
   });
 }
@@ -764,11 +772,11 @@ function updateCreditsState({
 
   if (isSelect) {
     if (selectedIndex === 0) {
-      window.open(GH_LINK);
+      window.open(ITCH_LINK);
       return state;
     }
     if (selectedIndex === 1) {
-      window.open(ITCH_LINK);
+      window.open(TSYD_LINK);
       return state;
     }
     // Main menu

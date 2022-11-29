@@ -49,5 +49,5 @@ export const SOUND_BRAKE_ID = 'brake2';
 export const SOUND_BUMPER_ID = 'bumper1';
 export const SOUND_NITRO_ID = 'brake3';
 
-export const GH_LINK = 'https://github.com/dogballs/gimme-a-brake';
 export const ITCH_LINK = 'https://heckx2.itch.io/';
+export const TSYD_LINK = 'https://www.instagram.com/tsydit/';
