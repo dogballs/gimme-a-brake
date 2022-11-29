@@ -58,14 +58,27 @@ const ctx = canvas.getContext('2d');
 canvas.width = IW;
 canvas.height = IH;
 
-const offCanvas = new OffscreenCanvas(IW, IH);
+let offCanvas;
+if (window.OffscreenCanvas) {
+  offCanvas = new OffscreenCanvas(IW, IH);
+} else {
+  offCanvas = document.createElement('canvas');
+  offCanvas.width = IW;
+  offCanvas.height = IH;
+}
 const offCtx = offCanvas.getContext('2d');
 
 const keyboardListener = new KeyboardListener(canvas);
 
-const audioCtx = new AudioContext();
-const speedAudio = new SpeedAudio(audioCtx);
-const soundController = new SoundController(audioCtx);
+let audioCtx;
+function getContext() {
+  if (!audioCtx) {
+    audioCtx = new AudioContext();
+  }
+  return audioCtx;
+}
+const speedAudio = new SpeedAudio(getContext);
+const soundController = new SoundController(getContext);
 
 const resources = {
   map: generateMap(),

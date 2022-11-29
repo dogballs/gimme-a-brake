@@ -257,23 +257,29 @@ export function drawSpeedometer(
 }
 
 export class SpeedAudio {
-  private readonly osc: OscillatorNode;
-  private readonly gain: GainNode;
+  private osc: OscillatorNode;
+  private gain: GainNode;
   private isMuted: boolean = true;
 
-  constructor(audioCtx: AudioContext) {
-    this.osc = audioCtx.createOscillator();
+  constructor(private readonly getContext: () => AudioContext) {}
+
+  ensureOsc() {
+    if (this.osc) {
+      return;
+    }
+
+    this.osc = this.getContext().createOscillator();
     this.osc.type = 'triangle';
 
     // const biquadFilter = audioCtx.createBiquadFilter();
-    this.gain = audioCtx.createGain();
+    this.gain = this.getContext().createGain();
     this.gain.gain.value = 0.3;
 
     this.osc.start();
     this.osc
       // .connect(biquadFilter)
       .connect(this.gain)
-      .connect(audioCtx.destination);
+      .connect(this.getContext().destination);
   }
 
   update({
@@ -283,6 +289,8 @@ export class SpeedAudio {
     moveSpeedChange,
     moveGear,
   }: { menuState: MenuState; upgrades: Upgrade[] } & SpeedState) {
+    this.ensureOsc();
+
     this.gain.gain.value = menuState.isSoundOn ? 0.3 : 0;
 
     const gear = getMoveGears({ upgrades })[moveGear];

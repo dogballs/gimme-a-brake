@@ -66,18 +66,18 @@ export class SoundController {
   sounds: SoundMap = {};
   private globalMuted = false;
 
-  constructor(private readonly audioCtx) {}
+  constructor(private readonly getContext: () => AudioContext) {}
 
   play(name: string) {
     if (name === 'car') {
-      this.audioCtx.resume();
+      this.getContext().resume();
       return;
     }
     this.sounds[name].play();
   }
 
   playCarIntro() {
-    this.audioCtx.resume();
+    this.getContext().resume();
   }
 
   playLoop(name: string) {
@@ -107,19 +107,19 @@ export class SoundController {
         sound.resume();
       }
     });
-    this.audioCtx.resume();
+    this.getContext().resume();
   }
 
   pauseAll() {
     Object.keys(this.sounds).forEach((name) => {
       this.sounds[name].pause();
     });
-    this.audioCtx.suspend();
+    this.getContext().suspend();
   }
 
   stop(name: string) {
     if (name === 'car') {
-      this.audioCtx.suspend();
+      this.getContext().suspend();
       return;
     }
     this.sounds[name].stop();
@@ -129,7 +129,7 @@ export class SoundController {
     Object.keys(this.sounds).forEach((name) => {
       this.sounds[name].stop();
     });
-    this.audioCtx.suspend();
+    this.getContext().suspend();
   }
 
   setGlobalMuted(isGlobalMuted: boolean): void {
