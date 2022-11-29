@@ -35,16 +35,17 @@ export type MenuState = {
 };
 
 const INTRO_KEY = 'gimmeabreak.intro';
+const SOUND_KEY = 'gimmeabreak.sound';
 
-const hasWatchedIntro = localStorage.getItem(INTRO_KEY) || false;
+const savedHasWatchedIntro = localStorage.getItem(INTRO_KEY) === 'true';
+const savedIsSoundOn = localStorage.getItem(SOUND_KEY) !== 'false';
 
 const SKIP_FOR_DEV = false;
 
 export const defaultMenuState: MenuState = {
   isOpen: SKIP_FOR_DEV ? false : true,
   isAnyKey: SKIP_FOR_DEV ? false : true,
-  isSoundOn: true,
-  // isSoundOn: false,
+  isSoundOn: savedIsSoundOn,
   isPlaying: false,
   isGameOver: false,
   isWin: false,
@@ -65,7 +66,7 @@ const MAIN_MENU_ITEMS: MenuItem[] = [
   { id: 'sound', label: 'SOUND: ' },
   { id: 'credits', label: 'CREDITS' },
 ];
-if (hasWatchedIntro) {
+if (savedHasWatchedIntro) {
   MAIN_MENU_ITEMS.push({ id: 'intro', label: 'INTRO' });
 }
 
@@ -501,6 +502,7 @@ export function updateMenuState({
       }
       if (selectedIndex === 1) {
         const isSoundOn = !state.isSoundOn;
+        localStorage.setItem(SOUND_KEY, isSoundOn ? 'true' : 'false');
         soundController.setGlobalMuted(!isSoundOn);
         soundController.play(SOUND_MENU_SELECT_ID);
 
@@ -523,7 +525,7 @@ export function updateMenuState({
       }
     } else {
       if (selectedIndex === 0) {
-        if (hasWatchedIntro) {
+        if (savedHasWatchedIntro) {
           soundController.play(SOUND_MENU_SELECT_ID);
           return startPlaying({ state, soundController });
         } else {
@@ -534,6 +536,7 @@ export function updateMenuState({
       }
       if (selectedIndex === 1) {
         const isSoundOn = !state.isSoundOn;
+        localStorage.setItem(SOUND_KEY, isSoundOn ? 'true' : 'false');
         soundController.setGlobalMuted(!isSoundOn);
         soundController.play(SOUND_MENU_SELECT_ID);
 
