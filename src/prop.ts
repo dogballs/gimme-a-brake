@@ -35,7 +35,10 @@ type PropKind =
   | 'beach-barrel'
   | 'beach-barrel-stand'
   | 'beach-dolphin'
-  | 'beach-dolphin-head';
+  | 'beach-dolphin-head'
+  | 'forest-log'
+  | 'forest-ghost'
+  | 'forest-trap';
 
 export type Prop = {
   kind: PropKind;
@@ -54,6 +57,7 @@ export type PropBox = CollisionBox & {
 };
 
 const DOLPHIN_IN_OFFSET = 5;
+const TRAP_IN_OFFSET = 25;
 
 export function getPropBoxes({
   soundController,
@@ -133,6 +137,14 @@ export function getPropBoxes({
             prop.positionSpeed = 0;
           }
         }
+      } else if (prop.kind === 'forest-trap') {
+        if (inOffset >= TRAP_IN_OFFSET) {
+          prop.positionSpeed = prop.initialPosition === 1 ? -0.01 : 0.01;
+          prop.position = Math.min(
+            1,
+            Math.max(0, prop.position + prop.positionSpeed),
+          );
+        }
       } else {
         if (prop.positionSpeed !== 0) {
           let minPosition = 0;
@@ -168,6 +180,9 @@ export function getPropBoxes({
 
       let imageScale = Math.max(0, 1 - (1 - 0.1 * RS) * inHalfHeightT);
       let imageOpacity = 1;
+      if (prop.kind === 'forest-ghost') {
+        imageOpacity = 0.5 * inHalfHeightT;
+      }
 
       if (roadHeight > HH && propY < HH) {
         const inOverHeightT = Math.max(0, 1 - (HH - propY) / (roadHeight - HH));
@@ -175,6 +190,11 @@ export function getPropBoxes({
       } else if (isPreshow) {
         imageScale *= 1 - (appearStart - moveOffset) / preshowSize;
         imageOpacity = 1 - (appearStart - moveOffset) / preshowSize;
+        if (prop.kind === 'forest-ghost') {
+          // imageOpacity = 0.5 - (appearStart - moveOffset) / preshowSize;
+          imageOpacity =
+            0.5 - (1 - (appearStart - moveOffset) / preshowSize) / 2;
+        }
       }
 
       const image = imageByKind(images, prop.kind);
@@ -183,6 +203,13 @@ export function getPropBoxes({
       let imageHeight = image.height * imageScale;
       let imageX = propX - imageWidth / 2;
       let imageY = propY - imageHeight;
+
+      let collisionWidth = imageWidth;
+      let collisionX = imageX;
+      if (prop.kind === 'forest-ghost') {
+        collisionWidth = image.width * imageScale - 15 * RS;
+        collisionX = propX - collisionWidth / 2;
+      }
 
       if (prop.kind === 'beach-dolphin-head') {
         if (inOffset > DOLPHIN_IN_OFFSET) {
@@ -220,6 +247,8 @@ export function getPropBoxes({
         x: imageX,
         y: imageY,
         z: roadDepth - inOffset,
+        collisionWidth,
+        collisionX,
         width: imageWidth,
         height: imageHeight,
         depth: 20,
@@ -265,6 +294,14 @@ export function drawProps(
     }
     if (['beach-dolphin-head', 'beach-dolphin'].includes(propBox.prop.kind)) {
       const shouldFlip = propBox.prop.initialPosition === 1;
+      if (shouldFlip) {
+        ctx.translate(propBox.x + propBox.width / 2, 0);
+        ctx.scale(-1, 1);
+        flipped = true;
+      }
+    }
+    if (['forest-trap'].includes(propBox.prop.kind)) {
+      const shouldFlip = propBox.prop.initialPosition === 0;
       if (shouldFlip) {
         ctx.translate(propBox.x + propBox.width / 2, 0);
         ctx.scale(-1, 1);
@@ -325,6 +362,12 @@ function imageByKind(images: ImageMap, kind: PropKind) {
       return images.propBeachDolphin;
     case 'beach-dolphin-head':
       return images.propBeachDolphinHead;
+    case 'forest-log':
+      return images.propForestLog;
+    case 'forest-ghost':
+      return images.propForestGhost;
+    case 'forest-trap':
+      return images.propForestTrap;
     default:
       throw new Error(`Unsupported decor kind: "${kind}"`);
   }
@@ -358,10 +401,10 @@ KINDS_BY_ZONE.set('beach', {
   positionSpeeds: [-0.003, 0, 0.005],
 });
 KINDS_BY_ZONE.set('forest', {
-  kinds: [],
-  distributions: [],
-  moveSpeeds: [],
-  positionSpeeds: [],
+  kinds: ['forest-trap', 'forest-ghost', 'forest-log'],
+  distributions: [0.3, 0.7, 1],
+  moveSpeeds: [0, 0, 0],
+  positionSpeeds: [0, 0, 0],
 });
 
 export function generateProps({
@@ -409,6 +452,12 @@ export function generateProps({
     if (kind === 'beach-dolphin') {
       initialPosition = randomElement([0, 1]);
       positionSpeed = initialPosition === 1 ? -positionSpeed : positionSpeed;
+    }
+    if (kind === 'forest-log') {
+      initialPosition = randomElement([0.1, 0.9]);
+    }
+    if (kind === 'forest-trap') {
+      initialPosition = randomElement([0, 1]);
     }
 
     const prop: Prop = {

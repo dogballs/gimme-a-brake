@@ -48,7 +48,7 @@ const zones: Zone[] = [
   {
     start: 124000,
     kind: 'forest',
-    propCount: 0,
+    propCount: 30,
     decorCount: 1000,
     skipPole: true,
     isEnding: true,
@@ -140,7 +140,7 @@ export function generateMap(): Map {
 
   const map: Map = {
     zones,
-    decors: [],
+    decors,
     poles,
     props,
     sections: [],

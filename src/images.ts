@@ -38,7 +38,10 @@ export async function loadImages(): Promise<ImageMap> {
     ['propBeachBarrelStand', 'data/graphics/prop-beach-barrel-stand.png'],
     ['propBeachDolphin', 'data/graphics/prop-beach-dolphin.png'],
     ['propBeachDolphinHead', 'data/graphics/prop-beach-dolphin-head.png'],
-
+    // Prop - forest
+    ['propForestLog', 'data/graphics/prop-forest-log.png'],
+    ['propForestGhost', 'data/graphics/prop-forest-ghost.png'],
+    ['propForestTrap', 'data/graphics/prop-forest-trap.png'],
     // Upgrades
     ['upgrades', 'data/graphics/upgrades.png'],
     ['upgradeParachute', 'data/graphics/upgrade-parachute.png'],

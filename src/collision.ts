@@ -9,6 +9,8 @@ export type CollisionBox = {
   width: number;
   height: number;
   depth: number;
+  collisionX?: number;
+  collisionWidth?: number;
 };
 
 export function findCollisions(
@@ -20,9 +22,12 @@ export function findCollisions(
   for (let i = 0; i < targetBoxes.length; i++) {
     const targetBox = targetBoxes[i];
 
+    const targetX = targetBox.collisionX ?? targetBox.x;
+    const targetWidth = targetBox.collisionWidth ?? targetBox.width;
+
     const intersects =
-      sourceBox.x < targetBox.x + targetBox.width &&
-      sourceBox.x + sourceBox.width > targetBox.x &&
+      sourceBox.x < targetX + targetWidth &&
+      sourceBox.x + sourceBox.width > targetX &&
       sourceBox.y < targetBox.y + targetBox.height &&
       sourceBox.y + sourceBox.height > targetBox.y &&
       sourceBox.z < targetBox.z + targetBox.depth &&
@@ -74,7 +79,12 @@ function drawBoxes(
 ) {
   for (const box of boxes) {
     ctx.strokeStyle = boxColor;
-    ctx.strokeRect(box.x, box.y, box.width, box.height);
+    ctx.strokeRect(
+      box.collisionX ?? box.x,
+      box.y,
+      box.collisionWidth ?? box.width,
+      box.height,
+    );
 
     ctx.strokeStyle = depthColor;
     const zy = stripesToY(stripes, { inOffset: roadDepth - box.z });
@@ -94,6 +104,11 @@ function drawBoxes(
     const topZ = IH - zy2;
     const zHeight = bottomZ - topZ;
 
-    ctx.strokeRect(box.x, topZ, box.width, zHeight);
+    ctx.strokeRect(
+      box.collisionX ?? box.x,
+      topZ,
+      box.collisionWidth ?? box.width,
+      zHeight,
+    );
   }
 }

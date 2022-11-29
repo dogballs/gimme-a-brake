@@ -89,10 +89,10 @@ export function updateMoveSpeedState({
   isReverseActive: boolean;
 } & SpeedState): SpeedState {
   // Story mode - forced acceleration, no brakes
-  // const isThrottle = isThrottleActive;
-  // const isReverse = isReverseActive;
-  const isThrottle = true;
-  const isReverse = false;
+  const isThrottle = isThrottleActive;
+  const isReverse = isReverseActive;
+  // const isThrottle = true;
+  // const isReverse = false;
 
   let gear = currentMoveGear;
   let speedChange = currentMoveSpeedChange;
