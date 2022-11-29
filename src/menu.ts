@@ -143,6 +143,19 @@ export function drawMenu(
   const textY = 60 * RS;
   drawBigText(ctx, { text: 'GIMME A BRAKE', size: 30, x: textX, y: textY });
 
+  if (!state.isPlaying) {
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    if (isSafari) {
+      ctx.font = `${7 * RS}px ${FONT_PRIMARY}`;
+      ctx.fillStyle = '#666';
+      ctx.fillText(
+        'NOTE: MUSIC AND SOUNDS ARE NOT AVAILABLE IN SAFARI BROWSER',
+        50 * RS,
+        196 * RS,
+      );
+    }
+  }
+
   const items = MAIN_MENU_ITEMS.filter((item) => {
     if (state.isPlaying && ['credits', 'intro'].includes(item.id)) {
       return false;

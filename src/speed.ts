@@ -271,15 +271,11 @@ export class SpeedAudio {
     this.osc = this.getContext().createOscillator();
     this.osc.type = 'triangle';
 
-    // const biquadFilter = audioCtx.createBiquadFilter();
     this.gain = this.getContext().createGain();
     this.gain.gain.value = 0.3;
 
     this.osc.start();
-    this.osc
-      // .connect(biquadFilter)
-      .connect(this.gain)
-      .connect(this.getContext().destination);
+    this.osc.connect(this.gain).connect(this.getContext().destination);
   }
 
   update({
@@ -304,7 +300,6 @@ export class SpeedAudio {
 
     const soundValue = soundStart + (soundEnd - soundStart) * gearT;
 
-    // this.osc.detune.value = 50;
     this.osc.frequency.value = soundValue;
   }
 }
