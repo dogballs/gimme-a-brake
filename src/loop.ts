@@ -66,7 +66,7 @@ export class GameLoop {
     if (timestamp !== null) {
       // Timestamp is originally in milliseconds, convert to seconds
       const deltaTimestamp = timestamp - this.lastTimestamp;
-      if (Math.round(deltaTimestamp) < Math.round(this.getFpsInterval())) {
+      if (Math.round(this.getFpsInterval()) - Math.round(deltaTimestamp) > 2) {
         window.requestAnimationFrame(this.loop);
         return;
       }

@@ -2,7 +2,7 @@ import * as StatsJS from 'stats.js';
 
 // 0: fps, 1: ms, 2: mb, 3+: custom
 const stats = new StatsJS();
-// stats.showPanel(0);
+stats.showPanel(0);
 // document.body.appendChild(stats.dom);
 
 import { IW, IH, HH, MULT } from './config';
