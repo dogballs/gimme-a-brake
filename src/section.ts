@@ -7,6 +7,7 @@ import {
   lerpFragments,
 } from './fragment';
 import { Path } from './path';
+import { Zone } from './zone';
 
 export type SectionKind =
   | 'straight'
@@ -136,4 +137,8 @@ export function getNextSection({
 
 function hasSectionEnded(section: Section, moveOffset: number) {
   return section.start + section.size < moveOffset;
+}
+
+export function generateSectionsForZones({ zones }: { zones: Zone[] }) {
+  return [];
 }

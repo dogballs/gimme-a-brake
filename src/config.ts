@@ -1,3 +1,5 @@
+export const VERSION = '0.1.0';
+
 export const RENDER_SCALE = 1.5;
 export const RS = RENDER_SCALE;
 

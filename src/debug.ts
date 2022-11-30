@@ -1,4 +1,4 @@
-import { IW, IH, HW, HH } from './config';
+import { IW, IH, HW, HH, VERSION, RS, FONT_PRIMARY } from './config';
 import { Section } from './section';
 import { Upgrade } from './upgrade';
 import { Context2D } from './types';
@@ -42,6 +42,14 @@ export function drawDebug(
   //   5,
   //   80,
   // );
+}
+
+export function drawVersion(ctx) {
+  ctx.globalAlpha = 0.5;
+  ctx.font = `${6 * RS}px ${FONT_PRIMARY}`;
+  ctx.fillStyle = '#ddd';
+  ctx.fillText(VERSION, 4 * RS, 196 * RS);
+  ctx.globalAlpha = 1;
 }
 
 export function drawHorizon(

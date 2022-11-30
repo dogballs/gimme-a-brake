@@ -1,10 +1,17 @@
+import * as StatsJS from 'stats.js';
+
+// 0: fps, 1: ms, 2: mb, 3+: custom
+const stats = new StatsJS();
+// stats.showPanel(0);
+// document.body.appendChild(stats.dom);
+
 import { IW, IH, HH } from './config';
 import { drawCar, getCarBox, updateCarState } from './car';
 import { findCollisions, drawCollisionBoxes } from './collision';
 import { InputControl, KeyboardListener } from './controls';
 import { drawCurve } from './curve';
 import { drawBackground, updateBackgroundOffset } from './background';
-import { drawDebug, drawHorizon } from './debug';
+import { drawDebug, drawHorizon, drawVersion } from './debug';
 import { drawDecors } from './decor';
 import { updateEndingState, drawEnding } from './ending';
 import {
@@ -203,16 +210,9 @@ function draw({
     });
   }
 
-  // drawDebug(ctx, {
-  //   section,
-  //   bgOffset,
-  //   moveOffset,
-  //   upgrades: state.upgradeState.upgrades,
-  //   ...state.speedState,
-  //   ...state.steerState,
-  // });
-
-  // drawHorizon(ctx);
+  if (state.menuState.isOpen && !state.menuState.isAnyKey) {
+    drawVersion(ctx);
+  }
 
   if (!state.endingState.isInitiated) {
     drawActiveUpgrades(ctx, {
@@ -253,11 +253,6 @@ function draw({
     state: state.menuState,
     images: resources.images,
   });
-
-  // drawCurve(ctx, path.left, {
-  //   moveOffset: state.moveOffset,
-  //   steerOffset: state.steerState.steerOffset,
-  // });
 }
 
 function getInput() {
@@ -400,6 +395,8 @@ function tick({
   deltaTime: number;
   lastTime: number;
 }) {
+  stats.begin();
+
   keyboardListener.update();
 
   state.menuState = updateMenuState({
@@ -529,6 +526,8 @@ function tick({
       ...state.speedState,
     });
   }
+
+  stats.end();
 }
 
 async function main() {

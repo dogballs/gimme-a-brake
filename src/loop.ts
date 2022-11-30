@@ -65,7 +65,13 @@ export class GameLoop {
     let deltaTime = idealDeltaTime;
     if (timestamp !== null) {
       // Timestamp is originally in milliseconds, convert to seconds
-      deltaTime = (timestamp - this.lastTimestamp) / 1000;
+      const deltaTimestamp = timestamp - this.lastTimestamp;
+      if (Math.round(deltaTimestamp) < Math.round(this.getFpsInterval())) {
+        window.requestAnimationFrame(this.loop);
+        return;
+      }
+
+      deltaTime = deltaTimestamp / 1000;
 
       // If delta is too large, we must have resumed from stop() or breakpoint.
       // Use ideal default delta only for this frame.
@@ -82,6 +88,10 @@ export class GameLoop {
 
     window.requestAnimationFrame(this.loop);
   };
+
+  private getFpsInterval(): number {
+    return 1000 / this.options.fps;
+  }
 
   private getIdealDeltaTime(): number {
     return 1 / this.options.fps;
