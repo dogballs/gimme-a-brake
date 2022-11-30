@@ -152,12 +152,12 @@ export function drawMenu(
   if (!state.isPlaying) {
     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
     if (isSafari) {
-      ctx.font = `${7 * RS}px ${FONT_PRIMARY}`;
-      ctx.fillStyle = '#666';
+      ctx.font = `${6 * RS}px ${FONT_PRIMARY}`;
+      ctx.fillStyle = '#aaa';
       ctx.fillText(
         'NOTE: MUSIC AND SOUNDS ARE NOT AVAILABLE IN SAFARI BROWSER',
-        50 * RS,
-        196 * RS,
+        70 * RS,
+        6 * RS,
       );
     }
   }
