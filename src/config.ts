@@ -7,7 +7,7 @@ export const BW = 380 * RENDER_SCALE;
 export const BH = 200 * RENDER_SCALE;
 
 const MULT_KEY = 'gimmeabreak.mult';
-const DEFAULT_MULT = 2;
+const DEFAULT_MULT = 1.5;
 export const MULT_OPTIONS = [1, 1.5, 2];
 
 let mult = JSON.parse(localStorage.getItem(MULT_KEY)) || DEFAULT_MULT;
@@ -23,7 +23,7 @@ export function setMult(m: number) {
 }
 
 export function displayMult(m: number) {
-  return m / 2;
+  return m - 0.5;
 }
 
 export const IW = BW;
