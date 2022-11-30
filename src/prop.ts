@@ -1,4 +1,4 @@
-import { IH, HH, RS, POLE_START } from './config';
+import { IH, HH, RS, POLE_START, MULT } from './config';
 import { CollisionBox } from './collision';
 import {
   Curve,
@@ -87,7 +87,7 @@ export function getPropBoxes({
 
   const propBoxes: PropBox[] = [];
 
-  let preshowSize = 700;
+  let preshowSize = 500;
   if (section.kind === 'uphill' || nextSection?.kind === 'uphill') {
     preshowSize = 400;
   } else if (section.kind === 'downhill' || nextSection?.kind === 'downhill') {
@@ -121,14 +121,14 @@ export function getPropBoxes({
       }
 
       if (prop.moveSpeed > 0) {
-        prop.moveOffset = propMoveOffset - prop.moveSpeed;
+        prop.moveOffset = propMoveOffset - prop.moveSpeed * MULT();
       }
 
       if (['beach-dolphin'].includes(prop.kind)) {
         if (prop.positionSpeed !== 0 && inOffset >= DOLPHIN_IN_OFFSET) {
           let minPosition = 0;
           let maxPosition = 1;
-          prop.position += prop.positionSpeed;
+          prop.position += prop.positionSpeed * MULT();
           if (prop.position < minPosition) {
             prop.position = minPosition;
             prop.positionSpeed = 0;
@@ -139,7 +139,8 @@ export function getPropBoxes({
         }
       } else if (prop.kind === 'forest-trap') {
         if (inOffset >= TRAP_IN_OFFSET) {
-          prop.positionSpeed = prop.initialPosition === 1 ? -0.01 : 0.01;
+          prop.positionSpeed =
+            (prop.initialPosition === 1 ? -0.01 : 0.01) * MULT();
           prop.position = Math.min(
             1,
             Math.max(0, prop.position + prop.positionSpeed),
@@ -154,7 +155,7 @@ export function getPropBoxes({
             minPosition = Math.max(0, prop.initialPosition - drift);
             maxPosition = Math.min(1, prop.initialPosition + drift);
           }
-          prop.position += prop.positionSpeed;
+          prop.position += prop.positionSpeed * MULT();
           if (prop.position < minPosition) {
             prop.position = minPosition;
             prop.positionSpeed *= -1;
@@ -389,6 +390,10 @@ KINDS_BY_ZONE.set('green', {
   positionSpeeds: [0, 0, 0],
 });
 KINDS_BY_ZONE.set('desert', {
+  // kinds: ['desert-tumbleweed'],
+  // distributions: [1],
+  // moveSpeeds: [0],
+  // positionSpeeds: [0.005],
   kinds: ['desert-bike', 'desert-tumbleweed', 'green-sheep'],
   distributions: [0.5, 0.75, 1],
   moveSpeeds: [2, 0, 0],
