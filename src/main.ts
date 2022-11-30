@@ -253,6 +253,11 @@ function draw({
     state: state.menuState,
     images: resources.images,
   });
+
+  // drawDebug(ctx, {
+  //   section,
+  //   moveOffset,
+  // });
 }
 
 function getInput() {

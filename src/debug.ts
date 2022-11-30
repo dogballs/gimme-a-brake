@@ -7,22 +7,22 @@ export function drawDebug(
   ctx: Context2D,
   {
     section,
-    bgOffset,
-    steerOffset,
+    // bgOffset,
+    // steerOffset,
     moveOffset,
-    moveSpeed,
-    moveSpeedChange,
-    moveGear,
-    upgrades,
-  }: {
+  }: // moveSpeed,
+  // moveSpeedChange,
+  // moveGear,
+  // upgrades,
+  {
     section: Section;
-    bgOffset: number;
-    steerOffset: number;
+    // bgOffset: number;
+    // steerOffset: number;
     moveOffset: number;
-    moveSpeed: number;
-    moveSpeedChange: number;
-    moveGear: number;
-    upgrades: Upgrade[];
+    // moveSpeed: number;
+    // moveSpeedChange: number;
+    // moveGear: number;
+    // upgrades: Upgrade[];
   },
 ) {
   ctx.setLineDash([]);
@@ -31,12 +31,12 @@ export function drawDebug(
   ctx.lineWidth = 1;
 
   ctx.strokeText(`section kind: ${section.kind}`, 5, 10);
-  ctx.strokeText(`bg: ${bgOffset.toFixed(5)}`, 5, 20);
-  ctx.strokeText(`steer: ${steerOffset.toFixed(5)}`, 5, 30);
+  // ctx.strokeText(`bg: ${bgOffset.toFixed(5)}`, 5, 20);
+  // ctx.strokeText(`steer: ${steerOffset.toFixed(5)}`, 5, 30);
   ctx.strokeText(`move offset: ${moveOffset.toFixed(5)}`, 5, 40);
-  ctx.strokeText(`move speed: ${moveSpeed.toFixed(5)}`, 5, 50);
-  ctx.strokeText(`move speed change: ${moveSpeedChange.toFixed(5)}`, 5, 60);
-  ctx.strokeText(`move gear: ${moveGear}`, 5, 70);
+  // ctx.strokeText(`move speed: ${moveSpeed.toFixed(5)}`, 5, 50);
+  // ctx.strokeText(`move speed change: ${moveSpeedChange.toFixed(5)}`, 5, 60);
+  // ctx.strokeText(`move gear: ${moveGear}`, 5, 70);
   // ctx.strokeText(
   //   'upgrades: [' + upgrades.map((u) => u.kind).join() + ']',
   //   5,

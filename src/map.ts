@@ -168,6 +168,8 @@ export function generateMap(): Map {
   const props = generatePropsForZones({ zones });
   const sections = generateSectionsForZones({ zones });
 
+  // console.log(sections);
+
   const map: Map = {
     zones,
     decors,

@@ -128,7 +128,7 @@ export function updateSteerState({
 
   // The faster the car is going - turn will generate more counter-force
   const turnCounterForce =
-    STEER_TURN_COUNTER_FORCE * (moveSpeed / MOVE_SPEED_MAX) * MULT();
+    STEER_TURN_COUNTER_FORCE * (moveSpeed / (MOVE_SPEED_MAX * MULT()));
   if (section.kind === 'turn-left') {
     steerOffset -= turnCounterForce;
   } else if (section.kind === 'turn-right') {

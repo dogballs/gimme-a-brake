@@ -1,3 +1,4 @@
+import { POLE_START } from './config';
 import {
   Fragment,
   straightFragment,
@@ -7,6 +8,7 @@ import {
   lerpFragments,
 } from './fragment';
 import { Path } from './path';
+import { randomElement, randomNumber } from './random';
 import { Zone } from './zone';
 
 export type SectionKind =
@@ -140,5 +142,49 @@ function hasSectionEnded(section: Section, moveOffset: number) {
 }
 
 export function generateSectionsForZones({ zones }: { zones: Zone[] }) {
-  return [];
+  const sections: Section[] = [];
+
+  for (let i = 0; i < zones.length; i++) {
+    const zone = zones[i];
+    const nextZone = zones[i + 1];
+
+    const zoneStart = zone.start + POLE_START;
+    const zoneSize = nextZone ? nextZone.start - zoneStart - POLE_START : 0;
+
+    let start = zoneStart;
+    while (start < zoneStart + zoneSize) {
+      let size;
+      const kind = randomElement([
+        'straight',
+        'uphill',
+        'downhill',
+        'turn-left',
+        'turn-right',
+      ]);
+      switch (kind) {
+        case 'straight':
+        case 'turn-left':
+        case 'turn-right':
+          size = randomNumber(1000, 3000);
+          sections.push({ kind, size, start });
+          size += 300;
+          break;
+        case 'uphill': {
+          size = randomNumber(1000, 3000);
+          const steepness = randomNumber(25, 35);
+          sections.push({ kind, size, start, steepness });
+          break;
+        }
+        case 'downhill': {
+          size = randomNumber(1000, 3000);
+          const steepness = randomNumber(45, 55);
+          sections.push({ kind, size, start, steepness });
+          break;
+        }
+      }
+      start += size;
+    }
+  }
+
+  return sections;
 }
