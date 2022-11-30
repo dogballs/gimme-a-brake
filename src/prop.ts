@@ -89,9 +89,19 @@ export function getPropBoxes({
 
   let preshowSize = 500;
   if (section.kind === 'uphill' || nextSection?.kind === 'uphill') {
-    preshowSize = 400;
-  } else if (section.kind === 'downhill' || nextSection?.kind === 'downhill') {
+    preshowSize = 700;
+  } else if (section.kind === 'downhill') {
     preshowSize = 0;
+  } else if (
+    section.kind === 'turn-left' ||
+    nextSection?.kind === 'turn-left'
+  ) {
+    preshowSize = 700;
+  } else if (
+    section.kind === 'turn-right' ||
+    nextSection?.kind === 'turn-right'
+  ) {
+    preshowSize = 700;
   }
 
   for (const prop of props) {

@@ -170,15 +170,17 @@ export function generateSectionsForZones({ zones }: { zones: Zone[] }) {
           size += 300;
           break;
         case 'uphill': {
-          size = randomNumber(1000, 3000);
+          size = randomNumber(1500, 3000);
           const steepness = randomNumber(25, 35);
           sections.push({ kind, size, start, steepness });
+          size += 300;
           break;
         }
         case 'downhill': {
-          size = randomNumber(1000, 3000);
+          size = randomNumber(1500, 3000);
           const steepness = randomNumber(45, 55);
           sections.push({ kind, size, start, steepness });
+          size += 300;
           break;
         }
       }

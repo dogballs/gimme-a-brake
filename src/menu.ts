@@ -431,6 +431,7 @@ export function updateMenuState({
           ...state,
           isOpen: true,
           isGameOver: true,
+          selectedIndex: 0,
         };
       }
       return {
