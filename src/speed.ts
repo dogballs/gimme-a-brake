@@ -6,6 +6,7 @@ import {
   RS,
   MOVE_ACCELERATION,
   MOVE_DECELERATION_FREE,
+  MOVE_DECELERATION_POLE,
   MOVE_DECELERATION_REVERSE,
   MOVE_DECELERATION_DEATH,
   MOVE_DECELERATION_UPHILL_UPGRADE,
@@ -50,11 +51,11 @@ function getMoveGears({ upgrades }: { upgrades: Upgrade[] }) {
   const speedMax = hasUpgrade ? MOVE_SPEED_MAX_UPGRADE : MOVE_SPEED_MAX;
 
   return {
-    1: { delim: 4, startAt: 0, endAt: 1.1 },
-    2: { delim: 5, startAt: 1, endAt: 2.6 },
-    3: { delim: 6, startAt: 2.5, endAt: 4.1 },
-    4: { delim: 7, startAt: 4, endAt: 6.1 },
-    5: { delim: 8, startAt: 6, endAt: speedMax },
+    1: { delim: 2, startAt: 0, endAt: 1.1 },
+    2: { delim: 2.5, startAt: 1, endAt: 2.6 },
+    3: { delim: 3, startAt: 2.5, endAt: 4.1 },
+    4: { delim: 3.5, startAt: 4, endAt: 6.1 },
+    5: { delim: 4, startAt: 6, endAt: speedMax },
   };
 }
 
@@ -113,7 +114,7 @@ export function updateMoveSpeedState({
   if (nextPole) {
     const toPole = nextPole.start - moveOffset;
     if (toPole < POLE_START) {
-      speedChange = (speedChange - MOVE_DECELERATION_FREE) / gearDesc.delim;
+      speedChange = (speedChange - MOVE_DECELERATION_POLE) / gearDesc.delim;
       speed = Math.max(3, speed + speedChange);
 
       if (toPole < POLE_DRIVE) {

@@ -6,6 +6,26 @@ export const RS = RENDER_SCALE;
 export const BW = 380 * RENDER_SCALE;
 export const BH = 200 * RENDER_SCALE;
 
+const MULT_KEY = 'gimmeabreak.mult';
+const DEFAULT_MULT = 2;
+export const MULT_OPTIONS = [1, 1.5, 2];
+
+let mult = JSON.parse(localStorage.getItem(MULT_KEY)) || DEFAULT_MULT;
+
+export function MULT() {
+  return mult;
+}
+
+export function setMult(m: number) {
+  console.assert(MULT_OPTIONS.includes(m), 'mult must be one of');
+  mult = m;
+  localStorage.setItem(MULT_KEY, JSON.stringify(m));
+}
+
+export function displayMult(m: number) {
+  return m / 2;
+}
+
 export const IW = BW;
 export const IH = BH;
 export const HW = IW / 2; // half = 190
@@ -13,8 +33,6 @@ export const HH = IH / 2; // half = 100
 
 export const STEER_LIMIT = Infinity;
 export const STEER_TURN_COUNTER_FORCE = 4 * RS;
-
-export const MOVE_SPEED = 5 * RS;
 
 export const STEER_SPEED = 5 * RS;
 export const STEER_SPEED_IMPROVED = 8 * RS;
@@ -26,6 +44,7 @@ export const MOVE_DECELERATION_UPHILL_UPGRADE = 0.01;
 export const MOVE_DECELERATION_BUMPER_UPGRADE = 0.07;
 export const MOVE_DECELERATION_PARACHUTE_UPGRADE = 0.15;
 export const MOVE_DECELERATION_NITRO_UPGRADE = 0.11;
+export const MOVE_DECELERATION_POLE = 0.1;
 export const MOVE_DECELERATION_FREE = 0.05;
 export const MOVE_DECELERATION_REVERSE = 0.1;
 export const MOVE_DECELERATION_DEATH = 0.2;

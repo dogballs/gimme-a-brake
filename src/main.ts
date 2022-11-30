@@ -5,7 +5,7 @@ const stats = new StatsJS();
 // stats.showPanel(0);
 // document.body.appendChild(stats.dom);
 
-import { IW, IH, HH } from './config';
+import { IW, IH, HH, MULT } from './config';
 import { drawCar, getCarBox, updateCarState } from './car';
 import { findCollisions, drawCollisionBoxes } from './collision';
 import { InputControl, KeyboardListener } from './controls';
@@ -314,7 +314,7 @@ function updateLevelState() {
     ...state.speedState,
   });
 
-  state.moveOffsetChange = state.speedState.moveSpeed;
+  state.moveOffsetChange = state.speedState.moveSpeed * MULT();
   state.moveOffset += state.moveOffsetChange;
 
   state.steerState = updateSteerState({
@@ -325,7 +325,7 @@ function updateLevelState() {
     endingState: state.endingState,
     isLeftTurnActive,
     isRightTurnActive,
-    moveSpeed: state.speedState.moveSpeed,
+    moveSpeed: state.speedState.moveSpeed * MULT(),
     moveOffset: state.moveOffset,
     ...state.steerState,
   });
@@ -335,7 +335,7 @@ function updateLevelState() {
     bgOffset: state.bgOffset,
     moveOffset: state.moveOffset,
     moveOffsetChange: state.moveOffsetChange,
-    moveSpeed: state.speedState.moveSpeed,
+    moveSpeed: state.speedState.moveSpeed * 2,
   });
 }
 

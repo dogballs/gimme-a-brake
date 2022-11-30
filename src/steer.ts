@@ -7,6 +7,7 @@ import {
   STEER_LIMIT,
   STEER_TURN_COUNTER_FORCE,
   MOVE_SPEED_MAX,
+  MULT,
 } from './config';
 
 import { CarState } from './car';
@@ -63,11 +64,11 @@ export function updateSteerState({
   if (endingState.isInitiated) {
     let speed = 2;
     if (steerOffset > 0) {
-      steerSpeed = -speed;
+      steerSpeed = -speed * MULT();
       steerOffset = Math.max(0, steerOffset + steerSpeed);
     }
     if (steerOffset < 0) {
-      steerSpeed = speed;
+      steerSpeed = speed * MULT();
       steerOffset = Math.min(0, steerOffset + speed);
     }
     if (steerOffset === 0) {
@@ -91,11 +92,11 @@ export function updateSteerState({
       }
 
       if (steerOffset > 0) {
-        steerSpeed = -speed;
+        steerSpeed = -speed * MULT();
         steerOffset = Math.max(0, steerOffset + steerSpeed);
       }
       if (steerOffset < 0) {
-        steerSpeed = speed;
+        steerSpeed = speed * MULT();
         steerOffset = Math.min(0, steerOffset + speed);
       }
 
@@ -111,9 +112,9 @@ export function updateSteerState({
     if (moveSpeed < STEER_REDUCE_TILL_SPEED) {
       t = moveSpeed / STEER_REDUCE_TILL_SPEED;
     }
-    let baseSteerSpeed = STEER_SPEED;
+    let baseSteerSpeed = STEER_SPEED * MULT();
     if (upgrades.some((u) => u.kind === 'improved-steering')) {
-      baseSteerSpeed = STEER_SPEED_IMPROVED;
+      baseSteerSpeed = STEER_SPEED_IMPROVED * MULT();
     }
     const steerSpeed = baseSteerSpeed * t;
     if (isLeftTurnActive) {
@@ -127,7 +128,7 @@ export function updateSteerState({
 
   // The faster the car is going - turn will generate more counter-force
   const turnCounterForce =
-    STEER_TURN_COUNTER_FORCE * (moveSpeed / MOVE_SPEED_MAX);
+    STEER_TURN_COUNTER_FORCE * (moveSpeed / MOVE_SPEED_MAX) * MULT();
   if (section.kind === 'turn-left') {
     steerOffset -= turnCounterForce;
   } else if (section.kind === 'turn-right') {

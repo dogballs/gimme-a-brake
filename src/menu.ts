@@ -11,6 +11,10 @@ import {
   SOUND_GAME_THEME_ID,
   ITCH_LINK,
   TSYD_LINK,
+  MULT_OPTIONS,
+  MULT,
+  displayMult,
+  setMult,
 } from './config';
 import { CarState } from './car';
 import { KeyboardListener, InputControl } from './controls';
@@ -63,6 +67,7 @@ type MenuItem = {
 
 const MAIN_MENU_ITEMS: MenuItem[] = [
   { id: 'play', label: 'PLAY' },
+  { id: 'speed', label: 'SPEED' },
   { id: 'sound', label: 'SOUND: ' },
   { id: 'credits', label: 'CREDITS' },
 ];
@@ -72,6 +77,7 @@ if (savedHasWatchedIntro) {
 
 const GAME_OVER_ITEMS: MenuItem[] = [
   { id: 'retry', label: 'TRY AGAIN' },
+  { id: 'speed', label: 'SPEED' },
   { id: 'main', label: 'MAIN MENU' },
 ];
 
@@ -140,7 +146,7 @@ export function drawMenu(
   }
 
   const textX = (IW - 270 * RS) / 2;
-  const textY = 60 * RS;
+  const textY = 50 * RS;
   drawBigText(ctx, { text: 'GIMME A BRAKE', size: 30, x: textX, y: textY });
 
   if (!state.isPlaying) {
@@ -244,6 +250,9 @@ function drawItem(
   let text = item.label;
   if (item.id === 'sound') {
     text += '' + (state.isSoundOn ? 'ON' : 'OFF');
+  }
+  if (item.id === 'speed') {
+    text += ': x' + displayMult(MULT());
   }
   if (item.id === 'play' && state.isPlaying) {
     text = 'CONTINUE';
@@ -522,6 +531,16 @@ export function updateMenuState({
         return returnToPlaying({ state, soundController });
       }
       if (selectedIndex === 1) {
+        const index = MULT_OPTIONS.indexOf(MULT());
+        let nextIndex = index + 1;
+        if (nextIndex > MULT_OPTIONS.length - 1) {
+          nextIndex = 0;
+        }
+        setMult(MULT_OPTIONS[nextIndex]);
+        soundController.play(SOUND_MENU_SELECT_ID);
+        return state;
+      }
+      if (selectedIndex === 2) {
         const isSoundOn = !state.isSoundOn;
         localStorage.setItem(SOUND_KEY, isSoundOn ? 'true' : 'false');
         soundController.setGlobalMuted(!isSoundOn);
@@ -532,7 +551,7 @@ export function updateMenuState({
           isSoundOn,
         };
       }
-      if (selectedIndex === 2) {
+      if (selectedIndex === 3) {
         const newMenuState = {
           ...defaultMenuState,
           isAnyKey: false,
@@ -556,6 +575,16 @@ export function updateMenuState({
         }
       }
       if (selectedIndex === 1) {
+        const index = MULT_OPTIONS.indexOf(MULT());
+        let nextIndex = index + 1;
+        if (nextIndex > MULT_OPTIONS.length - 1) {
+          nextIndex = 0;
+        }
+        setMult(MULT_OPTIONS[nextIndex]);
+        soundController.play(SOUND_MENU_SELECT_ID);
+        return state;
+      }
+      if (selectedIndex === 2) {
         const isSoundOn = !state.isSoundOn;
         localStorage.setItem(SOUND_KEY, isSoundOn ? 'true' : 'false');
         soundController.setGlobalMuted(!isSoundOn);
@@ -567,7 +596,7 @@ export function updateMenuState({
         };
       }
 
-      if (selectedIndex === 2) {
+      if (selectedIndex === 3) {
         soundController.play(SOUND_MENU_SELECT_ID);
         return {
           ...state,
@@ -576,7 +605,7 @@ export function updateMenuState({
         };
       }
 
-      if (selectedIndex === 3) {
+      if (selectedIndex === 4) {
         soundController.stopAll();
         soundController.play(SOUND_MENU_SELECT_ID);
         return {
@@ -674,8 +703,18 @@ function updateGameOverState({
       });
       return newMenuState;
     }
-    // Main menu
     if (selectedIndex === 1) {
+      const index = MULT_OPTIONS.indexOf(MULT());
+      let nextIndex = index + 1;
+      if (nextIndex > MULT_OPTIONS.length - 1) {
+        nextIndex = 0;
+      }
+      setMult(MULT_OPTIONS[nextIndex]);
+      soundController.play(SOUND_MENU_SELECT_ID);
+      return state;
+    }
+    // Main menu
+    if (selectedIndex === 2) {
       const newMenuState = {
         ...defaultMenuState,
         isAnyKey: false,
