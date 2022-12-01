@@ -66,7 +66,7 @@ export function drawEnding(
       }
 
       ctx.globalAlpha =
-        Math.round(initiatedPassed / 0.05) % 2 === 0 ? 0.2 : 0.1;
+        Math.round(initiatedPassed / 0.05) % 2 === 0 ? 0.3 : 0.2;
       ctx.drawImage(
         ufoImage,
         100,

@@ -139,14 +139,16 @@ export function generateSectionsForZones({ zones }: { zones: Zone[] }) {
 
   for (let i = 0; i < zones.length; i++) {
     const zone = zones[i];
-    if (zone.isEnding) {
+    const nextZone = zones[i + 1];
+
+    if (nextZone.isEnding) {
       return sections;
     }
 
-    const nextZone = zones[i + 1];
-
     const zoneStart = zone.start + POLE_START;
     const zoneSize = nextZone ? nextZone.start - zoneStart - POLE_START : 0;
+
+    const emptySize = 500;
 
     let start = zoneStart;
     while (start < zoneStart + zoneSize) {
@@ -164,20 +166,20 @@ export function generateSectionsForZones({ zones }: { zones: Zone[] }) {
         case 'turn-right':
           size = randomNumber(1000, 3000);
           sections.push({ kind, size, start });
-          size += 300;
+          size += emptySize;
           break;
         case 'uphill': {
           size = randomNumber(1500, 3000);
           const steepness = randomNumber(25, 35);
           sections.push({ kind, size, start, steepness });
-          size += 300;
+          size += emptySize;
           break;
         }
         case 'downhill': {
           size = randomNumber(1500, 3000);
           const steepness = randomNumber(45, 55);
           sections.push({ kind, size, start, steepness });
-          size += 300;
+          size += emptySize;
           break;
         }
       }

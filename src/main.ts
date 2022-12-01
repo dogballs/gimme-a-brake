@@ -54,8 +54,10 @@ const ctx = canvas.getContext('2d');
 canvas.width = IW;
 canvas.height = IH;
 
+const FOR_ITCH = false;
+
 function updateCanvasSize() {
-  const widthOffset = 300;
+  const widthOffset = FOR_ITCH ? 0 : 300;
   const width = window.innerWidth - widthOffset;
   canvas.style.width = `${width}px`;
 

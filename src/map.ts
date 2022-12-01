@@ -56,10 +56,17 @@ const zones: Zone[] = [
     propCount: 0,
     decorCount: 1000,
     skipPole: true,
+  },
+  {
+    start: PRE_ZONE_SIZE + ZONE_SIZE * 4.5,
+    kind: 'forest',
+    propCount: 0,
+    decorCount: 1000,
+    skipPole: true,
     isEnding: true,
   },
   {
-    start: PRE_ZONE_SIZE + ZONE_SIZE * 4 + ENDING_SIZE,
+    start: PRE_ZONE_SIZE + ZONE_SIZE * 4.5 + ENDING_SIZE,
     kind: 'forest',
     propCount: 0,
     decorCount: 20,
