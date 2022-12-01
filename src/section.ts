@@ -139,6 +139,10 @@ export function generateSectionsForZones({ zones }: { zones: Zone[] }) {
 
   for (let i = 0; i < zones.length; i++) {
     const zone = zones[i];
+    if (zone.isEnding) {
+      return sections;
+    }
+
     const nextZone = zones[i + 1];
 
     const zoneStart = zone.start + POLE_START;

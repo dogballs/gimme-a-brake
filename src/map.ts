@@ -12,6 +12,11 @@ type Map = {
   poles: Pole[];
 };
 
+const PRE_ZONE_SIZE = 3000;
+const ZONE_SIZE = 22000;
+const ENDING_SIZE = 18000;
+const PROP_COUNT_PER_ZONE = 30;
+
 const zones: Zone[] = [
   {
     start: 0,
@@ -21,32 +26,32 @@ const zones: Zone[] = [
     skipPole: true,
   },
   {
-    start: 3000,
+    start: PRE_ZONE_SIZE,
     kind: 'green',
-    propCount: 30,
+    propCount: PROP_COUNT_PER_ZONE,
     decorCount: 100,
     skipPole: true,
   },
   {
-    start: 25000,
+    start: PRE_ZONE_SIZE + ZONE_SIZE,
     kind: 'desert',
-    propCount: 30,
+    propCount: PROP_COUNT_PER_ZONE,
     decorCount: 100,
   },
   {
-    start: 62000,
+    start: PRE_ZONE_SIZE + ZONE_SIZE * 2,
     kind: 'beach',
-    propCount: 30,
+    propCount: PROP_COUNT_PER_ZONE,
     decorCount: 20,
   },
   {
-    start: 93000,
+    start: PRE_ZONE_SIZE + ZONE_SIZE * 3,
     kind: 'forest',
-    propCount: 30,
+    propCount: PROP_COUNT_PER_ZONE,
     decorCount: 2000,
   },
   {
-    start: 124000,
+    start: PRE_ZONE_SIZE + ZONE_SIZE * 4,
     kind: 'forest',
     propCount: 0,
     decorCount: 1000,
@@ -54,7 +59,7 @@ const zones: Zone[] = [
     isEnding: true,
   },
   {
-    start: 124000 + 18000,
+    start: PRE_ZONE_SIZE + ZONE_SIZE * 4 + ENDING_SIZE,
     kind: 'forest',
     propCount: 0,
     decorCount: 20,

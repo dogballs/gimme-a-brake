@@ -5,7 +5,7 @@ const stats = new StatsJS();
 stats.showPanel(0);
 // document.body.appendChild(stats.dom);
 
-import { IW, IH, HH, MULT } from './config';
+import { IW, IH, BW, BH, HH, MULT } from './config';
 import { drawCar, getCarBox, updateCarState } from './car';
 import { findCollisions, drawCollisionBoxes } from './collision';
 import { InputControl, KeyboardListener } from './controls';
@@ -53,6 +53,21 @@ const ctx = canvas.getContext('2d');
 
 canvas.width = IW;
 canvas.height = IH;
+
+function updateCanvasSize() {
+  const widthOffset = 300;
+  const width = window.innerWidth - widthOffset;
+  canvas.style.width = `${width}px`;
+
+  if (window.innerHeight < canvas.clientHeight) {
+    const width = (window.innerHeight / BH) * BW - widthOffset;
+    canvas.style.width = `${width}px`;
+  }
+}
+
+window.addEventListener('resize', () => {
+  updateCanvasSize();
+});
 
 let offCanvas;
 if (window.OffscreenCanvas) {
@@ -534,6 +549,7 @@ async function main() {
     resources.sounds = await loadSounds();
 
     document.body.appendChild(canvas);
+    updateCanvasSize();
 
     keyboardListener.listen();
     soundController.sounds = resources.sounds;
