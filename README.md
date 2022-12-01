@@ -12,7 +12,7 @@ Inspired by Outrun that I used to play as a kid on arcade machines and Horizon C
 
 The idea of making a 2.5d game came after reading a [Wolfenstein 3d Game Engine Black Book](https://fabiensanglard.net/gebbwolf3d/) that I highly recommend.
 
-Written in TypeScript and utilizing HTML canvas without using any third-party libs.
+Written from scratch in TypeScript utilizing HTML canvas.
 
 TODO: itch.io page
 
