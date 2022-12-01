@@ -6,7 +6,7 @@ Note: mobile not supported
 
 ### About
 
-2.5d racing game made in 3 weeks from scratch for a [Game Off Jam 2022](https://itch.io/jam/game-off-2022).
+2.5d racing game made for a [Game Off Jam 2022](https://itch.io/jam/game-off-2022).
 
 Inspired by Outrun that I used to play as a kid on arcade machines and Horizon Chase Turbo that I played recently.
 
