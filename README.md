@@ -14,7 +14,7 @@ The idea of making a 2.5d game came after reading a [Wolfenstein 3d Game Engine 
 
 Written from scratch in TypeScript utilizing HTML canvas.
 
-TODO: itch.io page
+itch.io page: https://heckx2.itch.io/gimme-a-brake
 
 ### Screenshots
 
