@@ -1,17 +1,7 @@
 import { IH, HH, RS, POLE_START, MULT } from './config';
 import { CollisionBox } from './collision';
-import {
-  Curve,
-  translateCurve,
-  translateCurveUniform,
-  steerCurve,
-  pointOnCurve,
-  drawCurve,
-  curveXByY,
-  lerpCurve,
-} from './curve';
+import { Curve, steerCurve, curveXByY, lerpCurve } from './curve';
 import { ImageMap } from './images';
-import { getCurbPath } from './road';
 import { Section } from './section';
 import { SoundController } from './sound';
 import { generateStripes, stripesToY, stripesUnscaledHeight } from './stripes';

@@ -1,5 +1,5 @@
 import { IH, HH, RS } from './config';
-import { drawCurve, curveXByY, steerCurve } from './curve';
+import { curveXByY, steerCurve } from './curve';
 import { ImageMap } from './images';
 import { Path } from './path';
 import { getCurbPath } from './road';

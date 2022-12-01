@@ -1,6 +1,5 @@
 import { HW, HH, RS } from './config';
 import {
-  Curve,
   leftRoadCurve,
   rightRoadCurve,
   DEFAULT_BOTTOM_LEFT_X,

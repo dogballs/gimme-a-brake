@@ -1,8 +1,6 @@
 import {
   IW,
   IH,
-  HW,
-  HH,
   RS,
   FONT_PRIMARY,
   SOUND_CURB_ID,
@@ -15,14 +13,10 @@ import {
 import { CollisionBox } from './collision';
 import { curveXByY, steerCurve } from './curve';
 import { ImageMap } from './images';
-import { MenuState } from './menu';
 import { Path } from './path';
-import { Pole } from './pole';
-import { Section } from './section';
-import { Stripe, stripesToY } from './stripes';
+import { Stripe } from './stripes';
 import { SoundController } from './sound';
 import { Upgrade } from './upgrade';
-import { Context2D } from './types';
 
 export function drawCar(
   ctx,

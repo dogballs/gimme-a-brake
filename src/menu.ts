@@ -1,8 +1,6 @@
 import {
   IW,
   IH,
-  HW,
-  HH,
   RS,
   FONT_PRIMARY,
   SOUND_MENU_SELECT_ID,

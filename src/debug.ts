@@ -1,6 +1,5 @@
 import { IW, IH, HW, HH, VERSION, RS, FONT_PRIMARY } from './config';
 import { Section } from './section';
-import { Upgrade } from './upgrade';
 import { Context2D } from './types';
 
 export function drawDebug(

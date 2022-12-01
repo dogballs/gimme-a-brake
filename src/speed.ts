@@ -1,8 +1,5 @@
 import {
   IW,
-  IH,
-  HW,
-  HH,
   RS,
   MOVE_ACCELERATION,
   MOVE_DECELERATION_FREE,
@@ -15,10 +12,6 @@ import {
   MOVE_DECELERATION_NITRO_UPGRADE,
   MOVE_SPEED_MAX,
   MOVE_SPEED_MAX_UPGRADE,
-  STEER_LIMIT,
-  STEER_SPEED,
-  STEER_SPEED_IMPROVED,
-  STEER_TURN_COUNTER_FORCE,
   POLE_START,
   POLE_DRIVE,
   POLE_FULL_STOP,
@@ -27,12 +20,9 @@ import {
 import { CarState } from './car';
 import { EndingState } from './ending';
 import { MenuState } from './menu';
-import { Path } from './path';
 import { Pole } from './pole';
 import { Section } from './section';
-import { Stripe, stripesToY } from './stripes';
 import { Upgrade } from './upgrade';
-import { Context2D } from './types';
 
 export type SpeedState = {
   moveGear: number;

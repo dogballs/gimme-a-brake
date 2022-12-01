@@ -9,19 +9,10 @@ import { IW, IH, HH, MULT } from './config';
 import { drawCar, getCarBox, updateCarState } from './car';
 import { findCollisions, drawCollisionBoxes } from './collision';
 import { InputControl, KeyboardListener } from './controls';
-import { drawCurve } from './curve';
 import { drawBackground, updateBackgroundOffset } from './background';
 import { drawDebug, drawHorizon, drawVersion } from './debug';
 import { drawDecors } from './decor';
 import { updateEndingState, drawEnding } from './ending';
-import {
-  Fragment,
-  straightFragment,
-  createTurn,
-  createUphill,
-  createDownhill,
-  lerpFragments,
-} from './fragment';
 import { loadImages } from './images';
 import { drawMenu, updateMenuState } from './menu';
 import { GameLoop } from './loop';
@@ -29,7 +20,7 @@ import { generateMap } from './map';
 import { Path } from './path';
 import { drawPoles, getNextPole } from './pole';
 import { getPropBoxes, drawProps, PropBox } from './prop';
-import { drawCurbMask, drawRoadMask, drawRoadLines } from './road';
+import { drawCurbMask, drawRoadMask } from './road';
 import {
   Section,
   createSectionFragments,
@@ -41,7 +32,6 @@ import { SpeedAudio, updateMoveSpeedState, drawSpeedometer } from './speed';
 import { createGlobalState, createResetGlobalState } from './state';
 import { updateSteerState } from './steer';
 import {
-  Stripe,
   drawCurbStripes,
   drawGroundStripes,
   drawRoadStripes,
@@ -54,7 +44,6 @@ import {
   drawActiveUpgrades,
   updateUpgradeState,
 } from './upgrade';
-import { Context2D } from './types';
 
 const loadingElement = document.querySelector<HTMLElement>('[data-loading]');
 const crashElement = document.querySelector<HTMLElement>('[data-crash]');

@@ -1,4 +1,4 @@
-import { HH, IH } from './config';
+import { IH } from './config';
 import { Stripe, stripesToY } from './stripes';
 import { Context2D } from './types';
 

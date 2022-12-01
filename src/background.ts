@@ -1,4 +1,4 @@
-import { IW, IH, HH, BG_SPEED_PER_MOVE_OFFSET, MOVE_SPEED_MAX } from './config';
+import { IW, IH, HH, BG_SPEED_PER_MOVE_OFFSET } from './config';
 import { ImageMap } from './images';
 import { Section } from './section';
 import { generateStripes, stripesUnscaledHeight } from './stripes';

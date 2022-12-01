@@ -1,4 +1,4 @@
-import { IW, IH, RS } from './config';
+import { IW, RS } from './config';
 import { KeyboardListener } from './controls';
 import { ImageMap } from './images';
 import { SoundController } from './sound';

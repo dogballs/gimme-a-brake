@@ -1,4 +1,4 @@
-import { Decor, generateDecors, generateDecorsForZones } from './decor';
+import { Decor, generateDecorsForZones } from './decor';
 import { Pole, generatePolesForZones } from './pole';
 import { Prop, generatePropsForZones } from './prop';
 import { Section, generateSectionsForZones } from './section';

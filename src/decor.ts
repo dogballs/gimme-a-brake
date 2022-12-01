@@ -3,8 +3,6 @@ import {
   translateCurve,
   translateCurveUniform,
   steerCurve,
-  pointOnCurve,
-  drawCurve,
   curveXByY,
 } from './curve';
 import { ImageMap } from './images';

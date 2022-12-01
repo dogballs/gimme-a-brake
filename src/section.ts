@@ -1,6 +1,5 @@
 import { POLE_START } from './config';
 import {
-  Fragment,
   straightFragment,
   createTurn,
   createUphill,
@@ -11,12 +10,6 @@ import { Path } from './path';
 import { randomElement, randomNumber } from './random';
 import { Zone } from './zone';
 
-export type SectionKind =
-  | 'straight'
-  | 'turn-right'
-  | 'turn-left'
-  | 'downhill'
-  | 'uphill';
 export type Section =
   | {
       kind: 'straight' | 'turn-right' | 'turn-left';

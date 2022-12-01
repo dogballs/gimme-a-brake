@@ -1,4 +1,4 @@
-import { IH, RS } from './config';
+import { RS } from './config';
 import { Path, steerPath, translatePath } from './path';
 import { Context2D } from './types';
 
