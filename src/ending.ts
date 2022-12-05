@@ -1,5 +1,5 @@
 import { IW, RS } from './config';
-import { KeyboardListener } from './controls';
+import { InputController } from './controls';
 import { ImageMap } from './images';
 import { SoundController } from './sound';
 import { Zone } from './zone';
@@ -112,13 +112,13 @@ export function drawEnding(
 }
 
 export function updateEndingState({
-  keyboardListener,
+  inputController,
   soundController,
   deltaTime,
   zone,
   state,
 }: {
-  keyboardListener: KeyboardListener;
+  inputController: InputController;
   soundController: SoundController;
   deltaTime: number;
   zone: Zone;
@@ -132,7 +132,7 @@ export function updateEndingState({
 
   if (zone.isEnding && !state.isInitiated) {
     soundController.play('ufo4');
-    keyboardListener.unlisten();
+    inputController.unlisten();
     return {
       ...state,
       isInitiated: true,

@@ -15,7 +15,7 @@ import {
   setMult,
 } from './config';
 import { CarState } from './car';
-import { KeyboardListener, InputControl } from './controls';
+import { InputController, InputControl } from './controls';
 import { EndingState } from './ending';
 import { SpeedState } from './speed';
 import { ImageMap } from './images';
@@ -391,7 +391,7 @@ export function updateMenuState({
   speedState,
   endingState,
   deltaTime,
-  keyboardListener,
+  inputController,
   soundController,
   resetGlobalState,
 }: {
@@ -400,14 +400,14 @@ export function updateMenuState({
   speedState: SpeedState;
   endingState: EndingState;
   deltaTime: number;
-  keyboardListener: KeyboardListener;
+  inputController: InputController;
   soundController: SoundController;
   resetGlobalState: ResetGlobalState;
 }) {
   if (!state.isOpen) {
     // Ending
     if (!state.isWin && endingState.isDone) {
-      keyboardListener.listen();
+      inputController.listen();
       soundController.play('win2');
       return {
         ...state,
@@ -439,7 +439,7 @@ export function updateMenuState({
     }
 
     // Pressing ESC when playing
-    const isBack = keyboardListener.isDown(InputControl.Back);
+    const isBack = inputController.getActiveMethod().isDown(InputControl.Back);
     if (isBack) {
       // Ignore ESC when death animation started
       if (carState.flipTimePassed > 0) {
@@ -460,7 +460,7 @@ export function updateMenuState({
   if (state.isIntro) {
     return updateIntroState({
       deltaTime,
-      keyboardListener,
+      inputController,
       soundController,
       state,
     });
@@ -469,7 +469,7 @@ export function updateMenuState({
   // Credits screen
   if (state.isCredits) {
     return updateCreditsState({
-      keyboardListener,
+      inputController,
       soundController,
       state,
       resetGlobalState,
@@ -479,7 +479,7 @@ export function updateMenuState({
   // Win screen
   if (state.isWin) {
     return updateWinState({
-      keyboardListener,
+      inputController,
       soundController,
       state,
       resetGlobalState,
@@ -489,7 +489,7 @@ export function updateMenuState({
   // Game over screen
   if (state.isGameOver) {
     return updateGameOverState({
-      keyboardListener,
+      inputController,
       soundController,
       state,
       resetGlobalState,
@@ -498,7 +498,9 @@ export function updateMenuState({
 
   // Entry screen
   if (state.isAnyKey) {
-    const isDown = keyboardListener.isDown(InputControl.Select);
+    const isDown = inputController
+      .getActiveMethod()
+      .isDown(InputControl.Select);
     const isAnyKey = !isDown;
 
     return {
@@ -513,10 +515,11 @@ export function updateMenuState({
 
   let selectedIndex = state.selectedIndex;
 
-  const isUp = keyboardListener.isDown(InputControl.Up);
-  const isDown = keyboardListener.isDown(InputControl.Down);
-  const isSelect = keyboardListener.isDown(InputControl.Select);
-  const isBack = keyboardListener.isDown(InputControl.Back);
+  const inputMethod = inputController.getActiveMethod();
+  const isUp = inputMethod.isDown(InputControl.Up);
+  const isDown = inputMethod.isDown(InputControl.Down);
+  const isSelect = inputMethod.isDown(InputControl.Select);
+  const isBack = inputMethod.isDown(InputControl.Back);
 
   // Pressing ESC when the menu is open to close it
   if (state.isPlaying && isBack) {
@@ -671,21 +674,22 @@ function returnToPlaying({
 }
 
 function updateGameOverState({
-  keyboardListener,
+  inputController,
   soundController,
   resetGlobalState,
   state,
 }: {
-  keyboardListener: KeyboardListener;
+  inputController: InputController;
   soundController: SoundController;
   resetGlobalState: ResetGlobalState;
   state: MenuState;
 }) {
   let selectedIndex = state.selectedIndex;
 
-  const isSelect = keyboardListener.isDown(InputControl.Select);
-  const isUp = keyboardListener.isDown(InputControl.Up);
-  const isDown = keyboardListener.isDown(InputControl.Down);
+  const inputMethod = inputController.getActiveMethod();
+  const isSelect = inputMethod.isDown(InputControl.Select);
+  const isUp = inputMethod.isDown(InputControl.Up);
+  const isDown = inputMethod.isDown(InputControl.Down);
 
   if (isSelect) {
     // Try again
@@ -742,21 +746,22 @@ function updateGameOverState({
 }
 
 function updateWinState({
-  keyboardListener,
+  inputController,
   soundController,
   resetGlobalState,
   state,
 }: {
-  keyboardListener: KeyboardListener;
+  inputController: InputController;
   soundController: SoundController;
   resetGlobalState: ResetGlobalState;
   state: MenuState;
 }) {
   let selectedIndex = state.selectedIndex;
 
-  const isSelect = keyboardListener.isDown(InputControl.Select);
-  const isUp = keyboardListener.isDown(InputControl.Up);
-  const isDown = keyboardListener.isDown(InputControl.Down);
+  const inputMethod = inputController.getActiveMethod();
+  const isSelect = inputMethod.isDown(InputControl.Select);
+  const isUp = inputMethod.isDown(InputControl.Up);
+  const isDown = inputMethod.isDown(InputControl.Down);
 
   if (isSelect) {
     // Credits
@@ -805,21 +810,22 @@ function updateWinState({
 }
 
 function updateCreditsState({
-  keyboardListener,
+  inputController,
   soundController,
   resetGlobalState,
   state,
 }: {
-  keyboardListener: KeyboardListener;
+  inputController: InputController;
   soundController: SoundController;
   resetGlobalState: ResetGlobalState;
   state: MenuState;
 }) {
   let selectedIndex = state.selectedIndex;
 
-  const isSelect = keyboardListener.isDown(InputControl.Select);
-  const isUp = keyboardListener.isDown(InputControl.Up);
-  const isDown = keyboardListener.isDown(InputControl.Down);
+  const inputMethod = inputController.getActiveMethod();
+  const isSelect = inputMethod.isDown(InputControl.Select);
+  const isUp = inputMethod.isDown(InputControl.Up);
+  const isDown = inputMethod.isDown(InputControl.Down);
 
   if (isSelect) {
     if (selectedIndex === 0) {
@@ -951,36 +957,22 @@ function drawIntro(
   } else if (state.introPassed < 1.2) {
     drawOverlay(ctx, 0.1);
   }
-
-  // if (state.introPassed > 27.2) {
-  //   drawOverlay(ctx, 0.7);
-  // } else if (state.introPassed > 27) {
-  //   drawOverlay(ctx, 0.6);
-  // } else if (state.introPassed > 26.8) {
-  //   drawOverlay(ctx, 0.5);
-  // } else if (state.introPassed > 26.6) {
-  //   drawOverlay(ctx, 0.4);
-  // } else if (state.introPassed > 26.4) {
-  //   drawOverlay(ctx, 0.3);
-  // } else if (state.introPassed > 26.2) {
-  //   drawOverlay(ctx, 0.2);
-  // } else if (state.introPassed > 26) {
-  //   drawOverlay(ctx, 0.1);
-  // }
 }
 
 function updateIntroState({
   state,
   deltaTime,
-  keyboardListener,
+  inputController,
   soundController,
 }: {
   state: MenuState;
   deltaTime;
-  keyboardListener: KeyboardListener;
+  inputController: InputController;
   soundController: SoundController;
 }) {
-  const isSelect = keyboardListener.isDown(InputControl.Select);
+  const isSelect = inputController
+    .getActiveMethod()
+    .isDown(InputControl.Select);
 
   let introPassed = state.introPassed;
 

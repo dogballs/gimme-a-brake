@@ -8,7 +8,7 @@ stats.showPanel(0);
 import { IW, IH, BW, BH, HH, MULT } from './config';
 import { drawCar, getCarBox, updateCarState } from './car';
 import { findCollisions, drawCollisionBoxes } from './collision';
-import { InputControl, KeyboardListener } from './controls';
+import { InputControl, InputController } from './controls';
 import { drawBackground, updateBackgroundOffset } from './background';
 import { drawDebug, drawHorizon, drawVersion } from './debug';
 import { drawDecors } from './decor';
@@ -81,7 +81,7 @@ if (window.OffscreenCanvas) {
 }
 const offCtx = offCanvas.getContext('2d');
 
-const keyboardListener = new KeyboardListener(canvas);
+const inputController = new InputController();
 
 let audioCtx;
 function getContext() {
@@ -267,10 +267,9 @@ function draw({
 }
 
 function getInput() {
-  const isUp = keyboardListener.isHold(InputControl.Up);
-  const isDown = keyboardListener.isHold(InputControl.Down);
+  const inputMethod = inputController.getActiveMethod();
 
-  const lastPressedThrottleControl = keyboardListener.getHoldLastOf([
+  const lastPressedThrottleControl = inputMethod.getHoldLastOf([
     InputControl.Up,
     InputControl.Down,
   ]);
@@ -278,7 +277,7 @@ function getInput() {
   const isThrottleActive = lastPressedThrottleControl === InputControl.Up;
   const isReverseActive = lastPressedThrottleControl === InputControl.Down;
 
-  const lastPressedTurnControl = keyboardListener.getHoldLastOf([
+  const lastPressedTurnControl = inputMethod.getHoldLastOf([
     InputControl.Left,
     InputControl.Right,
   ]);
@@ -408,10 +407,10 @@ function tick({
 }) {
   stats.begin();
 
-  keyboardListener.update();
+  inputController.update();
 
   state.menuState = updateMenuState({
-    keyboardListener,
+    inputController,
     soundController,
     resetGlobalState,
     state: state.menuState,
@@ -437,7 +436,7 @@ function tick({
   });
 
   state.upgradeState = updateUpgradeState({
-    keyboardListener,
+    inputController,
     soundController,
     deltaTime,
     state: state.upgradeState,
@@ -474,7 +473,7 @@ function tick({
   });
 
   state.endingState = updateEndingState({
-    keyboardListener,
+    inputController,
     soundController,
     deltaTime,
     zone,
@@ -553,7 +552,7 @@ async function main() {
     document.body.appendChild(canvas);
     updateCanvasSize();
 
-    keyboardListener.listen();
+    inputController.listen();
     soundController.sounds = resources.sounds;
 
     loop.start();

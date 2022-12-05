@@ -6,7 +6,7 @@ import {
   SOUND_BRAKE_ID,
   SOUND_NITRO_ID,
 } from './config';
-import { KeyboardListener, InputControl } from './controls';
+import { InputController, InputControl } from './controls';
 import { ImageMap } from './images';
 import { randomElements } from './random';
 import { SoundController } from './sound';
@@ -121,14 +121,14 @@ export const defaultUpgradeState: UpgradeState = {
 };
 
 export function updateUpgradeState({
-  keyboardListener,
+  inputController,
   soundController,
   deltaTime,
   state,
   nextPole,
   moveOffset,
 }: {
-  keyboardListener: KeyboardListener;
+  inputController: InputController;
   soundController: SoundController;
   deltaTime: number;
   state: UpgradeState;
@@ -163,7 +163,9 @@ export function updateUpgradeState({
   }
 
   if (!state.isDialogOpen) {
-    const isActivated = keyboardListener.isDown(InputControl.Select);
+    const isActivated = inputController
+      .getActiveMethod()
+      .isDown(InputControl.Select);
     if (isActivated) {
       const activeIndex = state.upgrades.findIndex((upgrade) => {
         return upgrade.active === true;
@@ -203,7 +205,9 @@ export function updateUpgradeState({
     return state;
   }
 
-  const isSelected = keyboardListener.isDown(InputControl.Select);
+  const isSelected = inputController
+    .getActiveMethod()
+    .isDown(InputControl.Select);
   if (isSelected) {
     const newUpgrade = state.dialogUpgrades[state.dialogSelectedIndex];
     const upgrades = [...state.upgrades, newUpgrade];
@@ -220,8 +224,9 @@ export function updateUpgradeState({
     };
   }
 
-  const isLeft = keyboardListener.isDown(InputControl.Left);
-  const isRight = keyboardListener.isDown(InputControl.Right);
+  const inputMethod = inputController.getActiveMethod();
+  const isLeft = inputMethod.isDown(InputControl.Left);
+  const isRight = inputMethod.isDown(InputControl.Right);
 
   let dialogSelectedIndex = state.dialogSelectedIndex;
   if (isLeft) {
