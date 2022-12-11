@@ -267,9 +267,7 @@ function draw({
 }
 
 function getInput() {
-  const inputMethod = inputController.getActiveMethod();
-
-  const lastPressedThrottleControl = inputMethod.getHoldLastOf([
+  const lastPressedThrottleControl = inputController.getHoldLastOf([
     InputControl.Up,
     InputControl.Down,
   ]);
@@ -277,7 +275,7 @@ function getInput() {
   const isThrottleActive = lastPressedThrottleControl === InputControl.Up;
   const isReverseActive = lastPressedThrottleControl === InputControl.Down;
 
-  const lastPressedTurnControl = inputMethod.getHoldLastOf([
+  const lastPressedTurnControl = inputController.getHoldLastOf([
     InputControl.Left,
     InputControl.Right,
   ]);

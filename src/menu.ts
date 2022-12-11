@@ -439,7 +439,7 @@ export function updateMenuState({
     }
 
     // Pressing ESC when playing
-    const isBack = inputController.getActiveMethod().isDown(InputControl.Back);
+    const isBack = inputController.isDown(InputControl.Back);
     if (isBack) {
       // Ignore ESC when death animation started
       if (carState.flipTimePassed > 0) {
@@ -498,9 +498,7 @@ export function updateMenuState({
 
   // Entry screen
   if (state.isAnyKey) {
-    const isDown = inputController
-      .getActiveMethod()
-      .isDown(InputControl.Select);
+    const isDown = inputController.isDown(InputControl.Select);
     const isAnyKey = !isDown;
 
     return {
@@ -515,11 +513,10 @@ export function updateMenuState({
 
   let selectedIndex = state.selectedIndex;
 
-  const inputMethod = inputController.getActiveMethod();
-  const isUp = inputMethod.isDown(InputControl.Up);
-  const isDown = inputMethod.isDown(InputControl.Down);
-  const isSelect = inputMethod.isDown(InputControl.Select);
-  const isBack = inputMethod.isDown(InputControl.Back);
+  const isUp = inputController.isDown(InputControl.Up);
+  const isDown = inputController.isDown(InputControl.Down);
+  const isSelect = inputController.isDown(InputControl.Select);
+  const isBack = inputController.isDown(InputControl.Back);
 
   // Pressing ESC when the menu is open to close it
   if (state.isPlaying && isBack) {
@@ -686,10 +683,9 @@ function updateGameOverState({
 }) {
   let selectedIndex = state.selectedIndex;
 
-  const inputMethod = inputController.getActiveMethod();
-  const isSelect = inputMethod.isDown(InputControl.Select);
-  const isUp = inputMethod.isDown(InputControl.Up);
-  const isDown = inputMethod.isDown(InputControl.Down);
+  const isSelect = inputController.isDown(InputControl.Select);
+  const isUp = inputController.isDown(InputControl.Up);
+  const isDown = inputController.isDown(InputControl.Down);
 
   if (isSelect) {
     // Try again
@@ -758,10 +754,9 @@ function updateWinState({
 }) {
   let selectedIndex = state.selectedIndex;
 
-  const inputMethod = inputController.getActiveMethod();
-  const isSelect = inputMethod.isDown(InputControl.Select);
-  const isUp = inputMethod.isDown(InputControl.Up);
-  const isDown = inputMethod.isDown(InputControl.Down);
+  const isSelect = inputController.isDown(InputControl.Select);
+  const isUp = inputController.isDown(InputControl.Up);
+  const isDown = inputController.isDown(InputControl.Down);
 
   if (isSelect) {
     // Credits
@@ -822,10 +817,9 @@ function updateCreditsState({
 }) {
   let selectedIndex = state.selectedIndex;
 
-  const inputMethod = inputController.getActiveMethod();
-  const isSelect = inputMethod.isDown(InputControl.Select);
-  const isUp = inputMethod.isDown(InputControl.Up);
-  const isDown = inputMethod.isDown(InputControl.Down);
+  const isSelect = inputController.isDown(InputControl.Select);
+  const isUp = inputController.isDown(InputControl.Up);
+  const isDown = inputController.isDown(InputControl.Down);
 
   if (isSelect) {
     if (selectedIndex === 0) {
@@ -970,9 +964,7 @@ function updateIntroState({
   inputController: InputController;
   soundController: SoundController;
 }) {
-  const isSelect = inputController
-    .getActiveMethod()
-    .isDown(InputControl.Select);
+  const isSelect = inputController.isDown(InputControl.Select);
 
   let introPassed = state.introPassed;
 

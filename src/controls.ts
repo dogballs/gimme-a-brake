@@ -203,6 +203,8 @@ class KeyboardInputDevice implements InputDevice {
   };
 }
 
+const GAMEPAD_AXIS_THRESHOLD = 0.8;
+
 class GamepadInputDevice implements InputDevice {
   private deviceIndex: number = 0;
   private isListening = false;
@@ -239,13 +241,30 @@ class GamepadInputDevice implements InputDevice {
     }
 
     // Extract buttons that are in pressed state
-    const codes = [];
+    const codes = new Set<GamepadButtonCode>();
 
     const { buttons } = gamepad;
     for (let i = 0; i < buttons.length; i += 1) {
       const button = buttons[i];
       if (button.pressed === true) {
-        codes.push(i);
+        codes.add(i);
+      }
+    }
+
+    // Convert left stick movements to left/right/up/down button presses
+    if (gamepad.axes.length >= 2) {
+      const leftStickX = gamepad.axes[0];
+      const leftStickY = gamepad.axes[1];
+
+      if (leftStickX < -GAMEPAD_AXIS_THRESHOLD) {
+        codes.add(GamepadButtonCode.Left);
+      } else if (leftStickX > GAMEPAD_AXIS_THRESHOLD) {
+        codes.add(GamepadButtonCode.Right);
+      }
+      if (leftStickY < -GAMEPAD_AXIS_THRESHOLD) {
+        codes.add(GamepadButtonCode.Up);
+      } else if (leftStickY > GAMEPAD_AXIS_THRESHOLD) {
+        codes.add(GamepadButtonCode.Down);
       }
     }
 
@@ -272,13 +291,13 @@ class GamepadInputDevice implements InputDevice {
     const upCodes = [];
 
     for (const code of this.downCodes) {
-      if (!codes.includes(code)) {
+      if (!codes.has(code)) {
         upCodes.push(code);
       }
     }
 
     for (const code of this.holdCodes) {
-      if (!codes.includes(code)) {
+      if (!codes.has(code)) {
         upCodes.push(code);
       }
     }
@@ -322,24 +341,12 @@ class GamepadInputDevice implements InputDevice {
 }
 
 class InputMethod {
-  private device: InputDevice;
-  private binding: InputBinding;
-
-  constructor(device: InputDevice, binding: InputBinding) {
-    this.device = device;
-    this.binding = binding;
-  }
+  constructor(readonly device: InputDevice, readonly binding: InputBinding) {}
 
   isDown(control: InputControl) {
     const codes = this.unmap(control);
     const downCodes = this.device.getDownCodes();
     return codes.some((code) => downCodes.includes(code));
-  }
-
-  isHold(control: InputControl) {
-    const codes = this.unmap(control);
-    const holdCodes = this.device.getHoldCodes();
-    return codes.some((code) => holdCodes.includes(code));
   }
 
   getHoldLastOf(controls: InputControl[]): InputControl {
@@ -374,44 +381,39 @@ enum InputDeviceType {
 }
 
 export class InputController {
-  private readonly deviceMap = new Map<InputDeviceType, InputDevice>();
-  private readonly bindingMap = new Map<InputDeviceType, InputBinding>();
+  private readonly methodMap = new Map<InputDeviceType, InputMethod>();
   private activeDeviceType: InputDeviceType = InputDeviceType.Keyboard;
 
   constructor() {
-    this.deviceMap.set(InputDeviceType.Keyboard, new KeyboardInputDevice());
-    this.deviceMap.set(InputDeviceType.Gamepad, new GamepadInputDevice());
-
-    this.bindingMap.set(InputDeviceType.Keyboard, KEYBOARD_BINDING);
-    this.bindingMap.set(InputDeviceType.Gamepad, GAMEPAD_BINDING);
+    this.methodMap.set(
+      InputDeviceType.Keyboard,
+      new InputMethod(new KeyboardInputDevice(), KEYBOARD_BINDING),
+    );
+    this.methodMap.set(
+      InputDeviceType.Gamepad,
+      new InputMethod(new GamepadInputDevice(), GAMEPAD_BINDING),
+    );
   }
 
-  getActiveMethod(): InputMethod {
-    const activeDevice = this.getActiveDevice();
-    const activeBinding = this.getActiveBinding();
-
-    return new InputMethod(activeDevice, activeBinding);
+  isDown(control: InputControl) {
+    return this.methodMap.get(this.activeDeviceType).isDown(control);
   }
 
-  getActiveDevice(): InputDevice {
-    return this.deviceMap.get(this.activeDeviceType);
-  }
-
-  getActiveBinding(): InputBinding {
-    return this.bindingMap.get(this.activeDeviceType);
+  getHoldLastOf(controls: InputControl[]) {
+    return this.methodMap.get(this.activeDeviceType).getHoldLastOf(controls);
   }
 
   update() {
-    const activeDevice = this.getActiveDevice();
+    const activeDevice = this.methodMap.get(this.activeDeviceType).device;
 
-    this.deviceMap.forEach((device, deviceType) => {
-      device.update();
+    this.methodMap.forEach((method, deviceType) => {
+      method.device.update();
 
       // Check each device if it has any events. If it does, and it is not an active device - activate a new one.
-      const downCodes = device.getDownCodes();
+      const downCodes = method.device.getDownCodes();
       const hasActivity = downCodes.length > 0;
 
-      const isSameDeviceActive = activeDevice === device;
+      const isSameDeviceActive = activeDevice === method.device;
 
       if (hasActivity && !isSameDeviceActive) {
         this.activeDeviceType = deviceType;
@@ -420,14 +422,14 @@ export class InputController {
   }
 
   listen() {
-    this.deviceMap.forEach((device) => {
-      device.listen();
+    this.methodMap.forEach((method) => {
+      method.device.listen();
     });
   }
 
   unlisten() {
-    this.deviceMap.forEach((device) => {
-      device.unlisten();
+    this.methodMap.forEach((method) => {
+      method.device.unlisten();
     });
   }
 }

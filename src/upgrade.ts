@@ -163,9 +163,7 @@ export function updateUpgradeState({
   }
 
   if (!state.isDialogOpen) {
-    const isActivated = inputController
-      .getActiveMethod()
-      .isDown(InputControl.Select);
+    const isActivated = inputController.isDown(InputControl.Select);
     if (isActivated) {
       const activeIndex = state.upgrades.findIndex((upgrade) => {
         return upgrade.active === true;
@@ -205,9 +203,7 @@ export function updateUpgradeState({
     return state;
   }
 
-  const isSelected = inputController
-    .getActiveMethod()
-    .isDown(InputControl.Select);
+  const isSelected = inputController.isDown(InputControl.Select);
   if (isSelected) {
     const newUpgrade = state.dialogUpgrades[state.dialogSelectedIndex];
     const upgrades = [...state.upgrades, newUpgrade];
@@ -224,9 +220,8 @@ export function updateUpgradeState({
     };
   }
 
-  const inputMethod = inputController.getActiveMethod();
-  const isLeft = inputMethod.isDown(InputControl.Left);
-  const isRight = inputMethod.isDown(InputControl.Right);
+  const isLeft = inputController.isDown(InputControl.Left);
+  const isRight = inputController.isDown(InputControl.Right);
 
   let dialogSelectedIndex = state.dialogSelectedIndex;
   if (isLeft) {
